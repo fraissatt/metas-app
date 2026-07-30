@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import type { Objective } from '@prisma/client'
 
@@ -19,6 +20,7 @@ function readObjectiveFields(formData: FormData) {
 
 export async function createObjective(formData: FormData): Promise<void> {
   await prisma.objective.create({ data: readObjectiveFields(formData) })
+  revalidatePath('/objectives')
 }
 
 export async function listObjectives(): Promise<Objective[]> {
@@ -31,8 +33,10 @@ export async function getObjective(id: string): Promise<Objective | null> {
 
 export async function updateObjective(id: string, formData: FormData): Promise<void> {
   await prisma.objective.update({ where: { id }, data: readObjectiveFields(formData) })
+  revalidatePath('/objectives')
 }
 
 export async function deleteObjective(id: string): Promise<void> {
   await prisma.objective.delete({ where: { id } })
+  revalidatePath('/objectives')
 }
