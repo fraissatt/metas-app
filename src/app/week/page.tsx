@@ -3,6 +3,12 @@ import { getWeekProgress, listWeeklyGoalsForCurrentWeek } from '@/lib/actions/we
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 
+// This page's correctness depends on the wall clock at request time (it
+// computes "the current week" from `new Date()`), not just on data changes,
+// so it must never be statically prerendered — otherwise it freezes on the
+// build week forever.
+export const dynamic = 'force-dynamic'
+
 export default async function WeekPage() {
   const goals = await listWeeklyGoalsForCurrentWeek()
   const progress = await Promise.all(goals.map((g) => getWeekProgress(g.id)))

@@ -3,6 +3,11 @@ import { listDailyTasksByDate, toggleDailyTask } from '@/lib/actions/dailyTasks'
 import { TaskToggle } from '@/components/task-toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+// This page's correctness depends on the wall clock at request time (it
+// filters tasks by "today"), not just on data changes, so it must never be
+// statically prerendered — otherwise it freezes on the build day forever.
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const tasks = await listDailyTasksByDate(new Date())
 
