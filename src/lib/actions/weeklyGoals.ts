@@ -1,6 +1,7 @@
 'use server'
 
 import { parseISO } from 'date-fns'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
 import type { WeeklyGoal } from '@prisma/client'
@@ -16,6 +17,7 @@ function readWeeklyGoalFields(formData: FormData) {
 export async function createWeeklyGoal(objectiveId: string, formData: FormData): Promise<void> {
   const fields = readWeeklyGoalFields(formData)
   await prisma.weeklyGoal.create({ data: { ...fields, objectiveId } })
+  revalidatePath(`/objectives/${objectiveId}`)
 }
 
 export async function listWeeklyGoalsByObjective(objectiveId: string): Promise<WeeklyGoal[]> {
@@ -27,11 +29,13 @@ export async function getWeeklyGoal(id: string): Promise<WeeklyGoal | null> {
 }
 
 export async function updateWeeklyGoal(id: string, formData: FormData): Promise<void> {
-  await prisma.weeklyGoal.update({ where: { id }, data: readWeeklyGoalFields(formData) })
+  const goal = await prisma.weeklyGoal.update({ where: { id }, data: readWeeklyGoalFields(formData) })
+  revalidatePath(`/objectives/${goal.objectiveId}`)
 }
 
 export async function deleteWeeklyGoal(id: string): Promise<void> {
-  await prisma.weeklyGoal.delete({ where: { id } })
+  const goal = await prisma.weeklyGoal.delete({ where: { id } })
+  revalidatePath(`/objectives/${goal.objectiveId}`)
 }
 
 export async function getWeekProgress(
