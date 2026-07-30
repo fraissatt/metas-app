@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { parseISO } from 'date-fns'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import {
   createDailyTask,
@@ -34,6 +35,7 @@ describe('daily task actions', () => {
     expect(tasks).toHaveLength(1)
     expect(tasks[0].title).toBe('Correr 5km')
     expect(tasks[0].completed).toBe(false)
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
   })
 
   it('lists tasks for a weekly goal ordered by date', async () => {
@@ -79,6 +81,7 @@ describe('daily task actions', () => {
     expect(updated?.title).toBe('Renamed')
     expect(updated?.date.getDate()).toBe(30)
     expect(updated?.completed).toBe(true)
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
   })
 
   it('toggles completion and stamps completedAt', async () => {
@@ -91,11 +94,15 @@ describe('daily task actions', () => {
     const completed = await prisma.dailyTask.findUnique({ where: { id: task.id } })
     expect(completed?.completed).toBe(true)
     expect(completed?.completedAt).not.toBeNull()
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
+
+    vi.mocked(revalidatePath).mockClear()
 
     await toggleDailyTask(task.id)
     const uncompleted = await prisma.dailyTask.findUnique({ where: { id: task.id } })
     expect(uncompleted?.completed).toBe(false)
     expect(uncompleted?.completedAt).toBeNull()
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
   })
 
   it('deletes a task', async () => {
@@ -107,5 +114,6 @@ describe('daily task actions', () => {
     await deleteDailyTask(task.id)
 
     expect(await prisma.dailyTask.findUnique({ where: { id: task.id } })).toBeNull()
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
   })
 })
