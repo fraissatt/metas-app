@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# metas-app
 
-## Getting Started
+Objectives -> Weekly Goals -> Daily Tasks tracker, built with Next.js (App Router),
+Prisma, and Postgres.
 
-First, run the development server:
+## Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- [Node.js](https://nodejs.org/) 20.9 or later
+- [Docker](https://www.docker.com/) (for running Postgres locally via Docker Compose)
+- npm (this project is npm-only — do not use yarn, pnpm, or bun)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Start Postgres:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   docker compose up -d
+   ```
 
-## Learn More
+   This starts a Postgres 16 container on `localhost:5433` (remapped from the default
+   `5432` to avoid clashing with a Postgres instance you might already have running
+   locally) and creates both the app database (`metas_app`) and the test database
+   (`metas_app_test`).
 
-To learn more about Next.js, take a look at the following resources:
+2. Copy the environment file:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   cp .env.example .env
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   The default `DATABASE_URL` already matches the Docker Compose setup above, so no
+   further editing is needed for local development.
 
-## Deploy on Vercel
+3. Install dependencies:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npm install
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   This also runs `prisma generate` automatically via the `postinstall` script.
+
+4. Apply database migrations:
+
+   ```bash
+   npx prisma migrate dev
+   ```
+
+5. Start the dev server:
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000).
+
+## Running tests
+
+Tests run against a real Postgres database (`metas_app_test`, from the Docker Compose
+setup above) rather than a mocked Prisma client — there are no unit tests with mocked
+data access in this project, only DB-integration tests.
+
+1. Make sure Postgres is running (`docker compose up -d`) and `.env.test` exists (it's
+   already present in this repo, pointing at `metas_app_test` on port 5433).
+
+2. Apply migrations to the test database:
+
+   ```bash
+   npm run test:migrate
+   ```
+
+3. Run the test suite:
+
+   ```bash
+   npm run test
+   ```
+
+   Or in watch mode:
+
+   ```bash
+   npm run test:watch
+   ```
+
+## Other scripts
+
+- `npm run build` — production build.
+- `npm run start` — run the production build.
+- `npm run lint` — lint the codebase.
+- `npm run db:migrate` — apply pending migrations to the database pointed at by
+  `DATABASE_URL` (non-interactive; use `npx prisma migrate dev` instead when actively
+  developing new migrations).
+
+## Tech stack
+
+- [Next.js](https://nextjs.org) (App Router, Server Actions)
+- [Prisma](https://www.prisma.io/) + Postgres
+- [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) (on
+  [Base UI](https://base-ui.com/), not Radix)
+- [Vitest](https://vitest.dev/) + Testing Library

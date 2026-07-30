@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
     "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
     "test": "vitest run",
     "test:watch": "vitest"
