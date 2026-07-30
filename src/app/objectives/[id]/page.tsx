@@ -1,8 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getObjective } from '@/lib/actions/objectives'
+import { getObjectiveProgressSeries } from '@/lib/actions/progress'
 import { deleteWeeklyGoal, getWeekProgress, listWeeklyGoalsByObjective } from '@/lib/actions/weeklyGoals'
 import { DeleteButton } from '@/components/delete-button'
+import { ObjectiveProgressChart } from '@/components/objective-progress-chart'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -14,12 +16,16 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
 
   const weeklyGoals = await listWeeklyGoalsByObjective(id)
   const progressByGoal = await Promise.all(weeklyGoals.map((g) => getWeekProgress(g.id)))
+  const series = await getObjectiveProgressSeries(id)
 
   return (
     <main className="mx-auto max-w-2xl p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{objective.title}</h1>
         <Button render={<Link href={`/objectives/${id}/weeks/new`} />}>Nova meta semanal</Button>
+      </div>
+      <div className="mb-6">
+        <ObjectiveProgressChart data={series} />
       </div>
       <div className="flex flex-col gap-4">
         {weeklyGoals.map((goal, i) => (
