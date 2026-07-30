@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Objective {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  targetDate  DateTime?
+  status      Status       @default(ACTIVE)
+  weeklyGoals WeeklyGoal[]
+  createdAt   DateTime     @default(now())
+}
+
+model WeeklyGoal {
+  id          String      @id @default(cuid())
+  title       String
+  objective   Objective   @relation(fields: [objectiveId], references: [id], onDelete: Cascade)
+  objectiveId String
+  weekStart   DateTime
+  weekEnd     DateTime
+  status      Status      @default(ACTIVE)
+  dailyTasks  DailyTask[]
+}
+
+model DailyTask {
+  id           String     @id @default(cuid())
+  title        String
+  weeklyGoal   WeeklyGoal @relation(fields: [weeklyGoalId], references: [id], onDelete: Cascade)
+  weeklyGoalId String
+  date         DateTime
+  completed    Boolean    @default(false)
+  completedAt  DateTime?
+}
+
+enum Status {
+  ACTIVE
+  COMPLETED
+  ABANDONED
+}
