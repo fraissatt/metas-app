@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
   createWeeklyGoal,
@@ -22,6 +23,24 @@ async function makeObjective() {
 }
 
 describe('weekly goal actions', () => {
+  it('rejects an empty title', async () => {
+    const objective = await makeObjective()
+
+    await expect(
+      createWeeklyGoal(objective.id, formData({ title: '  ', weekOf: '2026-07-29' })),
+    ).rejects.toThrow()
+    expect(await prisma.weeklyGoal.findMany()).toHaveLength(0)
+  })
+
+  it('rejects an unparseable weekOf', async () => {
+    const objective = await makeObjective()
+
+    await expect(
+      createWeeklyGoal(objective.id, formData({ title: 'Correr 3x', weekOf: 'not-a-date' })),
+    ).rejects.toThrow()
+    expect(await prisma.weeklyGoal.findMany()).toHaveLength(0)
+  })
+
   it('creates a weekly goal with computed Monday-Sunday bounds', async () => {
     const objective = await makeObjective()
 
@@ -110,4 +129,37 @@ describe('weekly goal actions', () => {
     expect(result.map((g) => g.id)).toEqual([currentGoal.id])
     expect(result[0].objective.id).toBe(objective.id)
   })
+
+  it(
+    'round-trips weekOf through create -> edit-page default value -> update without shifting ' +
+      'a week (regression test for the toISOString UTC round-trip bug)',
+    async () => {
+      // Force a positive UTC-offset zone: this is the direction that exposes a mismatch
+      // between a local-based write (`parseISO`) and a UTC-based read (`toISOString`) — the
+      // bug the `format`-based fix removes. Forced explicitly (rather than relying on the
+      // machine's own TZ) so this test is meaningful regardless of what timezone it runs in.
+      const originalTz = process.env.TZ
+      process.env.TZ = 'Europe/Berlin'
+      try {
+        const objective = await makeObjective()
+
+        await createWeeklyGoal(objective.id, formData({ title: 'Roundtrip', weekOf: '2026-07-27' }))
+        const created = (await prisma.weeklyGoal.findMany())[0]
+        expect(created.weekStart.getDate()).toBe(27)
+
+        // This is exactly what the edit page's `defaultValues` computation does.
+        const weekOfDefault = format(created.weekStart, 'yyyy-MM-dd')
+        expect(weekOfDefault).toBe('2026-07-27')
+
+        // Save without changing anything, as if the user just opened and re-submitted the form.
+        await updateWeeklyGoal(created.id, formData({ title: 'Roundtrip', weekOf: weekOfDefault }))
+
+        const updated = await prisma.weeklyGoal.findUnique({ where: { id: created.id } })
+        expect(format(updated!.weekStart, 'yyyy-MM-dd')).toBe('2026-07-27')
+        expect(updated!.weekEnd.getDate()).toBe(2) // Aug 2 — same week, unshifted
+      } finally {
+        process.env.TZ = originalTz
+      }
+    },
+  )
 })

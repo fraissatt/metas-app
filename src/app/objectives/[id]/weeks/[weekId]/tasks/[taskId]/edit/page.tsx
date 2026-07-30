@@ -1,3 +1,4 @@
+import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import { DailyTaskForm } from '@/components/daily-task-form'
@@ -22,7 +23,7 @@ export default async function EditDailyTaskPage({
       <h1 className="mb-6 text-2xl font-semibold">Editar tarefa</h1>
       <DailyTaskForm
         action={action}
-        defaultValues={{ title: task.title, date: task.date.toISOString().slice(0, 10) }}
+        defaultValues={{ title: task.title, date: format(task.date, 'yyyy-MM-dd') }}
       />
     </main>
   )

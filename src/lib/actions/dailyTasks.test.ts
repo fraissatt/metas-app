@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { parseISO } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import {
@@ -36,6 +36,27 @@ describe('daily task actions', () => {
     expect(tasks[0].title).toBe('Correr 5km')
     expect(tasks[0].completed).toBe(false)
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
+    // The Today view on `/` also renders daily tasks by date (I2): a task created for
+    // today must revalidate there too, not just on the weekly-goal detail page.
+    expect(revalidatePath).toHaveBeenCalledWith('/')
+  })
+
+  it('rejects an empty title', async () => {
+    const goal = await makeWeeklyGoal()
+
+    await expect(
+      createDailyTask(goal.id, formData({ title: '  ', date: '2026-07-29' })),
+    ).rejects.toThrow()
+    expect(await prisma.dailyTask.findMany()).toHaveLength(0)
+  })
+
+  it('rejects an unparseable date', async () => {
+    const goal = await makeWeeklyGoal()
+
+    await expect(
+      createDailyTask(goal.id, formData({ title: 'Correr 5km', date: 'not-a-date' })),
+    ).rejects.toThrow()
+    expect(await prisma.dailyTask.findMany()).toHaveLength(0)
   })
 
   it('lists tasks for a weekly goal ordered by date', async () => {
@@ -82,6 +103,17 @@ describe('daily task actions', () => {
     expect(updated?.date.getDate()).toBe(30)
     expect(updated?.completed).toBe(true)
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
+    expect(revalidatePath).toHaveBeenCalledWith('/')
+  })
+
+  it('rejects an empty title on update', async () => {
+    const goal = await makeWeeklyGoal()
+    const task = await prisma.dailyTask.create({
+      data: { title: 'Original', weeklyGoalId: goal.id, date: new Date('2026-07-29') },
+    })
+
+    await expect(updateDailyTask(task.id, formData({ title: '  ', date: '2026-07-29' }))).rejects.toThrow()
+    expect((await prisma.dailyTask.findUnique({ where: { id: task.id } }))?.title).toBe('Original')
   })
 
   it('toggles completion and stamps completedAt', async () => {
@@ -117,5 +149,37 @@ describe('daily task actions', () => {
 
     expect(await prisma.dailyTask.findUnique({ where: { id: task.id } })).toBeNull()
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
+    expect(revalidatePath).toHaveBeenCalledWith('/')
   })
+
+  it(
+    'round-trips date through create -> edit-page default value -> update without shifting a ' +
+      'day (regression test for the toISOString UTC round-trip bug)',
+    async () => {
+      // Force a positive UTC-offset zone: this is the direction that exposes a mismatch
+      // between a local-based write (`parseISO`) and a UTC-based read (`toISOString`) — the
+      // bug the `format`-based fix removes. Forced explicitly (rather than relying on the
+      // machine's own TZ) so this test is meaningful regardless of what timezone it runs in.
+      const originalTz = process.env.TZ
+      process.env.TZ = 'Europe/Berlin'
+      try {
+        const goal = await makeWeeklyGoal()
+
+        await createDailyTask(goal.id, formData({ title: 'Roundtrip', date: '2026-07-29' }))
+        const created = (await prisma.dailyTask.findMany())[0]
+
+        // This is exactly what the edit page's `defaultValues` computation does.
+        const dateDefault = format(created.date, 'yyyy-MM-dd')
+        expect(dateDefault).toBe('2026-07-29')
+
+        // Save without changing anything, as if the user just opened and re-submitted the form.
+        await updateDailyTask(created.id, formData({ title: 'Roundtrip', date: dateDefault }))
+
+        const updated = await prisma.dailyTask.findUnique({ where: { id: created.id } })
+        expect(format(updated!.date, 'yyyy-MM-dd')).toBe('2026-07-29')
+      } finally {
+        process.env.TZ = originalTz
+      }
+    },
+  )
 })

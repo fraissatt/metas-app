@@ -1,3 +1,4 @@
+import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getObjective, updateObjective } from '@/lib/actions/objectives'
 import { ObjectiveForm } from '@/components/objective-form'
@@ -21,8 +22,8 @@ export default async function EditObjectivePage({ params }: { params: Promise<{ 
         defaultValues={{
           title: objective.title,
           description: objective.description,
-          startDate: objective.startDate.toISOString().slice(0, 10),
-          targetDate: objective.targetDate?.toISOString().slice(0, 10) ?? null,
+          startDate: format(objective.startDate, 'yyyy-MM-dd'),
+          targetDate: objective.targetDate ? format(objective.targetDate, 'yyyy-MM-dd') : null,
         }}
       />
     </main>

@@ -1,15 +1,14 @@
 'use server'
 
-import { parseISO } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
+import { readDate, readTitle } from '@/lib/actions/validation'
 import type { WeeklyGoal } from '@prisma/client'
 
 function readWeeklyGoalFields(formData: FormData) {
-  const title = String(formData.get('title') ?? '').trim()
-  const weekOf = String(formData.get('weekOf') ?? '')
-  const { weekStart, weekEnd } = getWeekBounds(parseISO(weekOf))
+  const title = readTitle(formData)
+  const { weekStart, weekEnd } = getWeekBounds(readDate(formData, 'weekOf'))
 
   return { title, weekStart, weekEnd }
 }

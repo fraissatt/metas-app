@@ -2,19 +2,18 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
+import { readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
 import type { Objective } from '@prisma/client'
 
 function readObjectiveFields(formData: FormData) {
-  const title = String(formData.get('title') ?? '').trim()
+  const title = readTitle(formData)
   const description = formData.get('description')
-  const startDate = String(formData.get('startDate') ?? '')
-  const targetDate = formData.get('targetDate')
 
   return {
     title,
     description: description ? String(description) : null,
-    startDate: new Date(startDate),
-    targetDate: targetDate ? new Date(String(targetDate)) : null,
+    startDate: readDate(formData, 'startDate'),
+    targetDate: readOptionalDate(formData, 'targetDate'),
   }
 }
 
