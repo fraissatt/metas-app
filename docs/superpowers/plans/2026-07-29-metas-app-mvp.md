@@ -544,6 +544,7 @@ Expected: FAIL — `@/lib/actions/objectives` doesn't exist.
 ```ts
 'use server'
 
+import { parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import type { Objective } from '@prisma/client'
 
@@ -556,8 +557,12 @@ function readObjectiveFields(formData: FormData) {
   return {
     title,
     description: description ? String(description) : null,
-    startDate: new Date(startDate),
-    targetDate: targetDate ? new Date(String(targetDate)) : null,
+    // Use `parseISO` (local time), not `new Date(str)` (UTC midnight) — this must match
+    // the convention the edit page's `defaultValues` uses to read the date back
+    // (`format`, also local time), or saving without changes shifts the date by a day
+    // in positive-UTC-offset timezones. See Task 8's edit page below for the matching fix.
+    startDate: parseISO(startDate),
+    targetDate: targetDate ? parseISO(String(targetDate)) : null,
   }
 }
 
@@ -1260,6 +1265,7 @@ export default function NewObjectivePage() {
 `src/app/objectives/[id]/edit/page.tsx`:
 
 ```tsx
+import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getObjective, updateObjective } from '@/lib/actions/objectives'
 import { ObjectiveForm } from '@/components/objective-form'
@@ -1283,8 +1289,12 @@ export default async function EditObjectivePage({ params }: { params: Promise<{ 
         defaultValues={{
           title: objective.title,
           description: objective.description,
-          startDate: objective.startDate.toISOString().slice(0, 10),
-          targetDate: objective.targetDate?.toISOString().slice(0, 10) ?? null,
+          // Use `format` (local time), not `.toISOString().slice(0, 10)` (UTC) — the
+          // write side (Task 5) uses `parseISO` (local time), and mismatching the two
+          // conventions shifts the date backward by a day in positive-UTC-offset
+          // timezones every time this page is opened and saved without changes.
+          startDate: format(objective.startDate, 'yyyy-MM-dd'),
+          targetDate: objective.targetDate ? format(objective.targetDate, 'yyyy-MM-dd') : null,
         }}
       />
     </main>
@@ -1475,6 +1485,7 @@ export default function NewWeeklyGoalPage({ params }: { params: Promise<{ id: st
 `src/app/objectives/[id]/weeks/[weekId]/edit/page.tsx`:
 
 ```tsx
+import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getWeeklyGoal, updateWeeklyGoal } from '@/lib/actions/weeklyGoals'
 import { WeeklyGoalForm } from '@/components/weekly-goal-form'
@@ -1499,7 +1510,12 @@ export default async function EditWeeklyGoalPage({
       <h1 className="mb-6 text-2xl font-semibold">Editar meta semanal</h1>
       <WeeklyGoalForm
         action={action}
-        defaultValues={{ title: goal.title, weekOf: goal.weekStart.toISOString().slice(0, 10) }}
+        // Use `format` (local time), not `.toISOString().slice(0, 10)` (UTC) — the write
+        // side (Task 6) already uses `parseISO` (local time) for `weekOf`, and
+        // mismatching the two conventions shifts the week backward by a day (and thus
+        // the whole computed Monday-Sunday range) in positive-UTC-offset timezones every
+        // time this page is opened and saved without changes.
+        defaultValues={{ title: goal.title, weekOf: format(goal.weekStart, 'yyyy-MM-dd') }}
       />
     </main>
   )
@@ -1722,6 +1738,7 @@ export default async function WeeklyGoalDetailPage({
 `src/app/objectives/[id]/weeks/[weekId]/tasks/[taskId]/edit/page.tsx`:
 
 ```tsx
+import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import { DailyTaskForm } from '@/components/daily-task-form'
@@ -1746,7 +1763,11 @@ export default async function EditDailyTaskPage({
       <h1 className="mb-6 text-2xl font-semibold">Editar tarefa</h1>
       <DailyTaskForm
         action={action}
-        defaultValues={{ title: task.title, date: task.date.toISOString().slice(0, 10) }}
+        // Use `format` (local time), not `.toISOString().slice(0, 10)` (UTC) — the write
+        // side (Task 7) already uses `parseISO` (local time) for `date`, and mismatching
+        // the two conventions shifts the date backward by a day in positive-UTC-offset
+        // timezones every time this page is opened and saved without changes.
+        defaultValues={{ title: task.title, date: format(task.date, 'yyyy-MM-dd') }}
       />
     </main>
   )
@@ -1781,6 +1802,13 @@ import Link from 'next/link'
 import { listDailyTasksByDate, toggleDailyTask } from '@/lib/actions/dailyTasks'
 import { TaskToggle } from '@/components/task-toggle'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+// This page's correctness depends on the wall clock at request time (it filters tasks
+// by "today"), not just on data changes, so it must never be statically prerendered —
+// otherwise Next freezes it as static HTML at build time and it never rolls over at
+// midnight. Without this export, `npm run build`'s `prerender-manifest.json` will show
+// this route with `initialRevalidateSeconds: false`.
+export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const tasks = await listDailyTasksByDate(new Date())
@@ -1853,6 +1881,13 @@ import Link from 'next/link'
 import { getWeekProgress, listWeeklyGoalsForCurrentWeek } from '@/lib/actions/weeklyGoals'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+
+// This page's correctness depends on the wall clock at request time (it computes "the
+// current week" from `new Date()`), not just on data changes, so it must never be
+// statically prerendered — otherwise Next freezes it as static HTML at build time and
+// it never rolls over into a new week. Without this export, `npm run build`'s
+// `prerender-manifest.json` will show this route with `initialRevalidateSeconds: false`.
+export const dynamic = 'force-dynamic'
 
 export default async function WeekPage() {
   const goals = await listWeeklyGoalsForCurrentWeek()
