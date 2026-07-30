@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
   createDailyTask,
@@ -52,13 +53,13 @@ describe('daily task actions', () => {
   it('lists tasks for a specific date across weekly goals, with objective included', async () => {
     const goal = await makeWeeklyGoal()
     const match = await prisma.dailyTask.create({
-      data: { title: 'Today task', weeklyGoalId: goal.id, date: new Date('2026-07-29T08:00:00') },
+      data: { title: 'Today task', weeklyGoalId: goal.id, date: parseISO('2026-07-29') },
     })
     await prisma.dailyTask.create({
-      data: { title: 'Other day', weeklyGoalId: goal.id, date: new Date('2026-07-30') },
+      data: { title: 'Other day', weeklyGoalId: goal.id, date: parseISO('2026-07-30') },
     })
 
-    const result = await listDailyTasksByDate(new Date('2026-07-29T23:00:00'))
+    const result = await listDailyTasksByDate(parseISO('2026-07-29'))
 
     expect(result.map((t) => t.id)).toEqual([match.id])
     expect(result[0].weeklyGoal.objective.title).toBe('Obj')
