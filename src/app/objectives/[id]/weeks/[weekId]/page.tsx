@@ -29,14 +29,19 @@ export default async function WeeklyGoalDetailPage({
       <DailyTaskForm action={addTask} />
       <ul className="mt-6 flex flex-col gap-2">
         {tasks.map((task) => (
-          <li key={task.id} className="flex items-center justify-between rounded-md border p-3">
-            <div className="flex items-center gap-3">
+          <li
+            key={task.id}
+            className="flex flex-wrap items-start justify-between gap-2 rounded-md border p-3"
+          >
+            <div className="flex min-w-0 items-start gap-3">
               <TaskToggle taskId={task.id} completed={task.completed} action={toggleDailyTask} />
-              <span className={task.completed ? 'line-through text-muted-foreground' : ''}>
+              <span
+                className={`break-words ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+              >
                 {task.title}
               </span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               <Button
                 variant="secondary"
                 render={<Link href={`/objectives/${id}/weeks/${weekId}/tasks/${task.id}/edit`} />}

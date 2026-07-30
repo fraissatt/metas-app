@@ -12,7 +12,7 @@ export function DailyTaskForm({
   defaultValues?: { title: string; date: string }
 }) {
   return (
-    <form action={action} className="flex items-end gap-3">
+    <form action={action} className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <div className="flex flex-1 flex-col gap-1.5">
         <Label htmlFor="title">Título</Label>
         <Input id="title" name="title" required defaultValue={defaultValues?.title} />
@@ -21,7 +21,9 @@ export function DailyTaskForm({
         <Label htmlFor="date">Data</Label>
         <Input id="date" name="date" type="date" required defaultValue={defaultValues?.date} />
       </div>
-      <Button type="submit">{defaultValues ? 'Salvar' : 'Adicionar'}</Button>
+      <Button type="submit" className="sm:w-auto">
+        {defaultValues ? 'Salvar' : 'Adicionar'}
+      </Button>
     </form>
   )
 }

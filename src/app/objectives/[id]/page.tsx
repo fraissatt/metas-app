@@ -20,9 +20,11 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
 
   return (
     <main className="mx-auto max-w-2xl p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{objective.title}</h1>
-        <Button render={<Link href={`/objectives/${id}/weeks/new`} />}>Nova meta semanal</Button>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <h1 className="text-2xl font-semibold break-words">{objective.title}</h1>
+        <Button className="shrink-0" render={<Link href={`/objectives/${id}/weeks/new`} />}>
+          Nova meta semanal
+        </Button>
       </div>
       <div className="mb-6">
         <ObjectiveProgressChart data={series} />

@@ -24,9 +24,11 @@ export default async function Home() {
                   {task.weeklyGoal.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex items-center gap-3">
+              <CardContent className="flex items-start gap-3">
                 <TaskToggle taskId={task.id} completed={task.completed} action={toggleDailyTask} />
-                <span className={task.completed ? 'line-through text-muted-foreground' : ''}>
+                <span
+                  className={`break-words ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                >
                   {task.title}
                 </span>
               </CardContent>
