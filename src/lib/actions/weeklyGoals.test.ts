@@ -33,6 +33,17 @@ describe('weekly goal actions', () => {
     expect(goals[0].weekEnd.getDate()).toBe(2)
   })
 
+  it('creates a weekly goal with Monday date string (regression test for UTC off-by-one-week bug)', async () => {
+    const objective = await makeObjective()
+
+    await createWeeklyGoal(objective.id, formData({ title: 'Monday Test', weekOf: '2026-07-27' }))
+
+    const goals = await prisma.weeklyGoal.findMany()
+    expect(goals).toHaveLength(1)
+    expect(goals[0].weekStart.getDate()).toBe(27)
+    expect(goals[0].weekEnd.getDate()).toBe(2)
+  })
+
   it('lists weekly goals for an objective ordered by week start', async () => {
     const objective = await makeObjective()
     const later = getWeekBounds(new Date('2026-08-10'))

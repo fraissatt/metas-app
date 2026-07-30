@@ -1,5 +1,6 @@
 'use server'
 
+import { parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
 import type { WeeklyGoal } from '@prisma/client'
@@ -7,7 +8,7 @@ import type { WeeklyGoal } from '@prisma/client'
 function readWeeklyGoalFields(formData: FormData) {
   const title = String(formData.get('title') ?? '').trim()
   const weekOf = String(formData.get('weekOf') ?? '')
-  const { weekStart, weekEnd } = getWeekBounds(new Date(weekOf))
+  const { weekStart, weekEnd } = getWeekBounds(parseISO(weekOf))
 
   return { title, weekStart, weekEnd }
 }
