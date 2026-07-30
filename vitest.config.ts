@@ -10,5 +10,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Test files share one Postgres test database (see src/test/setup.ts),
+    // so they must run sequentially — parallel files racing truncation
+    // against inserts produces flaky cross-file failures.
+    fileParallelism: false,
   },
 })
