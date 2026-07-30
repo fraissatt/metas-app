@@ -28,7 +28,10 @@ export default async function ObjectivesPage() {
                 <Button variant="secondary" render={<Link href={`/objectives/${objective.id}/edit`} />}>
                   Editar
                 </Button>
-                <DeleteButton action={deleteObjective.bind(null, objective.id)} />
+                <DeleteButton
+                  action={deleteObjective.bind(null, objective.id)}
+                  confirmDescription="Isso também excluirá todas as metas semanais e tarefas diárias relacionadas. Esta ação não pode ser desfeita."
+                />
               </div>
             </CardContent>
           </Card>

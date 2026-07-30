@@ -47,7 +47,10 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
                   <Button variant="secondary" render={<Link href={`/objectives/${id}/weeks/${goal.id}/edit`} />}>
                     Editar
                   </Button>
-                  <DeleteButton action={deleteWeeklyGoal.bind(null, goal.id)} />
+                  <DeleteButton
+                    action={deleteWeeklyGoal.bind(null, goal.id)}
+                    confirmDescription="Isso também excluirá todas as tarefas diárias desta meta. Esta ação não pode ser desfeita."
+                  />
                 </div>
               </div>
             </CardContent>
