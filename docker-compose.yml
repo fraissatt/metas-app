@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: metas
       POSTGRES_DB: metas_app
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
