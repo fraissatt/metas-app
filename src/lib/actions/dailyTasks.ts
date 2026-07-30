@@ -57,6 +57,9 @@ export async function toggleDailyTask(id: string): Promise<void> {
     data: { completed: !task.completed, completedAt: task.completed ? null : new Date() },
   })
   await revalidateWeekPath(task.weeklyGoalId)
+  // The Today view on `/` also renders this task's completion state, so it
+  // needs its own revalidation on top of the weekly-goal detail page above.
+  revalidatePath('/')
 }
 
 export async function deleteDailyTask(id: string): Promise<void> {

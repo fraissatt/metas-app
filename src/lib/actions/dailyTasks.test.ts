@@ -95,6 +95,7 @@ describe('daily task actions', () => {
     expect(completed?.completed).toBe(true)
     expect(completed?.completedAt).not.toBeNull()
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
+    expect(revalidatePath).toHaveBeenCalledWith('/')
 
     vi.mocked(revalidatePath).mockClear()
 
@@ -103,6 +104,7 @@ describe('daily task actions', () => {
     expect(uncompleted?.completed).toBe(false)
     expect(uncompleted?.completedAt).toBeNull()
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
+    expect(revalidatePath).toHaveBeenCalledWith('/')
   })
 
   it('deletes a task', async () => {
