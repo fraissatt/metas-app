@@ -30,12 +30,15 @@
 
 This task has no automated test — it's a CSS value change with no logic to assert. Verification is manual (Task 5).
 
-- [ ] **Step 1: Replace the `:root` and `.dark` blocks**
+- [x] **Step 1: Replace the `:root` and `.dark` blocks**
 
 In `src/app/globals.css`, replace both the `:root { ... }` block (lines 51-84) and the `.dark { ... }` block (lines 86-118) with this single set of values, duplicated identically in both selectors (so the theme is correct whether or not the `dark` class is present — Task 4 always applies it, but this keeps the file defensively correct):
 
+> **Post-implementation note (final review fix):** `color-scheme: dark;` was added as the first declaration in both blocks. Without it, native controls (date-picker popups, scrollbars, autofill) kept rendering with the light OS theme against the new dark background.
+
 ```css
 :root {
+  color-scheme: dark;
   --background: #121214;
   --foreground: #e4e4e7;
   --card: #1a1a1d;
@@ -71,6 +74,7 @@ In `src/app/globals.css`, replace both the `:root { ... }` block (lines 51-84) a
 }
 
 .dark {
+  color-scheme: dark;
   --background: #121214;
   --foreground: #e4e4e7;
   --card: #1a1a1d;
@@ -107,7 +111,7 @@ In `src/app/globals.css`, replace both the `:root { ... }` block (lines 51-84) a
 
 Leave everything else in the file (`@import` lines, `@custom-variant dark`, the `@theme inline { ... }` block, `@layer base { ... }`) unchanged.
 
-- [ ] **Step 2: Add a neon glow to primary buttons**
+- [x] **Step 2: Add a neon glow to primary buttons**
 
 In the same file, inside `@layer base { ... }`, add a rule so any element using the `bg-primary` utility (i.e. default-variant buttons) gets a subtle glow consistent with the approved mockup:
 
@@ -128,7 +132,9 @@ In the same file, inside `@layer base { ... }`, add a rule so any element using 
 }
 ```
 
-- [ ] **Step 3: Commit**
+> **Post-implementation note (final review fix):** this `.bg-primary { box-shadow: ... }` rule was later removed from `globals.css`. It matched any element carrying the literal `bg-primary` class (e.g. the progress bar), not just buttons. The glow moved into `src/components/ui/button.tsx`'s `default` variant string instead: `"bg-primary text-primary-foreground hover:bg-primary/80 shadow-[0_0_12px_color-mix(in_oklch,var(--primary)_40%,transparent)]"`.
+
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/globals.css
@@ -147,7 +153,7 @@ git commit -m "feat: replace shadcn light theme with dark gray + neon green iden
 
 No automated test — this is a color-only change to a Recharts SVG chart; correctness is a visual check, done in Task 5.
 
-- [ ] **Step 1: Replace the hardcoded bar color and add theme-aware axis/grid/tooltip colors**
+- [x] **Step 1: Replace the hardcoded bar color and add theme-aware axis/grid/tooltip colors**
 
 Replace the full contents of `src/components/objective-progress-chart.tsx`:
 
@@ -188,7 +194,7 @@ export function ObjectiveProgressChart({ data }: { data: Array<{ weekLabel: stri
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/objective-progress-chart.tsx
@@ -208,7 +214,7 @@ git commit -m "fix: make progress chart colors theme-aware instead of hardcoded 
 - Consumes: `cn` from `@/lib/utils` (existing, signature `cn(...inputs: ClassValue[]): string`); `usePathname` from `next/navigation`; icons `Sun`, `CalendarDays`, `Target` from `lucide-react`; `Link` from `next/link`.
 - Produces: `export function Sidebar(): JSX.Element` — a client component with no props, rendered once in `src/app/layout.tsx` (Task 4).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/components/sidebar.test.tsx`:
 
@@ -257,14 +263,16 @@ describe('Sidebar', () => {
 })
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/components/sidebar.test.tsx`
 Expected: FAIL — `Cannot find module '@/components/sidebar'` (the file doesn't exist yet).
 
-- [ ] **Step 3: Write the Sidebar component**
+- [x] **Step 3: Write the Sidebar component**
 
 Create `src/components/sidebar.tsx`:
+
+> **Post-implementation note:** the version below is the final shipped code, after a task-review fix round (aria-label + boundary-safe route matching, both approved by the human partner) and a final-branch-review fix round (aria-label on `<nav>`, keyboard-focus reveal via `focus-within`, centering, `prefers-reduced-motion` guard, iOS safe-area padding). The two new edge cases from the first fix round also got two new tests (6 total, not the original 4).
 
 ```tsx
 'use client'
@@ -281,7 +289,7 @@ const links = [
 ]
 
 function isLinkActive(pathname: string, href: string) {
-  return href === '/' ? pathname === '/' : pathname.startsWith(href)
+  return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
 }
 
 export function Sidebar() {
@@ -289,9 +297,10 @@ export function Sidebar() {
 
   return (
     <nav
-      className="group fixed inset-x-0 bottom-0 z-50 flex h-14 items-center justify-around border-t border-sidebar-border bg-sidebar md:inset-x-auto md:inset-y-0 md:left-0 md:h-screen md:w-14 md:flex-col md:items-stretch md:justify-start md:gap-1 md:border-t-0 md:border-r md:p-3 md:transition-[width] md:duration-200 md:ease-in-out md:hover:w-52"
+      aria-label="Navegação principal"
+      className="group fixed inset-x-0 bottom-0 z-50 flex h-14 items-center justify-around border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] md:inset-x-auto md:inset-y-0 md:left-0 md:h-screen md:w-14 md:flex-col md:items-stretch md:justify-start md:gap-1 md:border-t-0 md:border-r md:p-3 md:transition-[width] md:duration-200 md:ease-in-out md:hover:w-52 md:focus-within:w-52 motion-reduce:transition-none"
     >
-      <span className="hidden overflow-hidden text-sm font-bold whitespace-nowrap text-sidebar-primary opacity-0 transition-opacity md:mb-2 md:block md:px-2 md:group-hover:opacity-100">
+      <span className="hidden overflow-hidden text-sm font-bold whitespace-nowrap text-sidebar-primary opacity-0 transition-opacity md:mb-2 md:block md:px-2 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
         Metas
       </span>
       {links.map(({ href, label, icon: Icon }) => {
@@ -300,14 +309,15 @@ export function Sidebar() {
           <Link
             key={href}
             href={href}
+            aria-label={label}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground md:w-full',
+              'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground md:w-full md:justify-center md:group-hover:justify-start',
               active && 'bg-sidebar-accent text-sidebar-accent-foreground hover:text-sidebar-accent-foreground',
             )}
           >
             <Icon className="size-5 shrink-0" />
-            <span className="hidden overflow-hidden whitespace-nowrap opacity-0 transition-opacity md:inline md:group-hover:opacity-100">
+            <span className="hidden overflow-hidden whitespace-nowrap opacity-0 transition-opacity md:inline md:group-hover:opacity-100 md:group-focus-within:opacity-100">
               {label}
             </span>
           </Link>
@@ -318,12 +328,12 @@ export function Sidebar() {
 }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `npx vitest run src/components/sidebar.test.tsx`
-Expected: PASS (4 tests)
+Expected: PASS (4 tests; 6 after the fix-round additions)
 
-- [ ] **Step 5: Delete the old nav bar**
+- [x] **Step 5: Delete the old nav bar**
 
 ```bash
 git rm src/components/nav-bar.tsx
@@ -331,7 +341,7 @@ git rm src/components/nav-bar.tsx
 
 (It has no test file, so nothing else references it after Task 4 rewires `layout.tsx`.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/sidebar.tsx src/components/sidebar.test.tsx
@@ -350,9 +360,11 @@ git commit -m "feat: add hover-collapsible sidebar with active-route highlightin
 
 No new automated test — `layout.tsx` is exercised indirectly by every existing page test that renders through the App Router in dev/build, and there's no existing precedent in this codebase for testing root layout in isolation. Verified manually in Task 5.
 
-- [ ] **Step 1: Replace `NavBar` with `Sidebar` and add the content offset**
+- [x] **Step 1: Replace `NavBar` with `Sidebar` and add the content offset**
 
 Replace the full contents of `src/app/layout.tsx`:
+
+> **Post-implementation note (final review fix):** the content wrapper's `pb-14` became `pb-[calc(3.5rem_+_env(safe-area-inset-bottom))]` so mobile content also clears the taller bar on notched devices (matching the sidebar's own `pb-[env(safe-area-inset-bottom)]` from Task 3's fix rounds).
 
 ```tsx
 import type { Metadata } from "next";
@@ -387,14 +399,14 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <Sidebar />
-        <div className="pb-14 md:pb-0 md:pl-14">{children}</div>
+        <div className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] md:pb-0 md:pl-14">{children}</div>
       </body>
     </html>
   );
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/app/layout.tsx
@@ -407,16 +419,16 @@ git commit -m "feat: render sidebar in root layout with responsive content offse
 
 **Files:** none (verification only)
 
-- [ ] **Step 1: Run the full automated test suite**
+- [x] **Step 1: Run the full automated test suite**
 
 Run: `npm test`
-Expected: All tests pass, including the 4 new `sidebar.test.tsx` tests and every pre-existing test (no regressions from the theme/layout changes, since none of them assert on color or the old `nav-bar.tsx`).
+Expected: All tests pass, including the 4 new `sidebar.test.tsx` tests and every pre-existing test (no regressions from the theme/layout changes, since none of them assert on color or the old `nav-bar.tsx`). (Final count: 57/57 passing across 13 files, including the 6 sidebar tests.)
 
-- [ ] **Step 2: Start the dev server**
+- [x] **Step 2: Start the dev server**
 
 Run: `npm run dev`
 
-- [ ] **Step 3: Manually verify in a browser**
+- [x] **Step 3: Manually verify in a browser**
 
 Open `http://localhost:3000` and check, per this project's convention of verifying UI changes in a real browser before calling them done:
 
@@ -426,6 +438,8 @@ Open `http://localhost:3000` and check, per this project's convention of verifyi
 - Resize below 768px (or use device toolbar): the sidebar becomes a fixed icon-only bottom bar; page content has bottom padding so nothing is hidden behind it.
 - Visit `/objectives` and open an objective with weekly goals to confirm `ObjectiveProgressChart` renders its grid, axes, tooltip, and bars legibly against the dark background (no invisible black-on-dark text, no jarring white tooltip box).
 
-- [ ] **Step 4: Stop the dev server**
+- [x] **Step 4: Stop the dev server**
 
 Fix anything found during manual verification before considering this plan complete; do not commit further unless a fix was needed.
+
+> **Post-implementation note:** manual verification found two pre-existing console warnings (`nativeButton` prop on `Button`/`Link` composition in `objectives/page.tsx`) unrelated to this branch — already being fixed separately on `master`. A whole-branch final review after this task found and fixed additional issues (see commits `50e7728` and `bb5c04b`): missing `color-scheme: dark`, no keyboard equivalent for the hover-reveal labels, an overly broad glow selector, off-center collapsed icons, missing nav landmark label, no `prefers-reduced-motion` guard, and iOS safe-area padding (the first attempt at the safe-area fix had an invalid `calc()` arbitrary-value syntax, corrected in `bb5c04b`).
