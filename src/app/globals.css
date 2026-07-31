@@ -49,6 +49,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --background: #121214;
   --foreground: #e4e4e7;
   --card: #1a1a1d;
@@ -84,6 +85,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: #121214;
   --foreground: #e4e4e7;
   --card: #1a1a1d;
@@ -126,8 +128,5 @@
   }
   html {
     @apply font-sans;
-  }
-  .bg-primary {
-    box-shadow: 0 0 12px color-mix(in oklch, var(--primary) 40%, transparent);
   }
 }

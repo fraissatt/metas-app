@@ -30,7 +30,7 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <Sidebar />
-        <div className="pb-14 md:pb-0 md:pl-14">{children}</div>
+        <div className="pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-14">{children}</div>
       </body>
     </html>
   );
