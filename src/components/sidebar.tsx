@@ -12,7 +12,7 @@ const links = [
 ]
 
 function isLinkActive(pathname: string, href: string) {
-  return href === '/' ? pathname === '/' : pathname.startsWith(href)
+  return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
 }
 
 export function Sidebar() {
@@ -31,6 +31,7 @@ export function Sidebar() {
           <Link
             key={href}
             href={href}
+            aria-label={label}
             aria-current={active ? 'page' : undefined}
             className={cn(
               'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground md:w-full',

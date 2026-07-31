@@ -39,4 +39,20 @@ describe('Sidebar', () => {
 
     expect(screen.getByRole('link', { name: /objetivos/i })).not.toHaveAttribute('aria-current')
   })
+
+  it('provides accessible names for mobile navigation links', () => {
+    vi.mocked(usePathname).mockReturnValue('/')
+    render(<Sidebar />)
+
+    expect(screen.getByRole('link', { name: 'Hoje' })).toHaveAttribute('aria-label', 'Hoje')
+    expect(screen.getByRole('link', { name: 'Semana' })).toHaveAttribute('aria-label', 'Semana')
+    expect(screen.getByRole('link', { name: 'Objetivos' })).toHaveAttribute('aria-label', 'Objetivos')
+  })
+
+  it('does not match routes with shared prefixes (path boundary safety)', () => {
+    vi.mocked(usePathname).mockReturnValue('/objectives-archive')
+    render(<Sidebar />)
+
+    expect(screen.getByRole('link', { name: /objetivos/i })).not.toHaveAttribute('aria-current')
+  })
 })
