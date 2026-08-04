@@ -41,6 +41,14 @@ describe('daily task actions', () => {
     expect(revalidatePath).toHaveBeenCalledWith('/')
   })
 
+  it('also revalidates the objective detail page', async () => {
+    const goal = await makeWeeklyGoal()
+
+    await createDailyTask(goal.id, formData({ title: 'Correr 5km', date: '2026-07-29' }))
+
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}`)
+  })
+
   it('rejects an empty title', async () => {
     const goal = await makeWeeklyGoal()
 

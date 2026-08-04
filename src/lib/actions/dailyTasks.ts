@@ -11,7 +11,13 @@ async function revalidateWeekPath(weeklyGoalId: string): Promise<void> {
     where: { id: weeklyGoalId },
     select: { objectiveId: true },
   })
-  if (goal) revalidatePath(`/objectives/${goal.objectiveId}/weeks/${weeklyGoalId}`)
+  if (goal) {
+    revalidatePath(`/objectives/${goal.objectiveId}/weeks/${weeklyGoalId}`)
+    // The objective detail page now also renders live weekly-goal/task data
+    // inline (quick-add, progress, expanded per-day view), so it needs the
+    // same revalidation as the weekly goal's own page.
+    revalidatePath(`/objectives/${goal.objectiveId}`)
+  }
 }
 
 export async function createDailyTask(weeklyGoalId: string, formData: FormData): Promise<void> {
