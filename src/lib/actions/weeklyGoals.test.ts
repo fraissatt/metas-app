@@ -79,6 +79,24 @@ describe('weekly goal actions', () => {
     expect(result.map((g) => g.id)).toEqual([earlierGoal.id, laterGoal.id])
   })
 
+  it("includes each goal's daily tasks ordered by date", async () => {
+    const objective = await makeObjective()
+    const bounds = getWeekBounds(new Date('2026-07-29'))
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'Goal', objectiveId: objective.id, ...bounds },
+    })
+    const later = await prisma.dailyTask.create({
+      data: { title: 'Later', weeklyGoalId: goal.id, date: new Date('2026-07-30') },
+    })
+    const earlier = await prisma.dailyTask.create({
+      data: { title: 'Earlier', weeklyGoalId: goal.id, date: new Date('2026-07-28') },
+    })
+
+    const [result] = await listWeeklyGoalsByObjective(objective.id)
+
+    expect(result.dailyTasks.map((t) => t.id)).toEqual([earlier.id, later.id])
+  })
+
   it('gets, updates, and deletes a weekly goal', async () => {
     const objective = await makeObjective()
     const bounds = getWeekBounds(new Date('2026-07-29'))
