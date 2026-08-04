@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import {
   createDailyTask,
+  createDailyTasks,
   deleteDailyTask,
   getDailyTask,
   listDailyTasksByDate,
@@ -190,4 +191,53 @@ describe('daily task actions', () => {
       }
     },
   )
+})
+
+function multiFormData(title: string, dates: string[]) {
+  const fd = new FormData()
+  fd.set('title', title)
+  for (const d of dates) fd.append('dates', d)
+  return fd
+}
+
+describe('createDailyTasks (recurring)', () => {
+  it('creates one independent daily task per selected date', async () => {
+    const goal = await makeWeeklyGoal()
+
+    await createDailyTasks(goal.id, multiFormData('Alongamento', ['2026-07-28', '2026-07-30']))
+
+    const tasks = await prisma.dailyTask.findMany({ orderBy: { date: 'asc' } })
+    expect(tasks).toHaveLength(2)
+    expect(tasks.map((t) => t.title)).toEqual(['Alongamento', 'Alongamento'])
+    expect(tasks[0].date.getDate()).toBe(28)
+    expect(tasks[1].date.getDate()).toBe(30)
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}`)
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
+    expect(revalidatePath).toHaveBeenCalledWith('/')
+  })
+
+  it('rejects when no day is selected', async () => {
+    const goal = await makeWeeklyGoal()
+
+    await expect(createDailyTasks(goal.id, multiFormData('Alongamento', []))).rejects.toThrow()
+    expect(await prisma.dailyTask.findMany()).toHaveLength(0)
+  })
+
+  it('rejects an empty title', async () => {
+    const goal = await makeWeeklyGoal()
+
+    await expect(createDailyTasks(goal.id, multiFormData('  ', ['2026-07-28']))).rejects.toThrow()
+    expect(await prisma.dailyTask.findMany()).toHaveLength(0)
+  })
+
+  it('completing one recurring instance does not affect the others', async () => {
+    const goal = await makeWeeklyGoal()
+    await createDailyTasks(goal.id, multiFormData('Alongamento', ['2026-07-28', '2026-07-30']))
+    const [first, second] = await prisma.dailyTask.findMany({ orderBy: { date: 'asc' } })
+
+    await toggleDailyTask(first.id)
+
+    expect((await prisma.dailyTask.findUnique({ where: { id: first.id } }))?.completed).toBe(true)
+    expect((await prisma.dailyTask.findUnique({ where: { id: second.id } }))?.completed).toBe(false)
+  })
 })
