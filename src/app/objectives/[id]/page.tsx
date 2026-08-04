@@ -22,7 +22,11 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
     <main className="mx-auto max-w-2xl p-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <h1 className="text-2xl font-semibold break-words">{objective.title}</h1>
-        <Button className="shrink-0" render={<Link href={`/objectives/${id}/weeks/new`} />}>
+        <Button
+          className="shrink-0"
+          nativeButton={false}
+          render={<Link href={`/objectives/${id}/weeks/new`} />}
+        >
           Nova meta semanal
         </Button>
       </div>
@@ -44,7 +48,11 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
                   {progressByGoal[i].completed}/{progressByGoal[i].total} tarefas
                 </span>
                 <div className="flex gap-2">
-                  <Button variant="secondary" render={<Link href={`/objectives/${id}/weeks/${goal.id}/edit`} />}>
+                  <Button
+                    variant="secondary"
+                    nativeButton={false}
+                    render={<Link href={`/objectives/${id}/weeks/${goal.id}/edit`} />}
+                  >
                     Editar
                   </Button>
                   <DeleteButton

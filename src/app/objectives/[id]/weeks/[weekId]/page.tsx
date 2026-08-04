@@ -44,6 +44,7 @@ export default async function WeeklyGoalDetailPage({
             <div className="flex shrink-0 gap-2">
               <Button
                 variant="secondary"
+                nativeButton={false}
                 render={<Link href={`/objectives/${id}/weeks/${weekId}/tasks/${task.id}/edit`} />}
               >
                 Editar
