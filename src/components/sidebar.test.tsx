@@ -8,21 +8,21 @@ vi.mock('next/navigation', () => ({
 }))
 
 describe('Sidebar', () => {
-  it('renders links to Hoje, Semana and Objetivos', () => {
+  it('renders links to Hoje and Objetivos, and no longer a Semana link', () => {
     vi.mocked(usePathname).mockReturnValue('/')
     render(<Sidebar />)
 
     expect(screen.getByRole('link', { name: /hoje/i })).toHaveAttribute('href', '/')
-    expect(screen.getByRole('link', { name: /semana/i })).toHaveAttribute('href', '/week')
     expect(screen.getByRole('link', { name: /objetivos/i })).toHaveAttribute('href', '/objectives')
+    expect(screen.queryByRole('link', { name: /semana/i })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link')).toHaveLength(2)
   })
 
   it('marks the link matching the current route as active', () => {
-    vi.mocked(usePathname).mockReturnValue('/week')
+    vi.mocked(usePathname).mockReturnValue('/')
     render(<Sidebar />)
 
-    expect(screen.getByRole('link', { name: /semana/i })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: /hoje/i })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: /hoje/i })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: /objetivos/i })).not.toHaveAttribute('aria-current')
   })
 
@@ -45,7 +45,6 @@ describe('Sidebar', () => {
     render(<Sidebar />)
 
     expect(screen.getByRole('link', { name: 'Hoje' })).toHaveAttribute('aria-label', 'Hoje')
-    expect(screen.getByRole('link', { name: 'Semana' })).toHaveAttribute('aria-label', 'Semana')
     expect(screen.getByRole('link', { name: 'Objetivos' })).toHaveAttribute('aria-label', 'Objetivos')
   })
 

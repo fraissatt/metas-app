@@ -2,12 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { CalendarDays, Sun, Target } from 'lucide-react'
+import { Sun, Target } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const links = [
   { href: '/', label: 'Hoje', icon: Sun },
-  { href: '/week', label: 'Semana', icon: CalendarDays },
   { href: '/objectives', label: 'Objetivos', icon: Target },
 ]
 
