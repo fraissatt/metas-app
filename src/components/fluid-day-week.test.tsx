@@ -103,4 +103,24 @@ describe('FluidDayWeek', () => {
     expect(screen.getByText('Nenhuma tarefa para hoje.')).toBeInTheDocument()
     expect(screen.getByText('Nenhuma meta semanal para esta semana.')).toBeInTheDocument()
   })
+
+  it('hides the week panel from AT and keyboard while collapsed', async () => {
+    const { container } = render(
+      <FluidDayWeek
+        tasks={[task]}
+        goals={[goal]}
+        progress={[{ total: 1, completed: 0, percent: 0 }]}
+        onToggleTask={vi.fn()}
+      />,
+    )
+    const panel = container.querySelector('#week-section')!
+
+    expect(panel).toHaveAttribute('aria-hidden', 'true')
+    expect(panel.firstElementChild).toHaveAttribute('inert')
+
+    await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
+
+    expect(panel).toHaveAttribute('aria-hidden', 'false')
+    expect(panel.firstElementChild).not.toHaveAttribute('inert')
+  })
 })

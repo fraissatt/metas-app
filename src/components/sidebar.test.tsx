@@ -19,11 +19,11 @@ describe('Sidebar', () => {
   })
 
   it('marks the link matching the current route as active', () => {
-    vi.mocked(usePathname).mockReturnValue('/')
+    vi.mocked(usePathname).mockReturnValue('/objectives')
     render(<Sidebar />)
 
-    expect(screen.getByRole('link', { name: /hoje/i })).toHaveAttribute('aria-current', 'page')
-    expect(screen.getByRole('link', { name: /objetivos/i })).not.toHaveAttribute('aria-current')
+    expect(screen.getByRole('link', { name: /objetivos/i })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: /hoje/i })).not.toHaveAttribute('aria-current')
   })
 
   it('marks Objetivos as active for nested objective routes', () => {
