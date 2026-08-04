@@ -65,6 +65,7 @@ export function FluidDayWeek({
         variant="outline"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
+        aria-controls="week-section"
         className="w-full border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary"
       >
         {expanded ? 'Recolher semana' : 'Ver semana'}
@@ -72,12 +73,14 @@ export function FluidDayWeek({
       </Button>
 
       <div
+        id="week-section"
+        aria-hidden={!expanded}
         className={cn(
           'grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none',
           expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
         )}
       >
-        <div className="overflow-hidden">
+        <div className="overflow-hidden" inert={!expanded}>
           <h2 className="mb-6 text-2xl font-semibold">Esta semana</h2>
           {goals.length === 0 ? (
             <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
