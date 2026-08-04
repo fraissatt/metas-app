@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { config } from 'dotenv'
@@ -14,5 +14,8 @@ export default defineConfig({
     // so they must run sequentially — parallel files racing truncation
     // against inserts produces flaky cross-file failures.
     fileParallelism: false,
+    // Nested checkouts (e.g. worktrees under .claude/worktrees/) would
+    // otherwise be re-discovered and run their tests a second time.
+    exclude: [...configDefaults.exclude, '**/.claude/**'],
   },
 })
