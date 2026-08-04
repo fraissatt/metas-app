@@ -1,46 +1,20 @@
-import Link from 'next/link'
 import { listDailyTasksByDate, toggleDailyTask } from '@/lib/actions/dailyTasks'
-import { TaskToggle } from '@/components/task-toggle'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getWeekProgress, listWeeklyGoalsForCurrentWeek } from '@/lib/actions/weeklyGoals'
+import { FluidDayWeek } from '@/components/fluid-day-week'
 
 // This page's correctness depends on the wall clock at request time (it
-// filters tasks by "today"), not just on data changes, so it must never be
-// statically prerendered — otherwise it freezes on the build day forever.
+// filters tasks by "today" and computes "the current week" from `new
+// Date()`), so it must never be statically prerendered — otherwise it freezes on the build day/week forever.
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const tasks = await listDailyTasksByDate(new Date())
+  const goals = await listWeeklyGoalsForCurrentWeek()
+  const progress = await Promise.all(goals.map((g) => getWeekProgress(g.id)))
 
   return (
     <main className="mx-auto max-w-2xl p-8">
-      <h1 className="mb-6 text-2xl font-semibold">Hoje</h1>
-      {tasks.length === 0 ? (
-        <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {tasks.map((task) => (
-            <Card key={task.id}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                  <Link href={`/objectives/${task.weeklyGoal.objective.id}`}>
-                    {task.weeklyGoal.objective.title}
-                  </Link>
-                  {' · '}
-                  {task.weeklyGoal.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-start gap-3">
-                <TaskToggle taskId={task.id} completed={task.completed} action={toggleDailyTask} />
-                <span
-                  className={`break-words ${task.completed ? 'line-through text-muted-foreground' : ''}`}
-                >
-                  {task.title}
-                </span>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <FluidDayWeek tasks={tasks} goals={goals} progress={progress} onToggleTask={toggleDailyTask} />
     </main>
   )
 }
