@@ -101,6 +101,44 @@ describe('WeeklyGoalCard', () => {
     expect(submitted.getAll('dates')).toEqual(['2026-07-28'])
   })
 
+  it('submits every checked day when multiple day toggles are checked', async () => {
+    const onCreateTasks = vi.fn().mockResolvedValue(undefined)
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={onCreateTasks}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    await userEvent.type(screen.getByPlaceholderText('Nova tarefa'), 'Alongamento')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'QUA 29' }))
+    await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
+
+    const submitted = onCreateTasks.mock.calls[0][0] as FormData
+    expect(submitted.getAll('dates')).toEqual(
+      expect.arrayContaining(['2026-07-28', '2026-07-29']),
+    )
+    expect(submitted.getAll('dates')).toHaveLength(2)
+  })
+
+  it('disables Criar when the goal\'s week does not contain today and no day is checked', async () => {
+    const weekStart = new Date('2099-01-05T00:00:00') // Monday, far from "today"
+    const weekEnd = new Date('2099-01-11T00:00:00')
+    const goal: WeeklyGoalWithTasks = { ...baseGoal, weekStart, weekEnd, dailyTasks: [] }
+
+    render(
+      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    await userEvent.type(screen.getByPlaceholderText('Nova tarefa'), 'Alongamento')
+
+    expect(screen.getByRole('button', { name: /^criar$/i })).toBeDisabled()
+  })
+
   it('toggles the expanded detail view via onToggleExpand and shows the read-only task list when expanded', () => {
     const onToggleExpand = vi.fn()
     const { rerender } = render(
@@ -144,6 +182,16 @@ describe('WeeklyGoalCard', () => {
       'href',
       '/objectives/obj-1/weeks/goal-1',
     )
+  })
+
+  it('shows a single empty-state message when an expanded goal has zero tasks', () => {
+    const goal: WeeklyGoalWithTasks = { ...baseGoal, dailyTasks: [] }
+    render(
+      <WeeklyGoalCard goal={goal} expanded onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} />,
+    )
+
+    expect(screen.getAllByText(/nesta semana/i)).toHaveLength(1)
+    expect(screen.getByText('Sem tarefas nesta semana ainda.')).toBeInTheDocument()
   })
 
   it('links Editar to the dedicated edit page', () => {

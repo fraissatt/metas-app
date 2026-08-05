@@ -72,6 +72,7 @@ describe('WeeklyGoalsPanel', () => {
     )
 
     await userEvent.type(screen.getByPlaceholderText('Nova tarefa'), 'Alongamento')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'TER 27' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
 
     expect(onCreateTasks).toHaveBeenCalledWith('goal-a', expect.any(FormData))

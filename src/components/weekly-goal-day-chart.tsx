@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { isSameDay } from 'date-fns'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'

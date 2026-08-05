@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
 import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
 import { format, isSameDay } from 'date-fns'
 import type { DailyTask } from '@prisma/client'
@@ -38,6 +39,7 @@ export function WeeklyGoalCard({
   const days = getWeekDays(goal.weekStart)
   const today = new Date()
   const { total, completed, percent } = computeProgress(goal.dailyTasks)
+  const [checkedCount, setCheckedCount] = useState(() => days.filter((day) => isSameDay(day, today)).length)
 
   return (
     <Card>
@@ -55,7 +57,6 @@ export function WeeklyGoalCard({
           <div className="flex shrink-0 gap-2">
             <Button
               variant="secondary"
-              size="sm"
               nativeButton={false}
               render={<Link href={`/objectives/${goal.objectiveId}/weeks/${goal.id}/edit`} />}
             >
@@ -80,6 +81,7 @@ export function WeeklyGoalCard({
                   name="dates"
                   value={iso}
                   defaultChecked={isSameDay(day, today)}
+                  onCheckedChange={(checked) => setCheckedCount((count) => count + (checked ? 1 : -1))}
                   aria-label={label}
                   className="flex flex-1 flex-col items-center justify-center rounded-md border border-border bg-secondary px-1 py-1.5 text-[11px] text-muted-foreground transition-colors data-checked:border-primary data-checked:bg-accent data-checked:text-accent-foreground"
                 >
@@ -91,7 +93,7 @@ export function WeeklyGoalCard({
               )
             })}
           </div>
-          <Button type="submit" size="sm" className="self-end">
+          <Button type="submit" size="sm" className="self-end" disabled={checkedCount === 0}>
             Criar
           </Button>
         </form>
@@ -103,20 +105,16 @@ export function WeeklyGoalCard({
         {expanded && (
           <div className="flex flex-col gap-3 border-t border-border pt-3">
             <WeeklyGoalDayChart weekStart={goal.weekStart} tasks={goal.dailyTasks} />
-            {goal.dailyTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma tarefa nesta semana.</p>
-            ) : (
-              <ul className="flex flex-col gap-1">
-                {goal.dailyTasks.map((task) => (
-                  <li
-                    key={task.id}
-                    className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
-                  >
-                    {format(task.date, 'dd/MM')} · {task.title}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className="flex flex-col gap-1">
+              {goal.dailyTasks.map((task) => (
+                <li
+                  key={task.id}
+                  className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
+                >
+                  {format(task.date, 'dd/MM')} · {task.title}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </CardContent>
