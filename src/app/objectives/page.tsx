@@ -21,7 +21,9 @@ export default async function ObjectivesPage() {
           <Card key={objective.id}>
             <CardHeader>
               <CardTitle>
-                <Link href={`/objectives/${objective.id}`}>{objective.title}</Link>
+                <Link href={`/objectives/${objective.id}`} className="transition-colors hover:text-primary hover:underline">
+                  {objective.title}
+                </Link>
               </CardTitle>
             </CardHeader>
             <CardContent className="flex items-center justify-between">
