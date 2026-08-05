@@ -43,7 +43,7 @@ export function WeeklyGoalDayChart({ weekStart, tasks }: { weekStart: Date; task
           }}
         />
         <Bar dataKey="completed" stackId="day" fill="var(--primary)" />
-        <Bar dataKey="remaining" stackId="day" fill="var(--muted)" radius={[2, 2, 0, 0]} />
+        <Bar dataKey="remaining" stackId="day" fill="var(--chart-1)" radius={[2, 2, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
