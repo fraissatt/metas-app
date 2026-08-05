@@ -1,13 +1,10 @@
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getObjective } from '@/lib/actions/objectives'
 import { getObjectiveProgressSeries } from '@/lib/actions/progress'
-import { deleteWeeklyGoal, getWeekProgress, listWeeklyGoalsByObjective } from '@/lib/actions/weeklyGoals'
-import { DeleteButton } from '@/components/delete-button'
+import { createDailyTasks } from '@/lib/actions/dailyTasks'
+import { createWeeklyGoal, deleteWeeklyGoal, listWeeklyGoalsByObjective } from '@/lib/actions/weeklyGoals'
 import { ObjectiveProgressChart } from '@/components/objective-progress-chart'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
+import { WeeklyGoalsPanel } from '@/components/weekly-goals-panel'
 
 export default async function ObjectiveDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -15,56 +12,20 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
   if (!objective) notFound()
 
   const weeklyGoals = await listWeeklyGoalsByObjective(id)
-  const progressByGoal = await Promise.all(weeklyGoals.map((g) => getWeekProgress(g.id)))
   const series = await getObjectiveProgressSeries(id)
 
   return (
     <main className="mx-auto max-w-2xl p-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <h1 className="text-2xl font-semibold break-words">{objective.title}</h1>
-        <Button
-          className="shrink-0"
-          nativeButton={false}
-          render={<Link href={`/objectives/${id}/weeks/new`} />}
-        >
-          Nova meta semanal
-        </Button>
-      </div>
+      <h1 className="mb-6 text-2xl font-semibold break-words">{objective.title}</h1>
       <div className="mb-6">
         <ObjectiveProgressChart data={series} />
       </div>
-      <div className="flex flex-col gap-4">
-        {weeklyGoals.map((goal, i) => (
-          <Card key={goal.id}>
-            <CardHeader>
-              <CardTitle>
-                <Link href={`/objectives/${id}/weeks/${goal.id}`}>{goal.title}</Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Progress value={progressByGoal[i].percent} />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  {progressByGoal[i].completed}/{progressByGoal[i].total} tarefas
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="secondary"
-                    nativeButton={false}
-                    render={<Link href={`/objectives/${id}/weeks/${goal.id}/edit`} />}
-                  >
-                    Editar
-                  </Button>
-                  <DeleteButton
-                    action={deleteWeeklyGoal.bind(null, goal.id)}
-                    confirmDescription="Isso também excluirá todas as tarefas diárias desta meta. Esta ação não pode ser desfeita."
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <WeeklyGoalsPanel
+        goals={weeklyGoals}
+        onCreateTasks={createDailyTasks}
+        onCreateWeeklyGoal={createWeeklyGoal.bind(null, id)}
+        onDeleteWeeklyGoal={deleteWeeklyGoal}
+      />
     </main>
   )
 }
