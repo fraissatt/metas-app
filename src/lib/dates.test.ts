@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getWeekBounds } from '@/lib/dates'
+import { getWeekBounds, getWeekDays } from '@/lib/dates'
 
 describe('getWeekBounds', () => {
   it('returns Monday through Sunday for a mid-week date', () => {
@@ -17,5 +17,18 @@ describe('getWeekBounds', () => {
     const { weekStart } = getWeekBounds(monday)
 
     expect(weekStart.getDate()).toBe(27)
+  })
+})
+
+describe('getWeekDays', () => {
+  it('returns the 7 dates from Monday through Sunday', () => {
+    const monday = new Date('2026-07-27T00:00:00')
+
+    const days = getWeekDays(monday)
+
+    expect(days).toHaveLength(7)
+    expect(days[0].getDate()).toBe(27) // Mon Jul 27
+    expect(days[1].getDate()).toBe(28) // Tue Jul 28
+    expect(days[6].getDate()).toBe(2) // Sun Aug 2
   })
 })

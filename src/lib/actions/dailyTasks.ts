@@ -1,6 +1,6 @@
 'use server'
 
-import { startOfDay, endOfDay } from 'date-fns'
+import { endOfDay, parseISO, startOfDay } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { readDate, readTitle } from '@/lib/actions/validation'
@@ -11,7 +11,13 @@ async function revalidateWeekPath(weeklyGoalId: string): Promise<void> {
     where: { id: weeklyGoalId },
     select: { objectiveId: true },
   })
-  if (goal) revalidatePath(`/objectives/${goal.objectiveId}/weeks/${weeklyGoalId}`)
+  if (goal) {
+    revalidatePath(`/objectives/${goal.objectiveId}/weeks/${weeklyGoalId}`)
+    // The objective detail page now also renders live weekly-goal/task data
+    // inline (quick-add, progress, expanded per-day view), so it needs the
+    // same revalidation as the weekly goal's own page.
+    revalidatePath(`/objectives/${goal.objectiveId}`)
+  }
 }
 
 export async function createDailyTask(weeklyGoalId: string, formData: FormData): Promise<void> {
@@ -22,6 +28,28 @@ export async function createDailyTask(weeklyGoalId: string, formData: FormData):
   await revalidateWeekPath(weeklyGoalId)
   // The Today view on `/` also renders daily tasks by date, so a task
   // created for today needs to appear there too.
+  revalidatePath('/')
+}
+
+export async function createDailyTasks(weeklyGoalId: string, formData: FormData): Promise<void> {
+  const title = readTitle(formData)
+  const rawDates = formData.getAll('dates').map(String)
+  if (rawDates.length === 0) {
+    throw new Error('Selecione ao menos um dia')
+  }
+
+  const dates = rawDates.map((raw) => {
+    const date = parseISO(raw)
+    if (Number.isNaN(date.getTime())) {
+      throw new Error('"dates" must contain valid dates')
+    }
+    return date
+  })
+
+  await prisma.dailyTask.createMany({
+    data: dates.map((date) => ({ title, date, weeklyGoalId })),
+  })
+  await revalidateWeekPath(weeklyGoalId)
   revalidatePath('/')
 }
 

@@ -4,7 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
 import { readDate, readTitle } from '@/lib/actions/validation'
-import type { WeeklyGoal } from '@prisma/client'
+import type { DailyTask, WeeklyGoal } from '@prisma/client'
+
+export type WeeklyGoalWithTasks = WeeklyGoal & { dailyTasks: DailyTask[] }
 
 function readWeeklyGoalFields(formData: FormData) {
   const title = readTitle(formData)
@@ -19,8 +21,12 @@ export async function createWeeklyGoal(objectiveId: string, formData: FormData):
   revalidatePath(`/objectives/${objectiveId}`)
 }
 
-export async function listWeeklyGoalsByObjective(objectiveId: string): Promise<WeeklyGoal[]> {
-  return prisma.weeklyGoal.findMany({ where: { objectiveId }, orderBy: { weekStart: 'asc' } })
+export async function listWeeklyGoalsByObjective(objectiveId: string): Promise<WeeklyGoalWithTasks[]> {
+  return prisma.weeklyGoal.findMany({
+    where: { objectiveId },
+    orderBy: { weekStart: 'asc' },
+    include: { dailyTasks: { orderBy: { date: 'asc' } } },
+  })
 }
 
 export async function getWeeklyGoal(id: string): Promise<WeeklyGoal | null> {
