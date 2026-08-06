@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
-import { TaskToggle } from '@/components/task-toggle'
+import { TodayTaskGroup } from '@/components/today-task-group'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import { groupTasksByWeeklyGoal } from '@/lib/tasks'
 import type { listDailyTasksByDate } from '@/lib/actions/dailyTasks'
 import type { listWeeklyGoalsForCurrentWeek } from '@/lib/actions/weeklyGoals'
 
@@ -35,26 +36,8 @@ export function FluidDayWeek({
           <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {tasks.map((task) => (
-              <Card key={task.id}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-muted-foreground">
-                    <Link href={`/objectives/${task.weeklyGoal.objective.id}`}>
-                      {task.weeklyGoal.objective.title}
-                    </Link>
-                    {' · '}
-                    {task.weeklyGoal.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="flex items-start gap-3">
-                  <TaskToggle taskId={task.id} completed={task.completed} action={onToggleTask} />
-                  <span
-                    className={`break-words ${task.completed ? 'line-through text-muted-foreground' : ''}`}
-                  >
-                    {task.title}
-                  </span>
-                </CardContent>
-              </Card>
+            {groupTasksByWeeklyGoal(tasks).map((group) => (
+              <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={onToggleTask} />
             ))}
           </div>
         )}
