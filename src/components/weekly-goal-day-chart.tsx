@@ -35,6 +35,7 @@ export function WeeklyGoalDayChart({ weekStart, tasks }: { weekStart: Date; task
           tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
         />
         <Tooltip
+          cursor={false}
           contentStyle={{
             background: 'var(--popover)',
             borderColor: 'var(--border)',
@@ -42,8 +43,14 @@ export function WeeklyGoalDayChart({ weekStart, tasks }: { weekStart: Date; task
             color: 'var(--popover-foreground)',
           }}
         />
-        <Bar dataKey="completed" stackId="day" fill="var(--primary)" />
-        <Bar dataKey="remaining" stackId="day" fill="var(--chart-1)" radius={[2, 2, 0, 0]} />
+        <Bar dataKey="completed" stackId="day" fill="var(--primary)" activeBar={{ fill: 'var(--primary)' }} />
+        <Bar
+          dataKey="remaining"
+          stackId="day"
+          fill="var(--chart-1)"
+          radius={[2, 2, 0, 0]}
+          activeBar={{ fill: 'var(--primary)' }}
+        />
       </BarChart>
     </ResponsiveContainer>
   )

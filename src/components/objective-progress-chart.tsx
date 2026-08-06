@@ -19,6 +19,7 @@ export function ObjectiveProgressChart({ data }: { data: Array<{ weekLabel: stri
           tick={{ fill: 'var(--muted-foreground)' }}
         />
         <Tooltip
+          cursor={false}
           formatter={(value) => [`${value}%`, 'Concluído']}
           contentStyle={{
             background: 'var(--popover)',
@@ -27,7 +28,7 @@ export function ObjectiveProgressChart({ data }: { data: Array<{ weekLabel: stri
             color: 'var(--popover-foreground)',
           }}
         />
-        <Bar dataKey="percent" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="percent" fill="var(--primary)" radius={[4, 4, 0, 0]} activeBar={{ fill: 'var(--primary)' }} />
       </BarChart>
     </ResponsiveContainer>
   )
