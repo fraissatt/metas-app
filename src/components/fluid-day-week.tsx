@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useOptimistic, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
@@ -12,6 +12,19 @@ import type { listWeeklyGoalsForCurrentWeek } from '@/lib/actions/weeklyGoals'
 
 type DailyTasks = Awaited<ReturnType<typeof listDailyTasksByDate>>
 type WeeklyGoals = Awaited<ReturnType<typeof listWeeklyGoalsForCurrentWeek>>
+type ToggleState = { tasks: DailyTasks; goals: WeeklyGoals }
+
+function toggleTaskOptimistic(state: ToggleState, taskId: string): ToggleState {
+  return {
+    tasks: state.tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)),
+    goals: state.goals.map((goal) => ({
+      ...goal,
+      dailyTasks: goal.dailyTasks.map((task) =>
+        task.id === taskId ? { ...task, completed: !task.completed } : task,
+      ),
+    })),
+  }
+}
 
 export function FluidDayWeek({
   tasks,
@@ -23,24 +36,30 @@ export function FluidDayWeek({
   onToggleTask: (id: string) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [optimisticState, applyOptimisticToggle] = useOptimistic({ tasks, goals }, toggleTaskOptimistic)
 
-  const todayGroups = groupTasksByWeeklyGoal(tasks)
+  async function handleToggle(taskId: string) {
+    applyOptimisticToggle(taskId)
+    await onToggleTask(taskId)
+  }
+
+  const todayGroups = groupTasksByWeeklyGoal(optimisticState.tasks)
   const todayGoalIds = todayGroups.map((group) => group.weeklyGoal.id)
   const goalsWithTasksToday = todayGoalIds
-    .map((id) => goals.find((goal) => goal.id === id))
+    .map((id) => optimisticState.goals.find((goal) => goal.id === id))
     .filter((goal): goal is WeeklyGoals[number] => goal !== undefined)
-  const otherGoals = goals.filter((goal) => !todayGoalIds.includes(goal.id))
+  const otherGoals = optimisticState.goals.filter((goal) => !todayGoalIds.includes(goal.id))
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="mb-6 text-2xl font-semibold">Hoje</h1>
-        {tasks.length === 0 ? (
+        {optimisticState.tasks.length === 0 ? (
           <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {todayGroups.map((group) => (
-              <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={onToggleTask} />
+              <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={handleToggle} />
             ))}
           </div>
         )}
@@ -68,7 +87,7 @@ export function FluidDayWeek({
       >
         <div className="overflow-hidden" inert={!expanded}>
           <h2 className="mb-6 text-2xl font-semibold">Esta semana</h2>
-          {goals.length === 0 ? (
+          {optimisticState.goals.length === 0 ? (
             <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
           ) : (
             <div className="flex flex-col gap-4">

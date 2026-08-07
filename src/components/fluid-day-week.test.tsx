@@ -197,4 +197,25 @@ describe('FluidDayWeek', () => {
       within(container.querySelector('#week-section')!).queryByText('outras metas da semana'),
     ).not.toBeInTheDocument()
   })
+
+  it('updates the week goal progress card immediately when a task is toggled, before the server action resolves', async () => {
+    let resolveToggle: () => void = () => {}
+    const onToggleTask = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveToggle = resolve
+        }),
+    )
+
+    const { container } = render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={onToggleTask} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
+    expect(within(container.querySelector('#week-section')!).getByText('0/1 tarefas')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('checkbox'))
+
+    expect(within(container.querySelector('#week-section')!).getByText('1/1 tarefas')).toBeInTheDocument()
+
+    resolveToggle()
+  })
 })
