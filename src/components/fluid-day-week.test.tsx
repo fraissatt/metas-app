@@ -163,4 +163,38 @@ describe('FluidDayWeek', () => {
 
     expect(screen.getByText('0/1 tarefas')).toBeInTheDocument()
   })
+
+  it('orders week goals so ones with a task today come first, separated by a divider from the rest', async () => {
+    const otherGoal = {
+      id: 'goal-2',
+      title: 'Meditar',
+      objectiveId: 'obj-1',
+      weekStart: new Date('2026-07-27'),
+      weekEnd: new Date('2026-08-02'),
+      status: 'ACTIVE' as const,
+      objective,
+      dailyTasks: [],
+    }
+
+    const { container } = render(<FluidDayWeek tasks={[task]} goals={[otherGoal, goal]} onToggleTask={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
+
+    const panel = within(container.querySelector('#week-section')!)
+    const headingOrder = panel
+      .getAllByRole('link', { name: /Ler documentação|Meditar/ })
+      .map((el) => el.textContent)
+    expect(headingOrder).toEqual(['Ler documentação do App Router', 'Meditar'])
+    expect(panel.getByText('outras metas da semana')).toBeInTheDocument()
+  })
+
+  it('omits the divider when every week goal has a task today', async () => {
+    const { container } = render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
+
+    expect(
+      within(container.querySelector('#week-section')!).queryByText('outras metas da semana'),
+    ).not.toBeInTheDocument()
+  })
 })

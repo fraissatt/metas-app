@@ -24,6 +24,13 @@ export function FluidDayWeek({
 }) {
   const [expanded, setExpanded] = useState(false)
 
+  const todayGroups = groupTasksByWeeklyGoal(tasks)
+  const todayGoalIds = todayGroups.map((group) => group.weeklyGoal.id)
+  const goalsWithTasksToday = todayGoalIds
+    .map((id) => goals.find((goal) => goal.id === id))
+    .filter((goal): goal is WeeklyGoals[number] => goal !== undefined)
+  const otherGoals = goals.filter((goal) => !todayGoalIds.includes(goal.id))
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -32,7 +39,7 @@ export function FluidDayWeek({
           <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {groupTasksByWeeklyGoal(tasks).map((group) => (
+            {todayGroups.map((group) => (
               <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={onToggleTask} />
             ))}
           </div>
@@ -65,7 +72,15 @@ export function FluidDayWeek({
             <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
           ) : (
             <div className="flex flex-col gap-4">
-              {goals.map((goal) => (
+              {goalsWithTasksToday.map((goal) => (
+                <WeekGoalProgressCard key={goal.id} goal={goal} />
+              ))}
+              {goalsWithTasksToday.length > 0 && otherGoals.length > 0 && (
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  outras metas da semana
+                </p>
+              )}
+              {otherGoals.map((goal) => (
                 <WeekGoalProgressCard key={goal.id} goal={goal} />
               ))}
             </div>
