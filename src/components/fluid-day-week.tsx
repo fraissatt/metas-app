@@ -1,12 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { TodayTaskGroup } from '@/components/today-task-group'
+import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
 import { groupTasksByWeeklyGoal } from '@/lib/tasks'
 import type { listDailyTasksByDate } from '@/lib/actions/dailyTasks'
@@ -18,12 +16,10 @@ type WeeklyGoals = Awaited<ReturnType<typeof listWeeklyGoalsForCurrentWeek>>
 export function FluidDayWeek({
   tasks,
   goals,
-  progress,
   onToggleTask,
 }: {
   tasks: DailyTasks
   goals: WeeklyGoals
-  progress: Array<{ total: number; completed: number; percent: number }>
   onToggleTask: (id: string) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
@@ -69,23 +65,8 @@ export function FluidDayWeek({
             <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
           ) : (
             <div className="flex flex-col gap-4">
-              {goals.map((goal, i) => (
-                <Card key={goal.id}>
-                  <CardHeader>
-                    <CardTitle>
-                      <Link href={`/objectives/${goal.objective.id}/weeks/${goal.id}`}>{goal.title}</Link>
-                      <span className="ml-2 text-sm font-normal text-muted-foreground">
-                        {goal.objective.title}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-2">
-                    <Progress value={progress[i].percent} />
-                    <span className="text-sm text-muted-foreground">
-                      {progress[i].completed}/{progress[i].total} tarefas ({progress[i].percent}%)
-                    </span>
-                  </CardContent>
-                </Card>
+              {goals.map((goal) => (
+                <WeekGoalProgressCard key={goal.id} goal={goal} />
               ))}
             </div>
           )}

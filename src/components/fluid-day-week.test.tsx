@@ -42,18 +42,11 @@ const task2 = {
   weeklyGoal: { ...weeklyGoal, objective },
 }
 
-const goal = { ...weeklyGoal, objective, dailyTasks: [] }
+const goal = { ...weeklyGoal, objective, dailyTasks: [task] }
 
 describe('FluidDayWeek', () => {
   it('groups tasks that share a weekly goal under one header', () => {
-    render(
-      <FluidDayWeek
-        tasks={[task, task2]}
-        goals={[]}
-        progress={[]}
-        onToggleTask={vi.fn()}
-      />,
-    )
+    render(<FluidDayWeek tasks={[task, task2]} goals={[]} onToggleTask={vi.fn()} />)
 
     expect(screen.getAllByText('Ler documentação do App Router')).toHaveLength(1)
     expect(screen.getByText('Revisar App Router')).toBeInTheDocument()
@@ -88,28 +81,17 @@ describe('FluidDayWeek', () => {
       },
     }
 
-    render(
-      <FluidDayWeek
-        tasks={[task, financeTask]}
-        goals={[goal]}
-        progress={[{ total: 1, completed: 0, percent: 0 }]}
-        onToggleTask={vi.fn()}
-      />,
-    )
+    render(<FluidDayWeek tasks={[task, financeTask]} goals={[goal]} onToggleTask={vi.fn()} />)
 
     const headings = screen.getAllByRole('link', { name: /Ler documentação|Revisar orçamento/ })
-    expect(headings.map((el) => el.textContent)).toEqual(['Ler documentação do App Router', 'Revisar orçamento mensal'])
+    expect(headings.map((el) => el.textContent)).toEqual([
+      'Ler documentação do App Router',
+      'Revisar orçamento mensal',
+    ])
   })
 
   it('links the group header to the weekly goal page and the objective page', () => {
-    render(
-      <FluidDayWeek
-        tasks={[task]}
-        goals={[goal]}
-        progress={[{ total: 1, completed: 0, percent: 0 }]}
-        onToggleTask={vi.fn()}
-      />,
-    )
+    render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
 
     expect(screen.getByRole('link', { name: 'Ler documentação do App Router' })).toHaveAttribute(
       'href',
@@ -119,27 +101,13 @@ describe('FluidDayWeek', () => {
   })
 
   it('renders collapsed by default', () => {
-    render(
-      <FluidDayWeek
-        tasks={[task]}
-        goals={[goal]}
-        progress={[{ total: 1, completed: 0, percent: 0 }]}
-        onToggleTask={vi.fn()}
-      />,
-    )
+    render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
 
     expect(screen.getByRole('button', { name: /ver semana/i })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('expands the week section when the toggle button is clicked', async () => {
-    const { container } = render(
-      <FluidDayWeek
-        tasks={[task]}
-        goals={[goal]}
-        progress={[{ total: 1, completed: 0, percent: 0 }]}
-        onToggleTask={vi.fn()}
-      />,
-    )
+    const { container } = render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
 
     await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
 
@@ -150,14 +118,7 @@ describe('FluidDayWeek', () => {
   })
 
   it('collapses the week section again on a second click', async () => {
-    render(
-      <FluidDayWeek
-        tasks={[task]}
-        goals={[goal]}
-        progress={[{ total: 1, completed: 0, percent: 0 }]}
-        onToggleTask={vi.fn()}
-      />,
-    )
+    render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
 
     await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
     await userEvent.click(screen.getByRole('button', { name: /recolher semana/i }))
@@ -167,14 +128,7 @@ describe('FluidDayWeek', () => {
 
   it("renders today's tasks and toggles completion via the injected action", async () => {
     const onToggleTask = vi.fn().mockResolvedValue(undefined)
-    render(
-      <FluidDayWeek
-        tasks={[task]}
-        goals={[goal]}
-        progress={[{ total: 1, completed: 0, percent: 0 }]}
-        onToggleTask={onToggleTask}
-      />,
-    )
+    render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={onToggleTask} />)
 
     expect(screen.getByText('Revisar App Router')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('checkbox'))
@@ -183,21 +137,14 @@ describe('FluidDayWeek', () => {
   })
 
   it('shows empty-state copy when there are no tasks or goals', () => {
-    render(<FluidDayWeek tasks={[]} goals={[]} progress={[]} onToggleTask={vi.fn()} />)
+    render(<FluidDayWeek tasks={[]} goals={[]} onToggleTask={vi.fn()} />)
 
     expect(screen.getByText('Nenhuma tarefa para hoje.')).toBeInTheDocument()
     expect(screen.getByText('Nenhuma meta semanal para esta semana.')).toBeInTheDocument()
   })
 
   it('hides the week panel from AT and keyboard while collapsed', async () => {
-    const { container } = render(
-      <FluidDayWeek
-        tasks={[task]}
-        goals={[goal]}
-        progress={[{ total: 1, completed: 0, percent: 0 }]}
-        onToggleTask={vi.fn()}
-      />,
-    )
+    const { container } = render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
     const panel = container.querySelector('#week-section')!
 
     expect(panel).toHaveAttribute('aria-hidden', 'true')
@@ -207,5 +154,13 @@ describe('FluidDayWeek', () => {
 
     expect(panel).toHaveAttribute('aria-hidden', 'false')
     expect(panel.firstElementChild).not.toHaveAttribute('inert')
+  })
+
+  it('shows the week goal progress card with completed/total tasks for the week', async () => {
+    render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
+
+    expect(screen.getByText('0/1 tarefas')).toBeInTheDocument()
   })
 })
