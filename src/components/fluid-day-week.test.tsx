@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FluidDayWeek } from '@/components/fluid-day-week'
@@ -44,7 +44,20 @@ const task2 = {
 
 const goal = { ...weeklyGoal, objective, dailyTasks: [task] }
 
+function mockMatchMedia(matches: boolean) {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })) as unknown as typeof window.matchMedia
+}
+
 describe('FluidDayWeek', () => {
+  beforeEach(() => {
+    mockMatchMedia(false)
+  })
+
   it('groups tasks that share a weekly goal under one header', () => {
     render(<FluidDayWeek tasks={[task, task2]} goals={[]} onToggleTask={vi.fn()} />)
 
@@ -217,5 +230,14 @@ describe('FluidDayWeek', () => {
     expect(within(container.querySelector('#week-section')!).getByText('1/1 tarefas')).toBeInTheDocument()
 
     resolveToggle()
+  })
+
+  it('shows the week section without collapsing when the viewport is desktop-width (lg+)', () => {
+    mockMatchMedia(true)
+
+    const { container } = render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
+
+    expect(container.querySelector('#week-section')).toHaveAttribute('aria-hidden', 'false')
+    expect(within(container.querySelector('#week-section')!).getByText('0/1 tarefas')).toBeInTheDocument()
   })
 })

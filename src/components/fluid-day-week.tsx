@@ -1,6 +1,6 @@
 'use client'
 
-import { useOptimistic, useState } from 'react'
+import { useCallback, useOptimistic, useState, useSyncExternalStore } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
@@ -26,6 +26,21 @@ function toggleTaskOptimistic(state: ToggleState, taskId: string): ToggleState {
   }
 }
 
+function useIsDesktop(breakpointPx = 1024): boolean {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      const mql = window.matchMedia(`(min-width: ${breakpointPx}px)`)
+      mql.addEventListener('change', onChange)
+      return () => mql.removeEventListener('change', onChange)
+    },
+    [breakpointPx],
+  )
+  const getSnapshot = useCallback(() => window.matchMedia(`(min-width: ${breakpointPx}px)`).matches, [breakpointPx])
+  const getServerSnapshot = useCallback(() => false, [])
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+}
+
 export function FluidDayWeek({
   tasks,
   goals,
@@ -36,6 +51,8 @@ export function FluidDayWeek({
   onToggleTask: (id: string) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
+  const isDesktop = useIsDesktop()
+  const effectiveExpanded = expanded || isDesktop
   const [optimisticState, applyOptimisticToggle] = useOptimistic({ tasks, goals }, toggleTaskOptimistic)
 
   async function handleToggle(taskId: string) {
@@ -51,8 +68,8 @@ export function FluidDayWeek({
   const otherGoals = optimisticState.goals.filter((goal) => !todayGoalIds.includes(goal.id))
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+      <div className="lg:basis-3/5">
         <h1 className="mb-6 text-2xl font-semibold">Hoje</h1>
         {optimisticState.tasks.length === 0 ? (
           <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
@@ -65,45 +82,47 @@ export function FluidDayWeek({
         )}
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        aria-controls="week-section"
-        className="w-full border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary"
-      >
-        {expanded ? 'Recolher semana' : 'Ver semana'}
-        {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-      </Button>
+      <div className="flex flex-col gap-6 lg:basis-2/5">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={effectiveExpanded}
+          aria-controls="week-section"
+          className="w-full border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary lg:hidden"
+        >
+          {expanded ? 'Recolher semana' : 'Ver semana'}
+          {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        </Button>
 
-      <div
-        id="week-section"
-        aria-hidden={!expanded}
-        className={cn(
-          'grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none',
-          expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-        )}
-      >
-        <div className="overflow-hidden" inert={!expanded}>
-          <h2 className="mb-6 text-2xl font-semibold">Esta semana</h2>
-          {optimisticState.goals.length === 0 ? (
-            <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {goalsWithTasksToday.map((goal) => (
-                <WeekGoalProgressCard key={goal.id} goal={goal} />
-              ))}
-              {goalsWithTasksToday.length > 0 && otherGoals.length > 0 && (
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  outras metas da semana
-                </p>
-              )}
-              {otherGoals.map((goal) => (
-                <WeekGoalProgressCard key={goal.id} goal={goal} />
-              ))}
-            </div>
+        <div
+          id="week-section"
+          aria-hidden={!effectiveExpanded}
+          className={cn(
+            'grid transition-[grid-template-rows] duration-300 ease-in-out motion-reduce:transition-none',
+            effectiveExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
           )}
+        >
+          <div className="overflow-hidden" inert={!effectiveExpanded}>
+            <h2 className="mb-6 text-2xl font-semibold">Esta semana</h2>
+            {optimisticState.goals.length === 0 ? (
+              <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
+            ) : (
+              <div className="flex flex-col gap-4">
+                {goalsWithTasksToday.map((goal) => (
+                  <WeekGoalProgressCard key={goal.id} goal={goal} />
+                ))}
+                {goalsWithTasksToday.length > 0 && otherGoals.length > 0 && (
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    outras metas da semana
+                  </p>
+                )}
+                {otherGoals.map((goal) => (
+                  <WeekGoalProgressCard key={goal.id} goal={goal} />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
