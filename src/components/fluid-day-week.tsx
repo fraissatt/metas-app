@@ -87,7 +87,7 @@ export function FluidDayWeek({
           type="button"
           variant="outline"
           onClick={() => setExpanded((v) => !v)}
-          aria-expanded={effectiveExpanded}
+          aria-expanded={expanded}
           aria-controls="week-section"
           className="w-full border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary lg:hidden"
         >
@@ -104,7 +104,7 @@ export function FluidDayWeek({
           )}
         >
           <div className="overflow-hidden" inert={!effectiveExpanded}>
-            <h2 className="mb-6 text-2xl font-semibold">Esta semana</h2>
+            <h2 className="mb-6 text-2xl font-semibold">Progresso da semana</h2>
             {optimisticState.goals.length === 0 ? (
               <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
             ) : (

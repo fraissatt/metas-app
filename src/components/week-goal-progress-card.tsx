@@ -23,7 +23,7 @@ export function WeekGoalProgressCard({
     <div className="flex overflow-hidden rounded-lg border border-border">
       <div className="w-[3px] shrink-0 bg-primary" />
       <div className="flex-1 p-4">
-        <div className="mb-3 flex flex-col text-left">
+        <div className="mb-3 flex min-w-0 flex-col text-left">
           <Link
             href={`/objectives/${goal.objective.id}/weeks/${goal.id}`}
             className="text-sm font-semibold hover:text-primary hover:underline"

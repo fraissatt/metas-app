@@ -12,7 +12,7 @@ export default async function Home() {
   const goals = await listWeeklyGoalsForCurrentWeek()
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
+    <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
       <FluidDayWeek tasks={tasks} goals={goals} onToggleTask={toggleDailyTask} />
     </main>
   )
