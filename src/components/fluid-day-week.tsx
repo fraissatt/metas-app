@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useOptimistic, useState, useSyncExternalStore } from 'react'
+import { useCallback, useOptimistic, useRef, useState, useSyncExternalStore } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
@@ -14,7 +14,7 @@ type DailyTasks = Awaited<ReturnType<typeof listDailyTasksByDate>>
 type WeeklyGoals = Awaited<ReturnType<typeof listWeeklyGoalsForCurrentWeek>>
 type ToggleState = { tasks: DailyTasks; goals: WeeklyGoals }
 
-function toggleTaskOptimistic(state: ToggleState, taskId: string): ToggleState {
+export function toggleTaskOptimistic(state: ToggleState, taskId: string): ToggleState {
   return {
     tasks: state.tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task)),
     goals: state.goals.map((goal) => ({
@@ -26,16 +26,31 @@ function toggleTaskOptimistic(state: ToggleState, taskId: string): ToggleState {
   }
 }
 
-function useIsDesktop(breakpointPx = 1024): boolean {
+export function useIsDesktop(breakpointPx = 1024): boolean {
+  // Lazily create and cache one MediaQueryList per breakpoint instead of
+  // calling matchMedia on every subscribe/getSnapshot invocation. The
+  // factory only runs when subscribe/getSnapshot are actually invoked
+  // (client-side, via useSyncExternalStore) — never during the render
+  // pass itself, so this stays safe under SSR where `window` is undefined.
+  // Cache is keyed by breakpointPx so a caller that varies the breakpoint
+  // across renders doesn't get stuck querying a stale MediaQueryList.
+  const mqlRef = useRef<{ breakpointPx: number; mql: MediaQueryList } | null>(null)
+  const getMql = useCallback(() => {
+    if (!mqlRef.current || mqlRef.current.breakpointPx !== breakpointPx) {
+      mqlRef.current = { breakpointPx, mql: window.matchMedia(`(min-width: ${breakpointPx}px)`) }
+    }
+    return mqlRef.current.mql
+  }, [breakpointPx])
+
   const subscribe = useCallback(
     (onChange: () => void) => {
-      const mql = window.matchMedia(`(min-width: ${breakpointPx}px)`)
+      const mql = getMql()
       mql.addEventListener('change', onChange)
       return () => mql.removeEventListener('change', onChange)
     },
-    [breakpointPx],
+    [getMql],
   )
-  const getSnapshot = useCallback(() => window.matchMedia(`(min-width: ${breakpointPx}px)`).matches, [breakpointPx])
+  const getSnapshot = useCallback(() => getMql().matches, [getMql])
   const getServerSnapshot = useCallback(() => false, [])
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)

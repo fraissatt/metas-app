@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { isSameDay } from 'date-fns'
 import type { DailyTask, Objective, WeeklyGoal } from '@prisma/client'
