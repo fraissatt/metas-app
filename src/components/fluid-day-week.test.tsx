@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FluidDayWeek } from '@/components/fluid-day-week'
+import { FluidDayWeek, toggleTaskOptimistic } from '@/components/fluid-day-week'
 
 const objective = {
   id: 'obj-1',
@@ -211,6 +211,53 @@ describe('FluidDayWeek', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('orders multiple today-goals by their first appearance in tasks, not by their position in goals', async () => {
+    const goalA = { ...weeklyGoal, id: 'goal-a', title: 'Meta A', objective }
+    const goalB = { ...weeklyGoal, id: 'goal-b', title: 'Meta B', objective }
+    const taskA = { ...task, id: 'task-a', weeklyGoalId: 'goal-a', weeklyGoal: goalA }
+    const taskB = { ...task, id: 'task-b', weeklyGoalId: 'goal-b', weeklyGoal: goalB }
+
+    // tasks reference goal-b before goal-a; goals lists goal-a before goal-b.
+    // The rendered order must follow tasks (goal-b, goal-a), not goals.
+    const { container } = render(
+      <FluidDayWeek
+        tasks={[taskB, taskA]}
+        goals={[
+          { ...goalA, dailyTasks: [taskA] },
+          { ...goalB, dailyTasks: [taskB] },
+        ]}
+        onToggleTask={vi.fn()}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
+
+    const panel = within(container.querySelector('#week-section')!)
+    const headingOrder = panel.getAllByRole('link', { name: /Meta A|Meta B/ }).map((el) => el.textContent)
+    expect(headingOrder).toEqual(['Meta B', 'Meta A'])
+  })
+
+  it('omits the divider and shows no today-goals when nothing has a task today', async () => {
+    const otherGoal = {
+      id: 'goal-2',
+      title: 'Meditar',
+      objectiveId: 'obj-1',
+      weekStart: new Date('2026-07-27'),
+      weekEnd: new Date('2026-08-02'),
+      status: 'ACTIVE' as const,
+      objective,
+      dailyTasks: [],
+    }
+
+    const { container } = render(<FluidDayWeek tasks={[]} goals={[otherGoal]} onToggleTask={vi.fn()} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /ver semana/i }))
+
+    const panel = within(container.querySelector('#week-section')!)
+    expect(panel.queryByText('outras metas da semana')).not.toBeInTheDocument()
+    expect(panel.getByRole('link', { name: 'Meditar' })).toBeInTheDocument()
+  })
+
   it('updates the week goal progress card immediately when a task is toggled, before the server action resolves', async () => {
     let resolveToggle: () => void = () => {}
     const onToggleTask = vi.fn(
@@ -239,5 +286,43 @@ describe('FluidDayWeek', () => {
 
     expect(container.querySelector('#week-section')).toHaveAttribute('aria-hidden', 'false')
     expect(within(container.querySelector('#week-section')!).getByText('0/1 tarefas')).toBeInTheDocument()
+  })
+})
+
+describe('toggleTaskOptimistic', () => {
+  it('flips the matching task in both tasks and the owning goal\'s dailyTasks', () => {
+    const state = { tasks: [task], goals: [goal] }
+
+    const next = toggleTaskOptimistic(state, 'task-1')
+
+    expect(next.tasks[0].completed).toBe(true)
+    expect(next.goals[0].dailyTasks[0].completed).toBe(true)
+  })
+
+  it('does not mutate the original state', () => {
+    const state = { tasks: [task], goals: [goal] }
+
+    toggleTaskOptimistic(state, 'task-1')
+
+    expect(state.tasks[0].completed).toBe(false)
+    expect(state.goals[0].dailyTasks[0].completed).toBe(false)
+  })
+
+  it('is a no-op for a task id that matches nothing', () => {
+    const state = { tasks: [task], goals: [goal] }
+
+    const next = toggleTaskOptimistic(state, 'no-such-task')
+
+    expect(next.tasks[0].completed).toBe(false)
+    expect(next.goals[0].dailyTasks[0].completed).toBe(false)
+  })
+
+  it('only flips the targeted task, leaving others in the same goal untouched', () => {
+    const state = { tasks: [task, task2], goals: [{ ...goal, dailyTasks: [task, task2] }] }
+
+    const next = toggleTaskOptimistic(state, 'task-1')
+
+    expect(next.goals[0].dailyTasks.find((t) => t.id === 'task-1')?.completed).toBe(true)
+    expect(next.goals[0].dailyTasks.find((t) => t.id === 'task-2')?.completed).toBe(true) // task2 starts completed:true, untouched
   })
 })
