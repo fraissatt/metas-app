@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FluidDayWeek, toggleTaskOptimistic } from '@/components/fluid-day-week'
+import { FluidDayWeek, toggleTaskOptimistic, useIsDesktop } from '@/components/fluid-day-week'
 
 const objective = {
   id: 'obj-1',
@@ -324,5 +324,33 @@ describe('toggleTaskOptimistic', () => {
 
     expect(next.goals[0].dailyTasks.find((t) => t.id === 'task-1')?.completed).toBe(true)
     expect(next.goals[0].dailyTasks.find((t) => t.id === 'task-2')?.completed).toBe(true) // task2 starts completed:true, untouched
+  })
+})
+
+function IsDesktopProbe({ breakpointPx }: { breakpointPx: number }) {
+  const isDesktop = useIsDesktop(breakpointPx)
+  return <span>{isDesktop ? 'desktop' : 'not-desktop'}</span>
+}
+
+describe('useIsDesktop', () => {
+  it('re-evaluates against the new breakpoint when breakpointPx changes, instead of reusing a stale MediaQueryList', () => {
+    // Viewport is fixed at 1200px; matches is derived from each query's
+    // own min-width, so a stale cached MediaQueryList (still queried for
+    // the old breakpoint) would give the wrong answer for the new one.
+    window.matchMedia = vi.fn().mockImplementation((query: string) => {
+      const minWidth = Number(/min-width:\s*(\d+)px/.exec(query)?.[1] ?? 0)
+      return {
+        matches: 1200 >= minWidth,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }
+    }) as unknown as typeof window.matchMedia
+
+    const { rerender, getByText } = render(<IsDesktopProbe breakpointPx={1024} />)
+    expect(getByText('desktop')).toBeInTheDocument() // 1200 >= 1024
+
+    rerender(<IsDesktopProbe breakpointPx={1440} />)
+    expect(getByText('not-desktop')).toBeInTheDocument() // 1200 < 1440
   })
 })

@@ -26,18 +26,20 @@ export function toggleTaskOptimistic(state: ToggleState, taskId: string): Toggle
   }
 }
 
-function useIsDesktop(breakpointPx = 1024): boolean {
+export function useIsDesktop(breakpointPx = 1024): boolean {
   // Lazily create and cache one MediaQueryList per breakpoint instead of
   // calling matchMedia on every subscribe/getSnapshot invocation. The
   // factory only runs when subscribe/getSnapshot are actually invoked
   // (client-side, via useSyncExternalStore) — never during the render
   // pass itself, so this stays safe under SSR where `window` is undefined.
-  const mqlRef = useRef<MediaQueryList | null>(null)
+  // Cache is keyed by breakpointPx so a caller that varies the breakpoint
+  // across renders doesn't get stuck querying a stale MediaQueryList.
+  const mqlRef = useRef<{ breakpointPx: number; mql: MediaQueryList } | null>(null)
   const getMql = useCallback(() => {
-    if (!mqlRef.current) {
-      mqlRef.current = window.matchMedia(`(min-width: ${breakpointPx}px)`)
+    if (!mqlRef.current || mqlRef.current.breakpointPx !== breakpointPx) {
+      mqlRef.current = { breakpointPx, mql: window.matchMedia(`(min-width: ${breakpointPx}px)`) }
     }
-    return mqlRef.current
+    return mqlRef.current.mql
   }, [breakpointPx])
 
   const subscribe = useCallback(
