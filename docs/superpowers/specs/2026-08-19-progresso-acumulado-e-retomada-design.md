@@ -32,26 +32,31 @@ Four states, resolved server-side in `src/app/page.tsx`:
 | State | Condition | Screen |
 |---|---|---|
 | **S1** | zero `Objective` rows | Onboarding: explains objective → weekly goal → daily task, CTA to `/objectives/new` |
-| **S2** | zero `WeeklyGoal` for the current week, ≥1 `WeeklyGoal` in an earlier week | Preview of the source week's goals + task counts, primary CTA "Repetir a semana de DD/MM", secondary link to `/objectives` |
-| **S2b** | zero `WeeklyGoal` for the current week, none in any earlier week, ≥1 `Objective` | CTA to `/objectives` to create a first weekly goal — no repeat button, since there is nothing to repeat |
-| **S3** | ≥1 `WeeklyGoal` for the current week | The existing 60/40 `FluidDayWeek` layout, unchanged |
+| **S2** | zero `WeeklyGoal` for the current week, and goals are missing from the source week | Preview of the missing goals + task counts, primary CTA "Trazer para esta semana", secondary link to `/objectives` |
+| **S2b** | zero `WeeklyGoal` for the current week, nothing missing to bring over, ≥1 `Objective` | CTA to `/objectives` to create a first weekly goal — no repeat button, since there is nothing to repeat |
+| **S3** | ≥1 `WeeklyGoal` for the current week | The existing 60/40 `FluidDayWeek` layout, plus the same missing-goals card rendered below it when anything is missing |
 
 S1, S2, and S2b replace the two-column layout entirely — they are page-level, centered, single-column at every breakpoint. S3 keeps the current layout; when `tasks` is empty the left column shows an inline empty state with an "add a task" link instead of today's bare sentence.
 
-### Repeat last week
+### Bringing missing goals forward
 
 - **Source week:** the greatest `weekStart` strictly earlier than the current week's `weekStart`, across all objectives — not the immediately preceding calendar week. A user who has been away three weeks would find the preceding week empty, and that user is exactly who this exists for.
-- **What is cloned:** every `WeeklyGoal` in the source week (title, `objectiveId`) and every `DailyTask` under them (title). Clones are created with `completed: false` and `completedAt: null`.
+- **What counts as missing:** a goal in the source week with no counterpart in the current week, where a counterpart is a current-week goal with the same `objectiveId` **and** the same `title`. Goals that already have a counterpart are left alone.
+- **What is cloned:** each missing `WeeklyGoal` (title, `objectiveId`) and every `DailyTask` under it (title). Clones are created with `completed: false` and `completedAt: null`.
 - **Date mapping:** `addDays(currentWeekStart, differenceInCalendarDays(task.date, sourceWeekStart))`. Calendar-day difference, not elapsed milliseconds, so a DST boundary inside the source week cannot shift a task by a day. A task on Tuesday of the source week lands on Tuesday of the current week.
-- **Collision:** impossible by construction — the button is only rendered in S2, which requires the current week to have zero goals. The action re-checks this inside its transaction to absorb a double-submit.
+- **Where the offer appears:** as the body of the S2 full-page return state, and as a compact card below the normal layout in S3. Same component, same action, different surroundings.
+- **Idempotency:** the action recomputes the missing set inside its own transaction rather than trusting what the page rendered. A double submit therefore finds nothing missing the second time and creates nothing — no separate "is the week empty" guard is needed, and none is used.
 - **Atomicity:** the whole clone runs in one `prisma.$transaction`. A partial failure that left goals without their tasks would be worse than not running at all.
+
+An earlier revision of this design gated the offer on the current week being **empty**. That was wrong in a case that has nothing to do with recurrence: a user who has already created two goals this week, out of five they had last week, would be offered nothing at all. Matching per goal rather than per week is the more useful behaviour on its own merits, and it is also what keeps this feature from colliding with the recurrence design in `2026-08-19-recorrencia-de-metas-design.md`.
 
 ## Non-goals
 
 - **No schema change.** No migration in either item. Every field read here already exists.
 - **No per-objective statistics.** The banner is global; objective-level progress stays as it is on `/objectives/[id]`.
 - **No review screen before cloning.** A per-goal checkbox list was considered and rejected — the preview in the return state carries the same information without adding a step, and unwanted goals can be deleted from `/objectives/[id]` in one click.
-- **No partial repeat.** A user with one goal in the current week who wants three more from last week is not served. Judged an edge case; revisit if it comes up in practice.
+- **No selective repeat.** The action brings over everything that is missing, all or nothing. Choosing a subset is what the rejected checkbox list would have been.
+- **No recurrence.** Goals do not carry themselves forward automatically here; every clone is user-initiated. Automatic materialisation is designed in `2026-08-19-recorrencia-de-metas-design.md` and deliberately kept separate.
 - **No `Status` transitions.** Marking an objective or weekly goal `COMPLETED` is item 2 of the UX review, not this one.
 - **No changes to `/objectives`, `/objectives/[id]`, or the weekly goal detail page.** `WeeklyGoalCard`, `WeeklyGoalsPanel`, and `WeeklyGoalDayChart` are untouched.
 - **No celebration/animation on completing a goal.** That is item 2 as well.
@@ -101,40 +106,46 @@ Three queries:
 ### `src/lib/actions/weeklyGoals.ts` — additions
 
 ```ts
-export type LastWeekPreview = {
+export type MissingGoalsPreview = {
   sourceWeekStart: Date
   goals: Array<{ id: string; title: string; taskCount: number }>
 }
 
-export async function getLastWeekPreview(): Promise<LastWeekPreview | null>
-export async function repeatLastWeek(): Promise<void>
+export async function getMissingGoalsPreview(): Promise<MissingGoalsPreview | null>
+export async function repeatMissingGoals(): Promise<void>
 ```
 
-`getLastWeekPreview` finds the greatest `weekStart` below the current week's, then returns that week's goals with a `_count` of their `dailyTasks`, ordered by `title` ascending. The explicit ordering matters: without it Postgres returns rows in an unspecified order, so the preview list could reshuffle between renders of the same data. Returns `null` when no earlier week exists — which is what distinguishes S2 from S2b.
+Both are built on one module-private helper, `findMissingGoals(currentWeekStart)`, which:
 
-`repeatLastWeek` resolves the same source week, reads its goals including `dailyTasks`, and inside a `$transaction`:
+1. Finds the source week — the greatest `weekStart` below `currentWeekStart`. Returns `null` if there is none.
+2. Reads the source week's goals (including `dailyTasks`) and the current week's goals (`objectiveId` and `title` only).
+3. Returns the source goals whose `objectiveId`+`title` pair does not appear in the current week, ordered by `title` ascending.
 
-1. Re-checks `weeklyGoal.count({ where: { weekStart: currentWeekStart } })` and returns early if non-zero (double-submit guard).
-2. Creates each `WeeklyGoal` with the source's `title` and `objectiveId`, the current week's `weekStart`/`weekEnd`, and the default `ACTIVE` status.
-3. Creates the cloned `DailyTask` rows via `createMany`, with the remapped dates.
+The explicit ordering matters: without it Postgres returns rows in an unspecified order, so the preview list could reshuffle between renders of the same data.
 
-Then revalidates `/` and `/objectives/[objectiveId]` for each distinct objective touched.
+`getMissingGoalsPreview` maps that to counts and returns `null` when the helper finds no source week **or** finds nothing missing — either way there is nothing to offer, and both mean S2b rather than S2.
+
+`repeatMissingGoals` opens a `$transaction` and calls the same helper **inside** it, so the set it clones is the set that is missing at write time, not the set the page rendered some seconds ago. For each missing goal it creates a `WeeklyGoal` with the source's `title` and `objectiveId`, the current week's bounds, and the default `ACTIVE` status; then its `DailyTask` rows via `createMany` with remapped dates. A second concurrent or repeated call finds nothing missing and writes nothing, which is why no separate empty-week guard exists.
+
+Then it revalidates `/` and `/objectives/[objectiveId]` for each distinct objective touched.
 
 ### `src/app/page.tsx` — state resolution
 
 The page is already `export const dynamic = 'force-dynamic'` and already a Server Component doing the fetching, so state selection belongs here; the client components stay presentational.
 
 ```
-stats  = await getLifetimeStats()
-goals  = await listWeeklyGoalsForCurrentWeek()
+stats   = await getLifetimeStats()
+goals   = await listWeeklyGoalsForCurrentWeek()
+preview = await getMissingGoalsPreview()
 
-if goals.length > 0                    → S3: banner + FluidDayWeek (tasks fetched as today)
+if goals.length > 0                     → S3: banner + FluidDayWeek (tasks fetched for today)
+                                              + MissingGoalsCard when preview is non-null
 else if (await countObjectives()) === 0 → S1: onboarding (no banner — totalCompleted is 0)
-else if (preview = await getLastWeekPreview()) → S2: banner + ReturnEmptyState
-else                                    → S2b: banner + FirstGoalEmptyState
+else if preview                         → S2: banner + ReturnEmptyState
+else                                    → S2b: banner + HomeEmptyState variant="no-goal"
 ```
 
-`listDailyTasksByDate` is only called on the S3 branch — the other three have no tasks to show.
+`listDailyTasksByDate` is only called on the S3 branch — the other three have no tasks to show. `getMissingGoalsPreview` is now called before the branch rather than inside it, because S3 needs it too.
 
 `countObjectives()` is a new one-line `prisma.objective.count()` in `src/lib/actions/objectives.ts`, rather than `(await listObjectives()).length`, so the empty-state check does not pull every objective row.
 
@@ -143,15 +154,16 @@ The banner renders whenever `stats.totalCompleted > 0`, which naturally hides it
 ## Components
 
 - **`src/components/lifetime-progress-banner.tsx`** — new, presentational, no `'use client'`. Props: `LifetimeStats`. Renders the count, the `"desde <data>"` line via `date-fns` `format`, the dot row, and the `"N das últimas M semanas"` label. Styled with existing tokens (`bg-accent`, `border-primary`, `text-primary`, `text-muted-foreground`) — no new colors, matching every other component in `src/components/`. Stacks vertically below `sm`, horizontal above.
-- **`src/components/return-empty-state.tsx`** — new, `'use client'`. Props: `{ preview: LastWeekPreview; onRepeat: () => Promise<void> }`. Renders the preview list (goal title + `"N tarefas"`), a primary button wired to `onRepeat` through `useTransition` for the pending/disabled state (same pattern as `TaskToggle`, `src/components/task-toggle.tsx:15`), and a secondary `Link` to `/objectives`. The secondary CTA is a link rather than an inline form because creating a weekly goal requires choosing an objective, which lives on `/objectives/[id]`.
+- **`src/components/missing-goals-card.tsx`** — new, `'use client'`. Props: `{ preview: MissingGoalsPreview; onRepeat: () => Promise<void> }`. Renders the source week label, the missing goals (title + `"N tarefas"`), and one button wired to `onRepeat` through `useTransition` for the pending/disabled state (same pattern as `TaskToggle`, `src/components/task-toggle.tsx:15`). This is the whole offer, and it is the same in both places it appears — only its container differs.
+- **`src/components/return-empty-state.tsx`** — new, presentational. Props: the same `{ preview, onRepeat }`, forwarded to `MissingGoalsCard`. Adds the S2 framing around it: the `"Sua semana ainda está vazia."` line above and a secondary `Link` to `/objectives` below. The secondary CTA is a link rather than an inline form because creating a weekly goal requires choosing an objective, which lives on `/objectives/[id]`. In S3 the card is rendered directly, without this wrapper.
 - **`src/components/home-empty-state.tsx`** — new, presentational. Props: `{ variant: 'no-objective' | 'no-goal' }`. Covers S1 and S2b, which differ only in copy and CTA target (`/objectives/new` vs `/objectives`).
 - **`src/components/fluid-day-week.tsx`** — the `tasks.length === 0` branch (line 90) gains a link to `/objectives` alongside the message. The banner is *not* rendered here; it is a sibling in `page.tsx` so it can span both columns. Otherwise unchanged.
 
 ## Error handling
 
-`repeatLastWeek` throws on DB failure and the transaction rolls back; the existing `src/app/error.tsx` boundary catches it. The double-submit guard makes a second concurrent call a no-op rather than a duplicate-creation bug. No new user-facing error copy — the button's pending state covers the normal case, and a genuine failure is a bug, not a flow.
+`repeatMissingGoals` throws on DB failure and the transaction rolls back; the existing `src/app/error.tsx` boundary catches it. Recomputing the missing set inside the transaction makes a second concurrent call a no-op rather than a duplicate-creation bug. No new user-facing error copy — the button's pending state covers the normal case, and a genuine failure is a bug, not a flow.
 
-`getLastWeekPreview` returning `null` is a normal state (S2b), not an error.
+`getMissingGoalsPreview` returning `null` is a normal state (S2b, or S3 with nothing outstanding), not an error.
 
 ## Testing
 
@@ -171,11 +183,14 @@ Following the project's convention: pure logic gets plain unit tests, server act
 - Empty DB returns `{ totalCompleted: 0, firstCompletedAt: null, weekWindow: [] }`.
 
 **`src/lib/actions/weeklyGoals.test.ts`** (extended, DB):
-- `getLastWeekPreview` returns `null` when only the current week has goals.
-- `getLastWeekPreview` picks the *most recent* earlier week when several exist, skipping empty weeks in between.
-- `repeatLastWeek` clones goals and tasks with `completed: false` and `completedAt: null`.
+- `getMissingGoalsPreview` returns `null` when there is no earlier week at all.
+- `getMissingGoalsPreview` picks the *most recent* earlier week when several exist, skipping empty weeks in between.
+- `getMissingGoalsPreview` returns `null` when every source goal already has a counterpart this week.
+- A source goal whose title matches a current-week goal under a *different* objective still counts as missing — the counterpart key is the pair, not the title alone.
+- `repeatMissingGoals` clones goals and tasks with `completed: false` and `completedAt: null`.
 - A source task on Tuesday lands on Tuesday of the current week.
-- `repeatLastWeek` is a no-op when the current week already has a goal.
+- `repeatMissingGoals` brings over only the missing goals, leaving existing counterparts untouched and un-duplicated.
+- Calling `repeatMissingGoals` twice in a row creates the goals once.
 - Cloned goals keep their original `objectiveId`.
 
 **`src/components/lifetime-progress-banner.test.tsx`** (new):
@@ -183,10 +198,13 @@ Following the project's convention: pure logic gets plain unit tests, server act
 - Renders one dot per window entry, with active/inactive distinguishable (a `data-` attribute, not a color assertion).
 - Renders `"N das últimas M semanas"` matching the window contents.
 
+**`src/components/missing-goals-card.test.tsx`** (new):
+- Lists each missing goal with its task count, singular for one.
+- Names the source week.
+- Clicking the button calls `onRepeat` once and disables while pending.
+
 **`src/components/return-empty-state.test.tsx`** (new):
-- Lists each preview goal with its task count.
-- Clicking the primary button calls `onRepeat` once and disables while pending.
-- Renders the secondary link to `/objectives`.
+- Renders the S2 framing (the empty-week line and the `/objectives` link) around the card's contents.
 
 **`src/components/home-empty-state.test.tsx`** (new):
 - The `no-objective` variant links to `/objectives/new`; the `no-goal` variant links to `/objectives`.
@@ -206,12 +224,14 @@ Following the project's convention: pure logic gets plain unit tests, server act
 - `src/components/lifetime-progress-banner.test.tsx`
 - `src/components/home-empty-state.tsx`
 - `src/components/home-empty-state.test.tsx`
+- `src/components/missing-goals-card.tsx`
+- `src/components/missing-goals-card.test.tsx`
 - `src/components/return-empty-state.tsx`
 - `src/components/return-empty-state.test.tsx`
 
 **Modified:**
-- `src/app/page.tsx` — four-way state resolution, banner rendering
-- `src/lib/actions/weeklyGoals.ts` — `getLastWeekPreview`, `repeatLastWeek`
+- `src/app/page.tsx` — four-way state resolution, banner rendering, missing-goals card in S3
+- `src/lib/actions/weeklyGoals.ts` — `findMissingGoals`, `getMissingGoalsPreview`, `repeatMissingGoals`
 - `src/lib/actions/weeklyGoals.test.ts` — cases above
 - `src/lib/actions/objectives.ts` — `countObjectives`
 - `src/components/fluid-day-week.tsx` — empty-tasks branch gains a link
@@ -222,6 +242,6 @@ Following the project's convention: pure logic gets plain unit tests, server act
 One spec, two implementation plans, executed in order:
 
 - **Plan 1 — lifetime progress banner.** `src/lib/stats.ts`, `src/lib/actions/stats.ts`, `LifetimeProgressBanner`, and its rendering in `page.tsx` above the existing layout. Ships on its own with no state-model changes.
-- **Plan 2 — home states and week resumption.** `countObjectives`, `getLastWeekPreview`, `repeatLastWeek`, the four-way branch in `page.tsx`, and the empty-state components. Consumes `getLifetimeStats` from plan 1.
+- **Plan 2 — home states and week resumption.** `countObjectives`, `findMissingGoals`, `getMissingGoalsPreview`, `repeatMissingGoals`, the four-way branch in `page.tsx`, and the empty-state components. Consumes `getLifetimeStats` from plan 1.
 
 Plan 1 is independently shippable; plan 2 depends on it only for the banner already being wired into `page.tsx`.
