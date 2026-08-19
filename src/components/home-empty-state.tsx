@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { buttonVariants } from '@/components/ui/button'
 
 const COPY = {
   'no-objective': {
@@ -22,7 +23,7 @@ export function HomeEmptyState({ variant }: { variant: keyof typeof COPY }) {
     <section className="mx-auto flex max-w-sm flex-col items-center gap-4 py-12 text-center">
       <h1 className="text-2xl font-semibold">{heading}</h1>
       <p className="text-sm text-muted-foreground">{body}</p>
-      <Link href={href} className="inline-flex items-center gap-2 text-primary hover:underline">
+      <Link href={href} className={buttonVariants()}>
         {cta}
       </Link>
     </section>

@@ -37,7 +37,7 @@ export default async function Home() {
         {banner}
         <FluidDayWeek tasks={tasks} goals={goals} onToggleTask={toggleDailyTask} />
         {preview && (
-          <div className="mt-6">
+          <div className="mt-6 max-w-md">
             <MissingGoalsCard preview={preview} onRepeat={repeatMissingGoals} />
           </div>
         )}

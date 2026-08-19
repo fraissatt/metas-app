@@ -35,4 +35,23 @@ describe('MissingGoalsCard', () => {
 
     expect(onRepeat).toHaveBeenCalledTimes(1)
   })
+
+  it('disables the button while onRepeat is pending', async () => {
+    let resolve: () => void = () => {}
+    const onRepeat = vi.fn(
+      () =>
+        new Promise<void>((r) => {
+          resolve = r
+        }),
+    )
+    render(<MissingGoalsCard preview={preview} onRepeat={onRepeat} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /trazer/i }))
+
+    const button = screen.getByRole('button', { name: /trazendo/i })
+    expect(button).toBeDisabled()
+
+    resolve()
+    await screen.findByRole('button', { name: /trazer para esta semana/i })
+  })
 })
