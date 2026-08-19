@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { format } from 'date-fns'
+import { addWeeks, format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
   createWeeklyGoal,
   deleteWeeklyGoal,
+  getMissingGoalsPreview,
   getWeekProgress,
   getWeeklyGoal,
   listWeeklyGoalsByObjective,
@@ -180,4 +181,104 @@ describe('weekly goal actions', () => {
       }
     },
   )
+
+  it('offers nothing when there is no earlier week at all', async () => {
+    const objective = await makeObjective()
+    await prisma.weeklyGoal.create({
+      data: { title: 'Atual', objectiveId: objective.id, ...getWeekBounds(new Date()) },
+    })
+
+    expect(await getMissingGoalsPreview()).toBeNull()
+  })
+
+  it('offers nothing when every source goal already has a counterpart this week', async () => {
+    const objective = await makeObjective()
+    const currentWeek = getWeekBounds(new Date())
+    const lastWeek = getWeekBounds(addWeeks(currentWeek.weekStart, -1))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Praticar inglês', objectiveId: objective.id, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Praticar inglês', objectiveId: objective.id, ...currentWeek },
+    })
+
+    expect(await getMissingGoalsPreview()).toBeNull()
+  })
+
+  it('offers the most recent earlier week, skipping empty weeks in between', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const oneWeekAgo = getWeekBounds(addWeeks(currentWeekStart, -1))
+    const fourWeeksAgo = getWeekBounds(addWeeks(currentWeekStart, -4))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Antiga', objectiveId: objective.id, ...fourWeeksAgo },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Recente', objectiveId: objective.id, ...oneWeekAgo },
+    })
+
+    const preview = await getMissingGoalsPreview()
+
+    expect(preview?.sourceWeekStart).toEqual(oneWeekAgo.weekStart)
+    expect(preview?.goals.map((g) => g.title)).toEqual(['Recente'])
+  })
+
+  it('offers only the goals without a counterpart, ordered by title', async () => {
+    const objective = await makeObjective()
+    const currentWeek = getWeekBounds(new Date())
+    const lastWeek = getWeekBounds(addWeeks(currentWeek.weekStart, -1))
+
+    const zebra = await prisma.weeklyGoal.create({
+      data: { title: 'Zebra', objectiveId: objective.id, ...lastWeek },
+    })
+    const alfa = await prisma.weeklyGoal.create({
+      data: { title: 'Alfa', objectiveId: objective.id, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Meio', objectiveId: objective.id, ...lastWeek },
+    })
+    // Already brought over by hand — must not be offered again.
+    await prisma.weeklyGoal.create({
+      data: { title: 'Meio', objectiveId: objective.id, ...currentWeek },
+    })
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'T1', weeklyGoalId: alfa.id, date: lastWeek.weekStart },
+        { title: 'T2', weeklyGoalId: alfa.id, date: lastWeek.weekStart },
+        { title: 'T3', weeklyGoalId: zebra.id, date: lastWeek.weekStart },
+      ],
+    })
+
+    const preview = await getMissingGoalsPreview()
+
+    // Alphabetical, not insertion order: without an explicit `orderBy` Postgres
+    // returns rows in an unspecified order and the list would reshuffle between
+    // renders of identical data.
+    expect(preview?.goals).toEqual([
+      { id: alfa.id, title: 'Alfa', taskCount: 2 },
+      { id: zebra.id, title: 'Zebra', taskCount: 1 },
+    ])
+  })
+
+  it('treats a same-titled goal under a different objective as still missing', async () => {
+    const first = await makeObjective()
+    const second = await prisma.objective.create({
+      data: { title: 'Outro', startDate: new Date() },
+    })
+    const currentWeek = getWeekBounds(new Date())
+    const lastWeek = getWeekBounds(addWeeks(currentWeek.weekStart, -1))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Revisar orçamento', objectiveId: first.id, ...lastWeek },
+    })
+    // Same title, different objective — not a counterpart.
+    await prisma.weeklyGoal.create({
+      data: { title: 'Revisar orçamento', objectiveId: second.id, ...currentWeek },
+    })
+
+    const preview = await getMissingGoalsPreview()
+
+    expect(preview?.goals.map((g) => g.title)).toEqual(['Revisar orçamento'])
+  })
 })
