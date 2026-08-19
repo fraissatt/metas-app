@@ -149,11 +149,15 @@ describe('FluidDayWeek', () => {
     expect(onToggleTask).toHaveBeenCalledWith('task-1')
   })
 
-  it('shows empty-state copy when there are no tasks or goals', () => {
+  it('shows empty-state copy and a way to add work when there are no tasks or goals', () => {
     render(<FluidDayWeek tasks={[]} goals={[]} onToggleTask={vi.fn()} />)
 
     expect(screen.getByText('Nenhuma tarefa para hoje.')).toBeInTheDocument()
     expect(screen.getByText('Nenhuma meta semanal para esta semana.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /adicionar tarefa/i })).toHaveAttribute(
+      'href',
+      '/objectives',
+    )
   })
 
   it('hides the week panel from AT and keyboard while collapsed', async () => {

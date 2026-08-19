@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useOptimistic, useRef, useState, useSyncExternalStore } from 'react'
+import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
@@ -87,7 +88,12 @@ export function FluidDayWeek({
       <div className="lg:basis-3/5">
         <h1 className="mb-6 text-2xl font-semibold">Hoje</h1>
         {optimisticState.tasks.length === 0 ? (
-          <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
+          <div className="flex flex-col items-start gap-2">
+            <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
+            <Link href="/objectives" className="text-sm font-medium text-primary hover:underline">
+              + Adicionar tarefa a uma meta
+            </Link>
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             {todayGroups.map((group) => (
