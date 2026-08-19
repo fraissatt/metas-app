@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
+  countObjectives,
   createObjective,
   deleteObjective,
   getObjective,
@@ -113,4 +114,17 @@ describe('objective actions', () => {
       }
     },
   )
+
+  it('counts objectives without loading their rows', async () => {
+    expect(await countObjectives()).toBe(0)
+
+    await prisma.objective.createMany({
+      data: [
+        { title: 'Primeiro', startDate: new Date() },
+        { title: 'Segundo', startDate: new Date() },
+      ],
+    })
+
+    expect(await countObjectives()).toBe(2)
+  })
 })
