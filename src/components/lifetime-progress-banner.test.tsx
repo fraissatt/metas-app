@@ -72,4 +72,17 @@ describe('LifetimeProgressBanner', () => {
     expect(screen.getByText('Sua primeira semana')).toBeInTheDocument()
     expect(screen.queryByText(/das últimas/)).not.toBeInTheDocument()
   })
+
+  it('does not greet a lapsed-but-returning user as a first-week user', () => {
+    render(
+      <LifetimeProgressBanner
+        totalCompleted={248}
+        firstCompletedAt={new Date(2025, 6, 29, 10)}
+        weekWindow={[week(7, 17, true)]}
+      />,
+    )
+
+    expect(screen.queryByText('Sua primeira semana')).not.toBeInTheDocument()
+    expect(screen.getByText('1 semana ativa')).toBeInTheDocument()
+  })
 })

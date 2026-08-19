@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils'
 
 export function LifetimeProgressBanner({ totalCompleted, firstCompletedAt, weekWindow }: LifetimeStats) {
   const activeWeeks = weekWindow.filter((week) => week.active).length
+  const isFirstWeek =
+    weekWindow.length === 1 && firstCompletedAt !== null && firstCompletedAt >= weekWindow[0].weekStart
 
   return (
     <section
@@ -34,9 +36,11 @@ export function LifetimeProgressBanner({ totalCompleted, firstCompletedAt, weekW
             ))}
           </div>
           <span className="text-xs text-muted-foreground">
-            {weekWindow.length === 1
+            {isFirstWeek
               ? 'Sua primeira semana'
-              : `${activeWeeks} das últimas ${weekWindow.length} semanas`}
+              : weekWindow.length === 1
+                ? '1 semana ativa'
+                : `${activeWeeks} das últimas ${weekWindow.length} semanas`}
           </span>
         </div>
       )}
