@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addWeeks, format } from 'date-fns'
+import { addDays, addWeeks, differenceInCalendarDays, format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
   createWeeklyGoal,
@@ -9,6 +9,7 @@ import {
   getWeeklyGoal,
   listWeeklyGoalsByObjective,
   listWeeklyGoalsForCurrentWeek,
+  repeatMissingGoals,
   updateWeeklyGoal,
 } from '@/lib/actions/weeklyGoals'
 import { getWeekBounds } from '@/lib/dates'
@@ -280,5 +281,156 @@ describe('weekly goal actions', () => {
     const preview = await getMissingGoalsPreview()
 
     expect(preview?.goals.map((g) => g.title)).toEqual(['Revisar orçamento'])
+  })
+
+  it('brings missing goals and their tasks into the current week, reset to incomplete', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'Revisar orçamento', objectiveId: objective.id, ...lastWeek },
+    })
+    await prisma.dailyTask.create({
+      data: {
+        title: 'Categorizar gastos',
+        weeklyGoalId: goal.id,
+        date: addDays(lastWeek.weekStart, 1),
+        completed: true,
+        completedAt: new Date(),
+      },
+    })
+
+    await repeatMissingGoals()
+
+    const created = await prisma.weeklyGoal.findMany({
+      where: { weekStart: currentWeekStart },
+      include: { dailyTasks: true },
+    })
+
+    expect(created).toHaveLength(1)
+    expect(created[0].title).toBe('Revisar orçamento')
+    expect(created[0].objectiveId).toBe(objective.id)
+    expect(created[0].weekEnd).toEqual(getWeekBounds(currentWeekStart).weekEnd)
+    expect(created[0].dailyTasks).toHaveLength(1)
+    expect(created[0].dailyTasks[0].title).toBe('Categorizar gastos')
+    expect(created[0].dailyTasks[0].completed).toBe(false)
+    expect(created[0].dailyTasks[0].completedAt).toBeNull()
+  })
+
+  it('lands each brought-over task on the same weekday it had in the source week', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'Meta', objectiveId: objective.id, ...lastWeek },
+    })
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'Terça', weeklyGoalId: goal.id, date: addDays(lastWeek.weekStart, 1) },
+        { title: 'Sábado', weeklyGoalId: goal.id, date: addDays(lastWeek.weekStart, 5) },
+      ],
+    })
+
+    await repeatMissingGoals()
+
+    const [created] = await prisma.weeklyGoal.findMany({
+      where: { weekStart: currentWeekStart },
+      include: { dailyTasks: { orderBy: { date: 'asc' } } },
+    })
+
+    expect(differenceInCalendarDays(created.dailyTasks[0].date, currentWeekStart)).toBe(1)
+    expect(differenceInCalendarDays(created.dailyTasks[1].date, currentWeekStart)).toBe(5)
+  })
+
+  it('leaves goals that already have a counterpart untouched and un-duplicated', async () => {
+    const objective = await makeObjective()
+    const currentWeek = getWeekBounds(new Date())
+    const lastWeek = getWeekBounds(addWeeks(currentWeek.weekStart, -1))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Já trouxe', objectiveId: objective.id, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Faltou', objectiveId: objective.id, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Já trouxe', objectiveId: objective.id, ...currentWeek },
+    })
+
+    await repeatMissingGoals()
+
+    const current = await prisma.weeklyGoal.findMany({
+      where: { weekStart: currentWeek.weekStart },
+      orderBy: { title: 'asc' },
+    })
+
+    expect(current.map((g) => g.title)).toEqual(['Faltou', 'Já trouxe'])
+  })
+
+  it('creates the goals once when called twice in a row', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'Meta', objectiveId: objective.id, ...lastWeek },
+    })
+    await prisma.dailyTask.create({
+      data: { title: 'Tarefa', weeklyGoalId: goal.id, date: lastWeek.weekStart },
+    })
+
+    await repeatMissingGoals()
+    await repeatMissingGoals()
+
+    const created = await prisma.weeklyGoal.findMany({
+      where: { weekStart: currentWeekStart },
+      include: { dailyTasks: true },
+    })
+
+    expect(created).toHaveLength(1)
+    expect(created[0].dailyTasks).toHaveLength(1)
+  })
+
+  it('does nothing when there is no earlier week to draw from', async () => {
+    await makeObjective()
+
+    await repeatMissingGoals()
+
+    expect(await prisma.weeklyGoal.findMany()).toHaveLength(0)
+  })
+
+  it('brings goals from several objectives in the same source week', async () => {
+    const first = await makeObjective()
+    const second = await prisma.objective.create({
+      data: { title: 'Outro', startDate: new Date() },
+    })
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    await prisma.weeklyGoal.create({ data: { title: 'A', objectiveId: first.id, ...lastWeek } })
+    await prisma.weeklyGoal.create({ data: { title: 'B', objectiveId: second.id, ...lastWeek } })
+
+    await repeatMissingGoals()
+
+    const created = await prisma.weeklyGoal.findMany({ where: { weekStart: currentWeekStart } })
+
+    expect(created).toHaveLength(2)
+    expect(new Set(created.map((g) => g.objectiveId))).toEqual(new Set([first.id, second.id]))
+  })
+
+  it('brings over a goal that has no tasks', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Vazia', objectiveId: objective.id, ...lastWeek },
+    })
+
+    await repeatMissingGoals()
+
+    const created = await prisma.weeklyGoal.findMany({
+      where: { weekStart: currentWeekStart },
+      include: { dailyTasks: true },
+    })
+
+    expect(created).toHaveLength(1)
+    expect(created[0].dailyTasks).toEqual([])
   })
 })

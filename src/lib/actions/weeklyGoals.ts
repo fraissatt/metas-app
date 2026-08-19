@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { addDays, differenceInCalendarDays } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
 import { readDate, readTitle } from '@/lib/actions/validation'
@@ -131,5 +132,53 @@ export async function getMissingGoalsPreview(): Promise<MissingGoalsPreview | nu
       title: goal.title,
       taskCount: goal.dailyTasks.length,
     })),
+  }
+}
+
+export async function repeatMissingGoals(): Promise<void> {
+  const { weekStart: currentWeekStart, weekEnd: currentWeekEnd } = getWeekBounds(new Date())
+  let touchedObjectiveIds: string[] = []
+
+  await prisma.$transaction(async (tx) => {
+    // Recomputed inside the transaction rather than reusing what the page
+    // rendered: two rapid clicks would otherwise both act on a stale set and
+    // create the same goals twice. The second call finds nothing missing.
+    const missing = await findMissingGoals(currentWeekStart, tx)
+    if (!missing || missing.goals.length === 0) return
+
+    touchedObjectiveIds = [...new Set(missing.goals.map((goal) => goal.objectiveId))]
+
+    for (const goal of missing.goals) {
+      // `completed` and `completedAt` are left to their schema defaults
+      // (false / null) — a week brought forward starts unfinished.
+      const clone = await tx.weeklyGoal.create({
+        data: {
+          title: goal.title,
+          objectiveId: goal.objectiveId,
+          weekStart: currentWeekStart,
+          weekEnd: currentWeekEnd,
+        },
+      })
+
+      if (goal.dailyTasks.length === 0) continue
+
+      await tx.dailyTask.createMany({
+        data: goal.dailyTasks.map((task) => ({
+          title: task.title,
+          weeklyGoalId: clone.id,
+          // Offset in calendar days, not elapsed milliseconds: a DST change
+          // inside the source week would otherwise shift a task onto the
+          // wrong weekday.
+          date: addDays(currentWeekStart, differenceInCalendarDays(task.date, missing.sourceWeekStart)),
+        })),
+      })
+    }
+  })
+
+  // Outside the transaction: cache invalidation is not part of the write, and
+  // must not run at all if the write rolled back.
+  revalidatePath('/')
+  for (const objectiveId of touchedObjectiveIds) {
+    revalidatePath(`/objectives/${objectiveId}`)
   }
 }
