@@ -20,6 +20,7 @@ const goalA = {
   weekStart: new Date('2026-08-03'),
   weekEnd: new Date('2026-08-09'),
   status: 'ACTIVE' as const,
+  recurring: false,
   objective,
 }
 
@@ -30,6 +31,7 @@ const goalB = {
   weekStart: new Date('2026-08-03'),
   weekEnd: new Date('2026-08-09'),
   status: 'ACTIVE' as const,
+  recurring: false,
   objective: otherObjective,
 }
 

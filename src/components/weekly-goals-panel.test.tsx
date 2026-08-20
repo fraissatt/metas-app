@@ -11,6 +11,7 @@ const goalA: WeeklyGoalWithTasks = {
   weekStart: new Date('2026-07-27'),
   weekEnd: new Date('2026-08-02'),
   status: 'ACTIVE',
+  recurring: false,
   dailyTasks: [],
 }
 
@@ -21,6 +22,7 @@ const goalB: WeeklyGoalWithTasks = {
   weekStart: new Date('2026-07-27'),
   weekEnd: new Date('2026-08-02'),
   status: 'ACTIVE',
+  recurring: false,
   dailyTasks: [],
 }
 

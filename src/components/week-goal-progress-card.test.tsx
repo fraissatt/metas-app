@@ -19,6 +19,7 @@ const weeklyGoal = {
   weekStart: new Date('2026-07-27'), // Monday
   weekEnd: new Date('2026-08-02'),
   status: 'ACTIVE' as const,
+  recurring: false,
   objective,
 }
 

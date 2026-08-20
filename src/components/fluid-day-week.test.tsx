@@ -20,6 +20,7 @@ const weeklyGoal = {
   weekStart: new Date('2026-07-27'),
   weekEnd: new Date('2026-08-02'),
   status: 'ACTIVE' as const,
+  recurring: false,
 }
 
 const task = {
@@ -82,6 +83,7 @@ describe('FluidDayWeek', () => {
         weekStart: new Date('2026-08-03'),
         weekEnd: new Date('2026-08-09'),
         status: 'ACTIVE' as const,
+        recurring: false,
         objective: {
           id: 'obj-finance',
           title: 'Organizar finanças',
@@ -189,6 +191,7 @@ describe('FluidDayWeek', () => {
       weekStart: new Date('2026-07-27'),
       weekEnd: new Date('2026-08-02'),
       status: 'ACTIVE' as const,
+      recurring: false,
       objective,
       dailyTasks: [],
     }
@@ -249,6 +252,7 @@ describe('FluidDayWeek', () => {
       weekStart: new Date('2026-07-27'),
       weekEnd: new Date('2026-08-02'),
       status: 'ACTIVE' as const,
+      recurring: false,
       objective,
       dailyTasks: [],
     }
