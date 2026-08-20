@@ -26,6 +26,13 @@ export async function listObjectives(): Promise<Objective[]> {
   return prisma.objective.findMany({ orderBy: { createdAt: 'desc' } })
 }
 
+// A count rather than `(await listObjectives()).length`: the home page only
+// needs to know whether any objective exists, and should not pull every row to
+// find out.
+export async function countObjectives(): Promise<number> {
+  return prisma.objective.count()
+}
+
 export async function getObjective(id: string): Promise<Objective | null> {
   return prisma.objective.findUnique({ where: { id } })
 }
