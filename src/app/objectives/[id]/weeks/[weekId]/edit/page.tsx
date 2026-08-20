@@ -23,7 +23,11 @@ export default async function EditWeeklyGoalPage({
       <h1 className="mb-6 text-2xl font-semibold">Editar meta semanal</h1>
       <WeeklyGoalForm
         action={action}
-        defaultValues={{ title: goal.title, weekOf: format(goal.weekStart, 'yyyy-MM-dd') }}
+        defaultValues={{
+          title: goal.title,
+          weekOf: format(goal.weekStart, 'yyyy-MM-dd'),
+          recurring: goal.recurring,
+        }}
       />
     </main>
   )

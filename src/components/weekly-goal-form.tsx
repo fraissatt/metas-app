@@ -1,6 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -9,7 +10,7 @@ export function WeeklyGoalForm({
   defaultValues,
 }: {
   action: (formData: FormData) => Promise<void>
-  defaultValues?: { title: string; weekOf: string }
+  defaultValues?: { title: string; weekOf: string; recurring?: boolean }
 }) {
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -26,6 +27,16 @@ export function WeeklyGoalForm({
           required
           defaultValue={defaultValues?.weekOf}
         />
+      </div>
+      {/* `aria-label` rather than a `Label htmlFor`, matching how the day
+          pickers in `weekly-goal-card.tsx` label their Base UI checkboxes. */}
+      <div className="flex items-center gap-2">
+        <Checkbox
+          name="recurring"
+          aria-label="Repetir toda semana"
+          defaultChecked={defaultValues?.recurring}
+        />
+        <span className="text-sm">Repetir toda semana</span>
       </div>
       <Button type="submit">Salvar</Button>
     </form>
