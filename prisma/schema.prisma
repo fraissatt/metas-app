@@ -26,6 +26,7 @@ model WeeklyGoal {
   weekStart   DateTime
   weekEnd     DateTime
   status      Status      @default(ACTIVE)
+  recurring   Boolean     @default(false)
   dailyTasks  DailyTask[]
 }
 

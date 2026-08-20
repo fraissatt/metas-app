@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
+import { readCheckbox, readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -54,5 +54,20 @@ describe('readOptionalDate', () => {
 
   it('throws when present but unparseable', () => {
     expect(() => readOptionalDate(formData({ targetDate: 'nope' }), 'targetDate')).toThrow()
+  })
+})
+
+describe('readCheckbox', () => {
+  it('is true when the field is present', () => {
+    const fd = new FormData()
+    fd.set('recurring', 'on')
+
+    expect(readCheckbox(fd, 'recurring')).toBe(true)
+  })
+
+  it('is false when the field is absent', () => {
+    // An unchecked checkbox submits nothing at all — that absence is the
+    // whole signal, which is why this reads presence rather than a value.
+    expect(readCheckbox(new FormData(), 'recurring')).toBe(false)
   })
 })

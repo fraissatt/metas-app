@@ -39,3 +39,12 @@ export function readOptionalDate(formData: FormData, field: string): Date | null
   }
   return date
 }
+
+/**
+ * Reads a checkbox field. An unchecked checkbox submits nothing at all, so
+ * presence is the signal — the submitted value ("on", or whatever `value` the
+ * control carries) is irrelevant.
+ */
+export function readCheckbox(formData: FormData, field: string): boolean {
+  return formData.get(field) !== null
+}

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
-import { readDate, readTitle } from '@/lib/actions/validation'
+import { readCheckbox, readDate, readTitle } from '@/lib/actions/validation'
 import type { DailyTask, WeeklyGoal } from '@prisma/client'
 
 export type WeeklyGoalWithTasks = WeeklyGoal & { dailyTasks: DailyTask[] }
@@ -11,8 +11,9 @@ export type WeeklyGoalWithTasks = WeeklyGoal & { dailyTasks: DailyTask[] }
 function readWeeklyGoalFields(formData: FormData) {
   const title = readTitle(formData)
   const { weekStart, weekEnd } = getWeekBounds(readDate(formData, 'weekOf'))
+  const recurring = readCheckbox(formData, 'recurring')
 
-  return { title, weekStart, weekEnd }
+  return { title, weekStart, weekEnd, recurring }
 }
 
 export async function createWeeklyGoal(objectiveId: string, formData: FormData): Promise<void> {

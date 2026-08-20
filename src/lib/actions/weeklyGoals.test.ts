@@ -180,4 +180,42 @@ describe('weekly goal actions', () => {
       }
     },
   )
+
+  it('persists recurring when the checkbox was submitted', async () => {
+    const objective = await makeObjective()
+
+    await createWeeklyGoal(
+      objective.id,
+      formData({ title: 'Academia', weekOf: '2026-08-17', recurring: 'on' }),
+    )
+
+    const [goal] = await prisma.weeklyGoal.findMany()
+    expect(goal.recurring).toBe(true)
+  })
+
+  it('defaults recurring to false when the checkbox was not submitted', async () => {
+    const objective = await makeObjective()
+
+    await createWeeklyGoal(objective.id, formData({ title: 'Pontual', weekOf: '2026-08-17' }))
+
+    const [goal] = await prisma.weeklyGoal.findMany()
+    expect(goal.recurring).toBe(false)
+  })
+
+  it('turns recurrence off again on update', async () => {
+    const objective = await makeObjective()
+    const goal = await prisma.weeklyGoal.create({
+      data: {
+        title: 'Academia',
+        objectiveId: objective.id,
+        recurring: true,
+        ...getWeekBounds(new Date()),
+      },
+    })
+
+    await updateWeeklyGoal(goal.id, formData({ title: 'Academia', weekOf: '2026-08-17' }))
+
+    const updated = await prisma.weeklyGoal.findUniqueOrThrow({ where: { id: goal.id } })
+    expect(updated.recurring).toBe(false)
+  })
 })
