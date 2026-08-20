@@ -135,6 +135,50 @@ function pendingRecurrences(goals: SourceGoal[]): SourceGoal[] {
   return goals.filter((goal) => goal.recurring && goal.objective.status !== 'COMPLETED')
 }
 
+/**
+ * Clones goals from the source week into the current one, preserving each
+ * task's weekday position.
+ *
+ * `recurring` is copied from the source, which is right for both callers:
+ * `repeatMissingGoals` only ever passes one-off goals, and
+ * `materializePendingWeek` only ever passes recurring ones — and a clone that
+ * lost the flag would stop the chain after a single week.
+ */
+async function cloneGoalsInto(
+  tx: Prisma.TransactionClient,
+  goals: SourceGoal[],
+  sourceWeekStart: Date,
+  currentWeekStart: Date,
+  currentWeekEnd: Date,
+): Promise<void> {
+  for (const goal of goals) {
+    // `completed` and `completedAt` are left to their schema defaults
+    // (false / null) — a week that has just arrived starts unfinished.
+    const clone = await tx.weeklyGoal.create({
+      data: {
+        title: goal.title,
+        objectiveId: goal.objectiveId,
+        weekStart: currentWeekStart,
+        weekEnd: currentWeekEnd,
+        recurring: goal.recurring,
+      },
+    })
+
+    if (goal.dailyTasks.length === 0) continue
+
+    await tx.dailyTask.createMany({
+      data: goal.dailyTasks.map((task) => ({
+        title: task.title,
+        weeklyGoalId: clone.id,
+        // Offset in calendar days, not elapsed milliseconds: a DST change
+        // inside the source week would otherwise shift a task onto the
+        // wrong weekday.
+        date: addDays(currentWeekStart, differenceInCalendarDays(task.date, sourceWeekStart)),
+      })),
+    })
+  }
+}
+
 export async function getMissingGoalsPreview(): Promise<MissingGoalsPreview | null> {
   const { weekStart: currentWeekStart } = getWeekBounds(new Date())
   const missing = await findMissingGoals(currentWeekStart)
@@ -169,31 +213,7 @@ export async function repeatMissingGoals(): Promise<void> {
 
     touchedObjectiveIds = [...new Set(goals.map((goal) => goal.objectiveId))]
 
-    for (const goal of goals) {
-      // `completed` and `completedAt` are left to their schema defaults
-      // (false / null) — a week brought forward starts unfinished.
-      const clone = await tx.weeklyGoal.create({
-        data: {
-          title: goal.title,
-          objectiveId: goal.objectiveId,
-          weekStart: currentWeekStart,
-          weekEnd: currentWeekEnd,
-        },
-      })
-
-      if (goal.dailyTasks.length === 0) continue
-
-      await tx.dailyTask.createMany({
-        data: goal.dailyTasks.map((task) => ({
-          title: task.title,
-          weeklyGoalId: clone.id,
-          // Offset in calendar days, not elapsed milliseconds: a DST change
-          // inside the source week would otherwise shift a task onto the
-          // wrong weekday.
-          date: addDays(currentWeekStart, differenceInCalendarDays(task.date, missing.sourceWeekStart)),
-        })),
-      })
-    }
+    await cloneGoalsInto(tx, goals, missing.sourceWeekStart, currentWeekStart, currentWeekEnd)
   })
 
   // Outside the transaction: cache invalidation is not part of the write, and
@@ -209,4 +229,28 @@ export async function countPendingRecurrences(): Promise<number> {
   const missing = await findMissingGoals(currentWeekStart)
 
   return missing ? pendingRecurrences(missing.goals).length : 0
+}
+
+export async function materializePendingWeek(): Promise<void> {
+  const { weekStart: currentWeekStart, weekEnd: currentWeekEnd } = getWeekBounds(new Date())
+  let touchedObjectiveIds: string[] = []
+
+  await prisma.$transaction(async (tx) => {
+    // Recomputed inside the transaction, not reused from whatever the page
+    // rendered: React Strict Mode calls this twice on every dev page load, and
+    // the second call must find nothing pending.
+    const missing = await findMissingGoals(currentWeekStart, tx)
+    if (!missing) return
+
+    const goals = pendingRecurrences(missing.goals)
+    if (goals.length === 0) return
+
+    touchedObjectiveIds = [...new Set(goals.map((goal) => goal.objectiveId))]
+    await cloneGoalsInto(tx, goals, missing.sourceWeekStart, currentWeekStart, currentWeekEnd)
+  })
+
+  revalidatePath('/')
+  for (const objectiveId of touchedObjectiveIds) {
+    revalidatePath(`/objectives/${objectiveId}`)
+  }
 }

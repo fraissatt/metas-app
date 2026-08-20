@@ -10,6 +10,7 @@ import {
   getWeeklyGoal,
   listWeeklyGoalsByObjective,
   listWeeklyGoalsForCurrentWeek,
+  materializePendingWeek,
   repeatMissingGoals,
   updateWeeklyGoal,
 } from '@/lib/actions/weeklyGoals'
@@ -574,5 +575,113 @@ describe('weekly goal actions', () => {
     await makeObjective()
 
     expect(await countPendingRecurrences()).toBe(0)
+  })
+
+  it('materialises a recurring goal with its tasks on the same weekdays', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'Treino A', weeklyGoalId: goal.id, date: addDays(lastWeek.weekStart, 0), completed: true },
+        { title: 'Treino B', weeklyGoalId: goal.id, date: addDays(lastWeek.weekStart, 2) },
+      ],
+    })
+
+    await materializePendingWeek()
+
+    const [created] = await prisma.weeklyGoal.findMany({
+      where: { weekStart: currentWeekStart },
+      include: { dailyTasks: { orderBy: { date: 'asc' } } },
+    })
+
+    expect(created.title).toBe('Academia')
+    expect(created.dailyTasks).toHaveLength(2)
+    expect(differenceInCalendarDays(created.dailyTasks[0].date, currentWeekStart)).toBe(0)
+    expect(differenceInCalendarDays(created.dailyTasks[1].date, currentWeekStart)).toBe(2)
+    expect(created.dailyTasks[0].completed).toBe(false)
+    expect(created.dailyTasks[0].completedAt).toBeNull()
+  })
+
+  it('carries the recurring flag onto the clone, so the chain continues', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+
+    await materializePendingWeek()
+
+    const [created] = await prisma.weeklyGoal.findMany({ where: { weekStart: currentWeekStart } })
+    expect(created.recurring).toBe(true)
+  })
+
+  it('leaves one-off goals behind', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Pontual', objectiveId: objective.id, ...lastWeek },
+    })
+
+    await materializePendingWeek()
+
+    const current = await prisma.weeklyGoal.findMany({ where: { weekStart: currentWeekStart } })
+    expect(current.map((g) => g.title)).toEqual(['Academia'])
+  })
+
+  it('leaves goals under a completed objective behind', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Terminado', startDate: new Date(), status: 'COMPLETED' },
+    })
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+
+    await materializePendingWeek()
+
+    expect(await prisma.weeklyGoal.findMany({ where: { weekStart: currentWeekStart } })).toHaveLength(0)
+  })
+
+  it('materialises once when called twice in a row', async () => {
+    // React Strict Mode double-invokes effects in development, so this is the
+    // normal case in dev, not an edge case.
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+    await prisma.dailyTask.create({
+      data: { title: 'Treino', weeklyGoalId: goal.id, date: lastWeek.weekStart },
+    })
+
+    await materializePendingWeek()
+    await materializePendingWeek()
+
+    const created = await prisma.weeklyGoal.findMany({
+      where: { weekStart: currentWeekStart },
+      include: { dailyTasks: true },
+    })
+
+    expect(created).toHaveLength(1)
+    expect(created[0].dailyTasks).toHaveLength(1)
+  })
+
+  it('does nothing when there is no earlier week', async () => {
+    await makeObjective()
+
+    await materializePendingWeek()
+
+    expect(await prisma.weeklyGoal.findMany()).toHaveLength(0)
   })
 })
