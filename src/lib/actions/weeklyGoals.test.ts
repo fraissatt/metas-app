@@ -471,4 +471,54 @@ describe('weekly goal actions', () => {
     expect(created).toHaveLength(1)
     expect(created[0].dailyTasks).toEqual([])
   })
+
+  it('does not offer a recurring goal for manual bring-forward', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+
+    // It is materialised automatically instead — offering it too would ask the
+    // user to do by hand what is about to happen on its own.
+    expect(await getMissingGoalsPreview()).toBeNull()
+  })
+
+  it('offers only the one-off goals when the source week mixes both', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Revisar orçamento', objectiveId: objective.id, ...lastWeek },
+    })
+
+    const preview = await getMissingGoalsPreview()
+
+    expect(preview?.goals.map((g) => g.title)).toEqual(['Revisar orçamento'])
+  })
+
+  it('leaves recurring goals alone when bringing missing goals forward', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Revisar orçamento', objectiveId: objective.id, ...lastWeek },
+    })
+
+    await repeatMissingGoals()
+
+    const current = await prisma.weeklyGoal.findMany({ where: { weekStart: currentWeekStart } })
+
+    expect(current.map((g) => g.title)).toEqual(['Revisar orçamento'])
+  })
 })

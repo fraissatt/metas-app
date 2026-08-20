@@ -5,7 +5,7 @@ import { addDays, differenceInCalendarDays } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
 import { readCheckbox, readDate, readTitle } from '@/lib/actions/validation'
-import type { DailyTask, Prisma, WeeklyGoal } from '@prisma/client'
+import type { DailyTask, Prisma, Status, WeeklyGoal } from '@prisma/client'
 
 export type WeeklyGoalWithTasks = WeeklyGoal & { dailyTasks: DailyTask[] }
 
@@ -68,7 +68,7 @@ export type MissingGoalsPreview = {
   goals: Array<{ id: string; title: string; taskCount: number }>
 }
 
-type SourceGoal = WeeklyGoal & { dailyTasks: DailyTask[] }
+type SourceGoal = WeeklyGoal & { dailyTasks: DailyTask[]; objective: { status: Status } }
 
 // A goal's identity across weeks is the objective it belongs to plus its
 // title. A space is an unambiguous separator here because `objectiveId` is a
@@ -105,7 +105,7 @@ async function findMissingGoals(
     db.weeklyGoal.findMany({
       where: { weekStart: previous.weekStart },
       orderBy: { title: 'asc' },
-      include: { dailyTasks: true },
+      include: { dailyTasks: true, objective: { select: { status: true } } },
     }),
     db.weeklyGoal.findMany({
       where: { weekStart: currentWeekStart },
@@ -121,14 +121,31 @@ async function findMissingGoals(
   }
 }
 
+/** Goals the user plans week by week — offered manually, never materialised. */
+function oneOffGoals(goals: SourceGoal[]): SourceGoal[] {
+  return goals.filter((goal) => !goal.recurring)
+}
+
+/**
+ * Goals that should reappear on their own. A completed objective stops
+ * generating: its weeks are finished, and quietly recreating them would undo
+ * the user's decision that it was done.
+ */
+function pendingRecurrences(goals: SourceGoal[]): SourceGoal[] {
+  return goals.filter((goal) => goal.recurring && goal.objective.status !== 'COMPLETED')
+}
+
 export async function getMissingGoalsPreview(): Promise<MissingGoalsPreview | null> {
   const { weekStart: currentWeekStart } = getWeekBounds(new Date())
   const missing = await findMissingGoals(currentWeekStart)
-  if (!missing || missing.goals.length === 0) return null
+  if (!missing) return null
+
+  const goals = oneOffGoals(missing.goals)
+  if (goals.length === 0) return null
 
   return {
     sourceWeekStart: missing.sourceWeekStart,
-    goals: missing.goals.map((goal) => ({
+    goals: goals.map((goal) => ({
       id: goal.id,
       title: goal.title,
       taskCount: goal.dailyTasks.length,
@@ -145,11 +162,14 @@ export async function repeatMissingGoals(): Promise<void> {
     // rendered: two rapid clicks would otherwise both act on a stale set and
     // create the same goals twice. The second call finds nothing missing.
     const missing = await findMissingGoals(currentWeekStart, tx)
-    if (!missing || missing.goals.length === 0) return
+    if (!missing) return
 
-    touchedObjectiveIds = [...new Set(missing.goals.map((goal) => goal.objectiveId))]
+    const goals = oneOffGoals(missing.goals)
+    if (goals.length === 0) return
 
-    for (const goal of missing.goals) {
+    touchedObjectiveIds = [...new Set(goals.map((goal) => goal.objectiveId))]
+
+    for (const goal of goals) {
       // `completed` and `completedAt` are left to their schema defaults
       // (false / null) — a week brought forward starts unfinished.
       const clone = await tx.weeklyGoal.create({
