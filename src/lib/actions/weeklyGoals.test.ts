@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { addDays, addWeeks, differenceInCalendarDays, format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
+  countPendingRecurrences,
   createWeeklyGoal,
   deleteWeeklyGoal,
   getMissingGoalsPreview,
@@ -520,5 +521,58 @@ describe('weekly goal actions', () => {
     const current = await prisma.weeklyGoal.findMany({ where: { weekStart: currentWeekStart } })
 
     expect(current.map((g) => g.title)).toEqual(['Revisar orçamento'])
+  })
+
+  it('counts recurring goals with no counterpart this week', async () => {
+    const objective = await makeObjective()
+    const currentWeekStart = getWeekBounds(new Date()).weekStart
+    const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Pontual', objectiveId: objective.id, ...lastWeek },
+    })
+
+    expect(await countPendingRecurrences()).toBe(1)
+  })
+
+  it('counts nothing once the recurring goal already has a counterpart', async () => {
+    const objective = await makeObjective()
+    const currentWeek = getWeekBounds(new Date())
+    const lastWeek = getWeekBounds(addWeeks(currentWeek.weekStart, -1))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...currentWeek },
+    })
+
+    expect(await countPendingRecurrences()).toBe(0)
+  })
+
+  it('counts nothing for a recurring goal under a completed objective', async () => {
+    const objective = await prisma.objective.create({
+      data: {
+        title: 'Terminado',
+        startDate: new Date(),
+        status: 'COMPLETED',
+      },
+    })
+    const lastWeek = getWeekBounds(addWeeks(getWeekBounds(new Date()).weekStart, -1))
+
+    await prisma.weeklyGoal.create({
+      data: { title: 'Academia', objectiveId: objective.id, recurring: true, ...lastWeek },
+    })
+
+    expect(await countPendingRecurrences()).toBe(0)
+  })
+
+  it('counts nothing when there is no earlier week', async () => {
+    await makeObjective()
+
+    expect(await countPendingRecurrences()).toBe(0)
   })
 })

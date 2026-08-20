@@ -203,3 +203,10 @@ export async function repeatMissingGoals(): Promise<void> {
     revalidatePath(`/objectives/${objectiveId}`)
   }
 }
+
+export async function countPendingRecurrences(): Promise<number> {
+  const { weekStart: currentWeekStart } = getWeekBounds(new Date())
+  const missing = await findMissingGoals(currentWeekStart)
+
+  return missing ? pendingRecurrences(missing.goals).length : 0
+}
