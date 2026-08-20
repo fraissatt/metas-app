@@ -223,6 +223,27 @@ describe('weekly goal actions', () => {
     expect(updated.recurring).toBe(false)
   })
 
+  it('turns recurrence on via update', async () => {
+    const objective = await makeObjective()
+    const currentWeek = getWeekBounds(new Date())
+    const goal = await prisma.weeklyGoal.create({
+      data: {
+        title: 'Academia',
+        objectiveId: objective.id,
+        recurring: false,
+        ...currentWeek,
+      },
+    })
+
+    await updateWeeklyGoal(
+      goal.id,
+      formData({ title: 'Academia', weekOf: format(currentWeek.weekStart, 'yyyy-MM-dd'), recurring: 'on' }),
+    )
+
+    const updated = await prisma.weeklyGoal.findUniqueOrThrow({ where: { id: goal.id } })
+    expect(updated.recurring).toBe(true)
+  })
+
   it('offers nothing when there is no earlier week at all', async () => {
     const objective = await makeObjective()
     await prisma.weeklyGoal.create({

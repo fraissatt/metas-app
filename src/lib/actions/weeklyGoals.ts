@@ -237,8 +237,9 @@ export async function materializePendingWeek(): Promise<void> {
 
   await prisma.$transaction(async (tx) => {
     // Recomputed inside the transaction, not reused from whatever the page
-    // rendered: React Strict Mode calls this twice on every dev page load, and
-    // the second call must find nothing pending.
+    // rendered: this is what makes remounts, retries, and genuinely concurrent
+    // calls safe. The ref guard in WeekMaterializer already handles React
+    // Strict Mode's double-invocation on its own.
     const missing = await findMissingGoals(currentWeekStart, tx)
     if (!missing) return
 

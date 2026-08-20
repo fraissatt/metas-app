@@ -52,6 +52,8 @@ A goal is only materialised when its objective's `status` is not `COMPLETED`. Th
 - **No end date or occurrence count.** A recurrence stops when the flag is cleared or the objective is completed.
 - **No changes to the celebration or lifecycle design**, beyond reading `Objective.status`.
 
+Because the previous week is the template, a chain's continuity also depends on the goal being present in whatever week `findMissingGoals` finds as the most recent prior one — a dependency the "flag cleared or objective completed" list above doesn't mention. Deleting the current week's materialised instance of a recurring goal can end the chain early, but only if that week still has some other goal in it; delete the goal that would otherwise leave the week empty and the source search falls further back, finding the goal again and keeping the chain alive. A week where goals are only ever added by hand on `/objectives/[id]`, with materialisation never triggered by a visit to `/`, has the same effect if it becomes the next source week. This is accepted as a consequence of the previous week being the one and only template, not a bug: the no-end-date, no-occurrence-count non-goal above already rules out tracking a chain more elaborately, and scoping the lookup past the single most recent week is a possible future follow-up, not part of this design.
+
 ## Schema
 
 One migration:
@@ -111,7 +113,7 @@ Then `/` and each touched `/objectives/[objectiveId]` are revalidated.
 
 ## Error handling
 
-`materializePendingWeek` throws on DB failure and rolls back; `src/app/error.tsx` catches it. Because it is triggered from an effect rather than a user gesture, a failure surfaces as the week simply not appearing — the user can still plan it by hand, and the bring-forward card is there if the source week has non-recurring goals too. No new error copy.
+`materializePendingWeek` throws on DB failure and rolls back, but the failure never reaches `src/app/error.tsx`: it is called as `void onMaterialize()` inside a `useEffect` (`src/components/week-materializer.tsx`), and a promise rejected inside an effect becomes an unhandled rejection, not something a React error boundary catches. Because it is triggered from an effect rather than a user gesture, a failure still surfaces the same way to the user: the week simply doesn't appear. The user can still plan it by hand, and the bring-forward card is there if the source week has non-recurring goals too. No new error copy.
 
 A user who opens the app on Monday and Tuesday of the same week materialises once: after the first run the goals have counterparts and are no longer missing.
 

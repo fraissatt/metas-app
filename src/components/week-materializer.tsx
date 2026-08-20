@@ -13,9 +13,11 @@ import { useEffect, useRef } from 'react'
  * sidebar renders `<Link href="/">`, which Next prefetches — a write in
  * `page.tsx` would create the week when the pointer crossed "Hoje".
  *
- * The ref guards against re-renders. React Strict Mode still double-invokes
- * this in development, which is why the server action recomputes what is
- * pending inside its own transaction.
+ * The ref guards against re-renders, including React Strict Mode's simulated
+ * double-invocation in development — React preserves refs across that cycle,
+ * so `fired` alone suppresses the second call. The server action still
+ * recomputes what is pending inside its own transaction, as defence-in-depth
+ * against remounts, retries, and genuinely concurrent calls in general.
  */
 export function WeekMaterializer({ onMaterialize }: { onMaterialize: () => Promise<void> }) {
   const fired = useRef(false)
