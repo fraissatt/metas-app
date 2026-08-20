@@ -2,8 +2,10 @@ import { listDailyTasksByDate, toggleDailyTask } from '@/lib/actions/dailyTasks'
 import { countObjectives } from '@/lib/actions/objectives'
 import { getLifetimeStats } from '@/lib/actions/stats'
 import {
+  countPendingRecurrences,
   getMissingGoalsPreview,
   listWeeklyGoalsForCurrentWeek,
+  materializePendingWeek,
   repeatMissingGoals,
 } from '@/lib/actions/weeklyGoals'
 import { FluidDayWeek } from '@/components/fluid-day-week'
@@ -11,6 +13,7 @@ import { HomeEmptyState } from '@/components/home-empty-state'
 import { LifetimeProgressBanner } from '@/components/lifetime-progress-banner'
 import { MissingGoalsCard } from '@/components/missing-goals-card'
 import { ReturnEmptyState } from '@/components/return-empty-state'
+import { WeekMaterializer } from '@/components/week-materializer'
 
 // This page's correctness depends on the wall clock at request time (it
 // filters tasks by "today" and computes "the current week" from `new
@@ -20,13 +23,15 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   const goals = await listWeeklyGoalsForCurrentWeek()
   const stats = await getLifetimeStats()
-  // Fetched before the branch, not inside it: S3 needs it too, to offer goals
-  // that were left behind even though the week is not empty.
   const preview = await getMissingGoalsPreview()
+  // A read, never a write. The write happens in the effect below, because
+  // Next prefetches the sidebar's link to "/" and a mutation here would run
+  // on hover.
+  const pendingRecurrences = await countPendingRecurrences()
 
-  // Rendered above every state that has any history behind it, so the
-  // accumulated total is the first thing a returning user sees.
   const banner = stats.totalCompleted > 0 ? <LifetimeProgressBanner {...stats} /> : null
+  const materializer =
+    pendingRecurrences > 0 ? <WeekMaterializer onMaterialize={materializePendingWeek} /> : null
 
   // S3 — the week is planned. The only branch that needs today's tasks.
   if (goals.length > 0) {
@@ -34,6 +39,7 @@ export default async function Home() {
 
     return (
       <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
+        {materializer}
         {banner}
         <FluidDayWeek tasks={tasks} goals={goals} onToggleTask={toggleDailyTask} />
         {preview && (
@@ -45,7 +51,7 @@ export default async function Home() {
     )
   }
 
-  // S1 — nothing exists yet. `banner` is necessarily null here.
+  // S1 — nothing exists yet. Neither banner nor materialiser can apply.
   if ((await countObjectives()) === 0) {
     return (
       <main className="mx-auto max-w-2xl p-8">
@@ -54,9 +60,12 @@ export default async function Home() {
     )
   }
 
-  // S2 when something can be brought forward, S2b when nothing can.
+  // S2 when something can be brought forward, S2b when nothing can. A pending
+  // recurrence is often exactly why this week is still empty, so the
+  // materialiser belongs here too.
   return (
     <main className="mx-auto max-w-2xl p-8">
+      {materializer}
       {banner}
       {preview ? (
         <ReturnEmptyState preview={preview} onRepeat={repeatMissingGoals} />
