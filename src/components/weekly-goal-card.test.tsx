@@ -15,6 +15,7 @@ const baseGoal: WeeklyGoalWithTasks = {
   weekStart: new Date('2026-07-27T00:00:00'), // Monday
   weekEnd: new Date('2026-08-02T00:00:00'),
   status: 'ACTIVE',
+  recurring: false,
   dailyTasks: [
     {
       id: 'task-1',
@@ -209,5 +210,33 @@ describe('WeeklyGoalCard', () => {
       'href',
       '/objectives/obj-1/weeks/goal-1/edit',
     )
+  })
+
+  it('marks a goal that repeats every week', () => {
+    render(
+      <WeeklyGoalCard
+        goal={{ ...baseGoal, recurring: true }}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('repete toda semana')).toBeInTheDocument()
+  })
+
+  it('does not mark a one-off goal', () => {
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByText('repete toda semana')).not.toBeInTheDocument()
   })
 })

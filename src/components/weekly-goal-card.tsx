@@ -47,6 +47,11 @@ export function WeeklyGoalCard({
         <CardTitle>
           <Link href={`/objectives/${goal.objectiveId}/weeks/${goal.id}`}>{goal.title}</Link>
         </CardTitle>
+        {goal.recurring && (
+          <span className="w-fit rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            repete toda semana
+          </span>
+        )}
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         <Progress value={percent} />
