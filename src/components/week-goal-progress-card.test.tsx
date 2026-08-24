@@ -87,4 +87,36 @@ describe('WeekGoalProgressCard', () => {
 
     expect(screen.getByText('0/0 tarefas')).toBeInTheDocument()
   })
+
+  it('marks the card as fulfilled when every task for the week is complete', () => {
+    const dailyTasks = [
+      task({ id: 'task-1', date: new Date('2026-07-27'), completed: true }),
+      task({ id: 'task-2', date: new Date('2026-07-28'), completed: true }),
+    ]
+
+    render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks }} />)
+
+    expect(screen.getByText('✓ concluída')).toBeInTheDocument()
+    expect(screen.getByText('Meta da semana fechada 🎯')).toBeInTheDocument()
+    expect(screen.queryByText('2/2 tarefas')).not.toBeInTheDocument()
+  })
+
+  it('does not celebrate a partially complete week', () => {
+    const dailyTasks = [
+      task({ id: 'task-1', date: new Date('2026-07-27'), completed: true }),
+      task({ id: 'task-2', date: new Date('2026-07-28'), completed: false }),
+    ]
+
+    render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks }} />)
+
+    expect(screen.queryByText('✓ concluída')).not.toBeInTheDocument()
+    expect(screen.getByText('1/2 tarefas')).toBeInTheDocument()
+  })
+
+  it('does not celebrate a goal that has no tasks at all', () => {
+    render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks: [] }} />)
+
+    expect(screen.queryByText('✓ concluída')).not.toBeInTheDocument()
+    expect(screen.getByText('0/0 tarefas')).toBeInTheDocument()
+  })
 })
