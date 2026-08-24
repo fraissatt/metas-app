@@ -274,7 +274,7 @@ describe('FluidDayWeek', () => {
 
     await userEvent.click(screen.getByRole('checkbox'))
 
-    expect(within(container.querySelector('#week-section')!).getByText('1/1 tarefas')).toBeInTheDocument()
+    expect(within(container.querySelector('#week-section')!).getByText('✓ concluída')).toBeInTheDocument()
 
     resolveToggle()
   })
