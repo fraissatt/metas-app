@@ -5,7 +5,7 @@ import { getObjectiveProgressSeries } from '@/lib/actions/progress'
 import { getWeekBounds } from '@/lib/dates'
 
 describe('getObjectiveProgressSeries', () => {
-  it('returns one point per weekly goal, ordered by week, with completion percent', async () => {
+  it('returns one point per week, ordered by week, with completion percent', async () => {
     const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
     // Use parseISO (not `new Date(string)`) for date-only strings: `new Date('2026-07-06')`
     // parses as UTC midnight, which in negative-UTC-offset timezones rolls back to the
@@ -33,6 +33,43 @@ describe('getObjectiveProgressSeries', () => {
     expect(series).toEqual([
       { weekLabel: '06/07', percent: 50 },
       { weekLabel: '13/07', percent: 100 },
+    ])
+  })
+
+  it('emits one point per week when an objective has several goals in the same week', async () => {
+    const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+    const week = getWeekBounds(parseISO('2026-07-06'))
+
+    const first = await prisma.weeklyGoal.create({
+      data: { title: 'Primeira', objectiveId: objective.id, ...week },
+    })
+    const second = await prisma.weeklyGoal.create({
+      data: { title: 'Segunda', objectiveId: objective.id, ...week },
+    })
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'a', weeklyGoalId: first.id, date: week.weekStart, completed: true },
+        { title: 'b', weeklyGoalId: first.id, date: week.weekStart, completed: true },
+        { title: 'c', weeklyGoalId: second.id, date: week.weekStart, completed: false },
+        { title: 'd', weeklyGoalId: second.id, date: week.weekStart, completed: false },
+      ],
+    })
+
+    const series = await getObjectiveProgressSeries(objective.id)
+
+    // One bar, not two with identical labels; the percent spans both goals.
+    expect(series).toEqual([{ weekLabel: '06/07', percent: 50 }])
+  })
+
+  it('reports 0% for a week whose goal has no tasks', async () => {
+    const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+    const week = getWeekBounds(parseISO('2026-07-06'))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Vazia', objectiveId: objective.id, ...week },
+    })
+
+    expect(await getObjectiveProgressSeries(objective.id)).toEqual([
+      { weekLabel: '06/07', percent: 0 },
     ])
   })
 })
