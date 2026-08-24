@@ -92,3 +92,32 @@ export async function reopenObjective(id: string): Promise<void> {
   revalidatePath('/objectives')
   revalidatePath(`/objectives/${id}`)
 }
+
+export type ObjectiveWithStats = Objective & { stats: ObjectiveStats }
+
+export async function listObjectivesWithStats(): Promise<{
+  active: ObjectiveWithStats[]
+  completed: ObjectiveWithStats[]
+}> {
+  const objectives = await prisma.objective.findMany({ orderBy: { createdAt: 'desc' } })
+
+  // One stats query per objective, in parallel. This is N+1 by construction and
+  // deliberately so: it keeps the week-fulfilment rule in `buildObjectiveWeeks`
+  // instead of duplicating it into SQL, and follows the precedent already set by
+  // `getObjectiveProgressSeries`. Revisit if objective counts reach the hundreds.
+  const withStats = await Promise.all(
+    objectives.map(async (objective) => ({
+      ...objective,
+      stats: await getObjectiveStats(objective.id),
+    })),
+  )
+
+  return {
+    // ABANDONED never occurs today (no screen writes it) and would land in
+    // `active` if it ever did, which is the safer of the two buckets.
+    active: withStats.filter((objective) => objective.status !== 'COMPLETED'),
+    completed: withStats
+      .filter((objective) => objective.status === 'COMPLETED')
+      .sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0)),
+  }
+}
