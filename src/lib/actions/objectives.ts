@@ -47,7 +47,7 @@ const RECENT_WEEKS = 26
 export async function getObjectiveStats(objectiveId: string): Promise<ObjectiveStats> {
   const objective = await prisma.objective.findUniqueOrThrow({
     where: { id: objectiveId },
-    select: { startDate: true },
+    select: { startDate: true, completedAt: true },
   })
   const goals = await prisma.weeklyGoal.findMany({
     where: { objectiveId },
@@ -61,10 +61,13 @@ export async function getObjectiveStats(objectiveId: string): Promise<ObjectiveS
     weeksFulfilled: weeks.filter((week) => week.fulfilled).length,
     tasksCompleted: weeks.reduce((sum, week) => sum + week.completed, 0),
     // Calendar weeks crossed, not 7-day blocks, so this agrees with
-    // `getWeekBounds` about where a week begins.
+    // `getWeekBounds` about where a week begins. Frozen at `completedAt` for a
+    // completed objective so the count stops growing once the objective is done.
     weeksSinceStart: Math.max(
       0,
-      differenceInCalendarWeeks(new Date(), objective.startDate, { weekStartsOn: 1 }),
+      differenceInCalendarWeeks(objective.completedAt ?? new Date(), objective.startDate, {
+        weekStartsOn: 1,
+      }),
     ),
     // The strip spans only the weeks this objective actually has. A four-week-old
     // objective shows four segments, not 26 with 22 blank — which would read as

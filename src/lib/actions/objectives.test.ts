@@ -168,6 +168,16 @@ describe('objective actions', () => {
     expect((await getObjectiveStats(objective.id)).weeksSinceStart).toBe(5)
   })
 
+  it('freezes weeksSinceStart at completion instead of letting it keep growing', async () => {
+    const startDate = addWeeks(new Date(), -10)
+    const completedAt = addWeeks(startDate, 4)
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate, status: 'COMPLETED', completedAt },
+    })
+
+    expect((await getObjectiveStats(objective.id)).weeksSinceStart).toBe(4)
+  })
+
   it('returns every week when there are fewer than 26, and the most recent 26 when there are more', async () => {
     const objective = await prisma.objective.create({
       data: { title: 'Academia', startDate: parseISO('2026-01-05') },

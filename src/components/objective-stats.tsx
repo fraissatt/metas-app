@@ -5,9 +5,11 @@ import { cn } from '@/lib/utils'
 export function ObjectiveStatsPanel({
   stats,
   compact = false,
+  completed = false,
 }: {
   stats: ObjectiveStats
   compact?: boolean
+  completed?: boolean
 }) {
   const { weeksFulfilled, tasksCompleted, weeksSinceStart, recentWeeks } = stats
 
@@ -21,7 +23,8 @@ export function ObjectiveStatsPanel({
           {' · '}
           {tasksCompleted} {tasksCompleted === 1 ? 'tarefa' : 'tarefas'}
           {' · '}
-          ativo há {weeksSinceStart} {weeksSinceStart === 1 ? 'semana' : 'semanas'}
+          {completed ? 'durou' : 'ativo há'} {weeksSinceStart}{' '}
+          {weeksSinceStart === 1 ? 'semana' : 'semanas'}
         </span>
       </p>
 

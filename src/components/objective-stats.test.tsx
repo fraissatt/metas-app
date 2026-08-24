@@ -46,4 +46,11 @@ describe('ObjectiveStatsPanel', () => {
     expect(screen.getByText(/2 semanas cumpridas/)).toBeInTheDocument()
     expect(screen.queryAllByTestId('week-segment')).toHaveLength(0)
   })
+
+  it('says how long a completed objective lasted instead of calling it active', () => {
+    render(<ObjectiveStatsPanel stats={stats} completed />)
+
+    expect(screen.getByText(/durou 104 semanas/)).toBeInTheDocument()
+    expect(screen.queryByText(/ativo há/)).not.toBeInTheDocument()
+  })
 })

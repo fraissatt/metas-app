@@ -25,7 +25,7 @@ function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <ObjectiveStatsPanel stats={objective.stats} compact />
+        <ObjectiveStatsPanel stats={objective.stats} compact completed={!!objective.completedAt} />
 
         {objective.completedAt && (
           <p className="text-sm font-medium text-primary">
