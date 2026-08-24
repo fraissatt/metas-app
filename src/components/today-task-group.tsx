@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { TaskToggle } from '@/components/task-toggle'
 import type { TaskGroup } from '@/lib/tasks'
+import { isGoalFulfilled } from '@/lib/objectives'
+import { cn } from '@/lib/utils'
 
 export function TodayTaskGroup({
   group,
@@ -13,6 +15,10 @@ export function TodayTaskGroup({
 }) {
   const { weeklyGoal, tasks } = group
   const completed = tasks.filter((t) => t.completed).length
+
+  // Only today's tasks — this is the day being done, not the week's goal being
+  // fulfilled. `WeekGoalProgressCard` owns that larger claim.
+  const dayComplete = isGoalFulfilled(tasks)
 
   return (
     <div className="flex overflow-hidden rounded-lg border border-border">
@@ -33,8 +39,13 @@ export function TodayTaskGroup({
               {weeklyGoal.objective.title}
             </Link>
           </div>
-          <span className="shrink-0 rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-primary">
-            {completed}/{tasks.length}
+          <span
+            className={cn(
+              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold',
+              dayComplete ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary',
+            )}
+          >
+            {dayComplete ? '✓ feito' : `${completed}/${tasks.length}`}
           </span>
         </div>
         <div className="flex flex-col">

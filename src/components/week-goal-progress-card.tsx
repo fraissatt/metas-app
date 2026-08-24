@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { isSameDay } from 'date-fns'
 import type { DailyTask, Objective, WeeklyGoal } from '@prisma/client'
 import { getWeekDays } from '@/lib/dates'
+import { isGoalFulfilled } from '@/lib/objectives'
+import { cn } from '@/lib/utils'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 const RING_RADIUS = 16
@@ -16,9 +18,15 @@ export function WeekGoalProgressCard({
   const completed = goal.dailyTasks.filter((t) => t.completed).length
   const percent = total === 0 ? 0 : Math.round((completed / total) * 100)
   const ringOffset = RING_CIRCUMFERENCE - (percent / 100) * RING_CIRCUMFERENCE
+  const fulfilled = isGoalFulfilled(goal.dailyTasks)
 
   return (
-    <div className="flex overflow-hidden rounded-lg border border-border">
+    <div
+      className={cn(
+        'flex overflow-hidden rounded-lg border transition-colors motion-reduce:transition-none',
+        fulfilled ? 'border-primary bg-accent' : 'border-border',
+      )}
+    >
       <div className="w-[3px] shrink-0 bg-primary" />
       <div className="flex-1 p-4">
         <div className="mb-3 flex min-w-0 flex-col text-left">
@@ -76,9 +84,20 @@ export function WeekGoalProgressCard({
           </div>
         </div>
 
-        <span className="mt-2 block text-sm text-muted-foreground">
-          {completed}/{total} tarefas
-        </span>
+        {/* The ring's own `stroke-dashoffset` transition already animates it to
+            full; this is the part that names what just happened. */}
+        {fulfilled ? (
+          <div className="mt-2 flex flex-col items-start gap-1">
+            <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
+              ✓ concluída
+            </span>
+            <span className="text-xs font-medium text-primary">Meta da semana fechada 🎯</span>
+          </div>
+        ) : (
+          <span className="mt-2 block text-sm text-muted-foreground">
+            {completed}/{total} tarefas
+          </span>
+        )}
       </div>
     </div>
   )

@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { format } from 'date-fns'
+import { addWeeks, format, parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
+import { getWeekBounds } from '@/lib/dates'
 import {
+  completeObjective,
   countObjectives,
   createObjective,
   deleteObjective,
   getObjective,
+  getObjectiveStats,
   listObjectives,
+  listObjectivesWithStats,
+  reopenObjective,
   updateObjective,
 } from '@/lib/actions/objectives'
 
@@ -126,5 +131,170 @@ describe('objective actions', () => {
     })
 
     expect(await countObjectives()).toBe(2)
+  })
+
+  it('reports zeros for an objective with no weekly goals', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: new Date() },
+    })
+
+    const stats = await getObjectiveStats(objective.id)
+
+    expect(stats.weeksFulfilled).toBe(0)
+    expect(stats.tasksCompleted).toBe(0)
+    expect(stats.recentWeeks).toEqual([])
+  })
+
+  it('counts fulfilled weeks and completed tasks across weeks', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: parseISO('2026-07-06') },
+    })
+    const fullWeek = getWeekBounds(parseISO('2026-07-06'))
+    const partialWeek = getWeekBounds(parseISO('2026-07-13'))
+
+    const full = await prisma.weeklyGoal.create({
+      data: { title: 'Cheia', objectiveId: objective.id, ...fullWeek },
+    })
+    const partial = await prisma.weeklyGoal.create({
+      data: { title: 'Parcial', objectiveId: objective.id, ...partialWeek },
+    })
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'a', weeklyGoalId: full.id, date: fullWeek.weekStart, completed: true },
+        { title: 'b', weeklyGoalId: full.id, date: fullWeek.weekStart, completed: true },
+        { title: 'c', weeklyGoalId: partial.id, date: partialWeek.weekStart, completed: true },
+        { title: 'd', weeklyGoalId: partial.id, date: partialWeek.weekStart, completed: false },
+      ],
+    })
+
+    const stats = await getObjectiveStats(objective.id)
+
+    expect(stats.weeksFulfilled).toBe(1)
+    expect(stats.tasksCompleted).toBe(3)
+    expect(stats.recentWeeks).toHaveLength(2)
+  })
+
+  it('measures weeks since the objective started', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: addWeeks(new Date(), -5) },
+    })
+
+    expect((await getObjectiveStats(objective.id)).weeksSinceStart).toBe(5)
+  })
+
+  it('freezes weeksSinceStart at completion instead of letting it keep growing', async () => {
+    const startDate = addWeeks(new Date(), -10)
+    const completedAt = addWeeks(startDate, 4)
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate, status: 'COMPLETED', completedAt },
+    })
+
+    expect((await getObjectiveStats(objective.id)).weeksSinceStart).toBe(4)
+  })
+
+  it('returns every week when there are fewer than 26, and the most recent 26 when there are more', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: parseISO('2026-01-05') },
+    })
+    const firstWeekStart = getWeekBounds(parseISO('2026-01-05')).weekStart
+
+    await prisma.weeklyGoal.createMany({
+      data: Array.from({ length: 30 }, (_, i) => ({
+        title: `Semana ${i}`,
+        objectiveId: objective.id,
+        ...getWeekBounds(addWeeks(firstWeekStart, i)),
+      })),
+    })
+
+    const stats = await getObjectiveStats(objective.id)
+
+    expect(stats.recentWeeks).toHaveLength(26)
+    // The window keeps the newest weeks, so the oldest four fall off the front.
+    expect(stats.recentWeeks[0].weekStart).toEqual(addWeeks(firstWeekStart, 4))
+  })
+
+  it('completes an objective, recording when', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Correr 5km', startDate: new Date() },
+    })
+
+    await completeObjective(objective.id)
+
+    const completed = await prisma.objective.findUniqueOrThrow({ where: { id: objective.id } })
+    expect(completed.status).toBe('COMPLETED')
+    expect(completed.completedAt).toBeInstanceOf(Date)
+  })
+
+  it('reopens a completed objective, clearing the completion date', async () => {
+    const objective = await prisma.objective.create({
+      data: {
+        title: 'Correr 5km',
+        startDate: new Date(),
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+    })
+
+    await reopenObjective(objective.id)
+
+    const reopened = await prisma.objective.findUniqueOrThrow({ where: { id: objective.id } })
+    expect(reopened.status).toBe('ACTIVE')
+    expect(reopened.completedAt).toBeNull()
+  })
+
+  it('leaves an already-completed objective completed', async () => {
+    // Idempotent by construction — no guard needed, and none is used.
+    const objective = await prisma.objective.create({
+      data: { title: 'Correr 5km', startDate: new Date() },
+    })
+
+    await completeObjective(objective.id)
+    await completeObjective(objective.id)
+
+    const completed = await prisma.objective.findUniqueOrThrow({ where: { id: objective.id } })
+    expect(completed.status).toBe('COMPLETED')
+  })
+
+  it('splits objectives into active and completed, each carrying its stats', async () => {
+    const active = await prisma.objective.create({
+      data: { title: 'Em andamento', startDate: new Date() },
+    })
+    const done = await prisma.objective.create({
+      data: {
+        title: 'Terminado',
+        startDate: new Date(),
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+    })
+
+    const { active: activeList, completed } = await listObjectivesWithStats()
+
+    expect(activeList.map((o) => o.id)).toEqual([active.id])
+    expect(completed.map((o) => o.id)).toEqual([done.id])
+    expect(activeList[0].stats.weeksFulfilled).toBe(0)
+  })
+
+  it('orders completed objectives by most recently completed', async () => {
+    const older = await prisma.objective.create({
+      data: {
+        title: 'Antigo',
+        startDate: new Date(),
+        status: 'COMPLETED',
+        completedAt: parseISO('2026-07-01'),
+      },
+    })
+    const newer = await prisma.objective.create({
+      data: {
+        title: 'Recente',
+        startDate: new Date(),
+        status: 'COMPLETED',
+        completedAt: parseISO('2026-08-01'),
+      },
+    })
+
+    const { completed } = await listObjectivesWithStats()
+
+    expect(completed.map((o) => o.id)).toEqual([newer.id, older.id])
   })
 })

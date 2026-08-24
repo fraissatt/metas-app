@@ -1,12 +1,59 @@
 import Link from 'next/link'
-import { listObjectives } from '@/lib/actions/objectives'
-import { deleteObjective } from '@/lib/actions/objectives'
+import { format } from 'date-fns'
+import { deleteObjective, listObjectivesWithStats, type ObjectiveWithStats } from '@/lib/actions/objectives'
+import { describeSchedule } from '@/lib/objectives'
 import { DeleteButton } from '@/components/delete-button'
+import { ObjectiveStatsPanel } from '@/components/objective-stats'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
+  const schedule = objective.completedAt
+    ? describeSchedule(objective.completedAt, objective.targetDate)
+    : null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          <Link
+            href={`/objectives/${objective.id}`}
+            className="transition-colors hover:text-primary hover:underline"
+          >
+            {objective.title}
+          </Link>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        <ObjectiveStatsPanel stats={objective.stats} compact completed={!!objective.completedAt} />
+
+        {objective.completedAt && (
+          <p className="text-sm font-medium text-primary">
+            ✓ Concluído em {format(objective.completedAt, 'dd/MM/yyyy')}
+            {schedule ? ` · ${schedule}` : ''}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            nativeButton={false}
+            render={<Link href={`/objectives/${objective.id}/edit`} />}
+          >
+            Editar
+          </Button>
+          <DeleteButton
+            action={deleteObjective.bind(null, objective.id)}
+            confirmDescription="Isso também excluirá todas as metas semanais e tarefas diárias relacionadas. Esta ação não pode ser desfeita."
+          />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export default async function ObjectivesPage() {
-  const objectives = await listObjectives()
+  const { active, completed } = await listObjectivesWithStats()
 
   return (
     <main className="mx-auto max-w-2xl p-8">
@@ -16,35 +63,27 @@ export default async function ObjectivesPage() {
           Novo objetivo
         </Button>
       </div>
+
       <div className="flex flex-col gap-4">
-        {objectives.map((objective) => (
-          <Card key={objective.id}>
-            <CardHeader>
-              <CardTitle>
-                <Link href={`/objectives/${objective.id}`} className="transition-colors hover:text-primary hover:underline">
-                  {objective.title}
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{objective.status}</span>
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  nativeButton={false}
-                  render={<Link href={`/objectives/${objective.id}/edit`} />}
-                >
-                  Editar
-                </Button>
-                <DeleteButton
-                  action={deleteObjective.bind(null, objective.id)}
-                  confirmDescription="Isso também excluirá todas as metas semanais e tarefas diárias relacionadas. Esta ação não pode ser desfeita."
-                />
-              </div>
-            </CardContent>
-          </Card>
+        {active.map((objective) => (
+          <ObjectiveRow key={objective.id} objective={objective} />
         ))}
       </div>
+
+      {/* Kept below the active ones rather than mixed in: with ten achievements
+          the two objectives still in play would otherwise disappear among them. */}
+      {completed.length > 0 && (
+        <>
+          <h2 className="mt-10 mb-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Concluídos
+          </h2>
+          <div className="flex flex-col gap-4">
+            {completed.map((objective) => (
+              <ObjectiveRow key={objective.id} objective={objective} />
+            ))}
+          </div>
+        </>
+      )}
     </main>
   )
 }
