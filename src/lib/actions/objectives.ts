@@ -72,3 +72,23 @@ export async function getObjectiveStats(objectiveId: string): Promise<ObjectiveS
     recentWeeks: weeks.slice(-RECENT_WEEKS),
   }
 }
+
+// `status` and `completedAt` are always written together — COMPLETED with a
+// timestamp, ACTIVE with null — so the two can never disagree.
+export async function completeObjective(id: string): Promise<void> {
+  await prisma.objective.update({
+    where: { id },
+    data: { status: 'COMPLETED', completedAt: new Date() },
+  })
+  revalidatePath('/objectives')
+  revalidatePath(`/objectives/${id}`)
+}
+
+export async function reopenObjective(id: string): Promise<void> {
+  await prisma.objective.update({
+    where: { id },
+    data: { status: 'ACTIVE', completedAt: null },
+  })
+  revalidatePath('/objectives')
+  revalidatePath(`/objectives/${id}`)
+}

@@ -3,11 +3,13 @@ import { addWeeks, format, parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
 import {
+  completeObjective,
   createObjective,
   deleteObjective,
   getObjective,
   getObjectiveStats,
   listObjectives,
+  reopenObjective,
   updateObjective,
 } from '@/lib/actions/objectives'
 
@@ -184,5 +186,47 @@ describe('objective actions', () => {
     expect(stats.recentWeeks).toHaveLength(26)
     // The window keeps the newest weeks, so the oldest four fall off the front.
     expect(stats.recentWeeks[0].weekStart).toEqual(addWeeks(firstWeekStart, 4))
+  })
+
+  it('completes an objective, recording when', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Correr 5km', startDate: new Date() },
+    })
+
+    await completeObjective(objective.id)
+
+    const completed = await prisma.objective.findUniqueOrThrow({ where: { id: objective.id } })
+    expect(completed.status).toBe('COMPLETED')
+    expect(completed.completedAt).toBeInstanceOf(Date)
+  })
+
+  it('reopens a completed objective, clearing the completion date', async () => {
+    const objective = await prisma.objective.create({
+      data: {
+        title: 'Correr 5km',
+        startDate: new Date(),
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+    })
+
+    await reopenObjective(objective.id)
+
+    const reopened = await prisma.objective.findUniqueOrThrow({ where: { id: objective.id } })
+    expect(reopened.status).toBe('ACTIVE')
+    expect(reopened.completedAt).toBeNull()
+  })
+
+  it('leaves an already-completed objective completed', async () => {
+    // Idempotent by construction — no guard needed, and none is used.
+    const objective = await prisma.objective.create({
+      data: { title: 'Correr 5km', startDate: new Date() },
+    })
+
+    await completeObjective(objective.id)
+    await completeObjective(objective.id)
+
+    const completed = await prisma.objective.findUniqueOrThrow({ where: { id: objective.id } })
+    expect(completed.status).toBe('COMPLETED')
   })
 })
