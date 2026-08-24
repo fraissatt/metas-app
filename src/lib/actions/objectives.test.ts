@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { format } from 'date-fns'
+import { addWeeks, format, parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
+import { getWeekBounds } from '@/lib/dates'
 import {
   createObjective,
   deleteObjective,
   getObjective,
+  getObjectiveStats,
   listObjectives,
   updateObjective,
 } from '@/lib/actions/objectives'
@@ -113,4 +115,74 @@ describe('objective actions', () => {
       }
     },
   )
+
+  it('reports zeros for an objective with no weekly goals', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: new Date() },
+    })
+
+    const stats = await getObjectiveStats(objective.id)
+
+    expect(stats.weeksFulfilled).toBe(0)
+    expect(stats.tasksCompleted).toBe(0)
+    expect(stats.recentWeeks).toEqual([])
+  })
+
+  it('counts fulfilled weeks and completed tasks across weeks', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: parseISO('2026-07-06') },
+    })
+    const fullWeek = getWeekBounds(parseISO('2026-07-06'))
+    const partialWeek = getWeekBounds(parseISO('2026-07-13'))
+
+    const full = await prisma.weeklyGoal.create({
+      data: { title: 'Cheia', objectiveId: objective.id, ...fullWeek },
+    })
+    const partial = await prisma.weeklyGoal.create({
+      data: { title: 'Parcial', objectiveId: objective.id, ...partialWeek },
+    })
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'a', weeklyGoalId: full.id, date: fullWeek.weekStart, completed: true },
+        { title: 'b', weeklyGoalId: full.id, date: fullWeek.weekStart, completed: true },
+        { title: 'c', weeklyGoalId: partial.id, date: partialWeek.weekStart, completed: true },
+        { title: 'd', weeklyGoalId: partial.id, date: partialWeek.weekStart, completed: false },
+      ],
+    })
+
+    const stats = await getObjectiveStats(objective.id)
+
+    expect(stats.weeksFulfilled).toBe(1)
+    expect(stats.tasksCompleted).toBe(3)
+    expect(stats.recentWeeks).toHaveLength(2)
+  })
+
+  it('measures weeks since the objective started', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: addWeeks(new Date(), -5) },
+    })
+
+    expect((await getObjectiveStats(objective.id)).weeksSinceStart).toBe(5)
+  })
+
+  it('returns every week when there are fewer than 26, and the most recent 26 when there are more', async () => {
+    const objective = await prisma.objective.create({
+      data: { title: 'Academia', startDate: parseISO('2026-01-05') },
+    })
+    const firstWeekStart = getWeekBounds(parseISO('2026-01-05')).weekStart
+
+    await prisma.weeklyGoal.createMany({
+      data: Array.from({ length: 30 }, (_, i) => ({
+        title: `Semana ${i}`,
+        objectiveId: objective.id,
+        ...getWeekBounds(addWeeks(firstWeekStart, i)),
+      })),
+    })
+
+    const stats = await getObjectiveStats(objective.id)
+
+    expect(stats.recentWeeks).toHaveLength(26)
+    // The window keeps the newest weeks, so the oldest four fall off the front.
+    expect(stats.recentWeeks[0].weekStart).toEqual(addWeeks(firstWeekStart, 4))
+  })
 })
