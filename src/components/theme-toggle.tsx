@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
 import type { Theme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
@@ -25,19 +25,26 @@ export function ThemeToggle({
   labelClassName?: string
 }) {
   const [theme, setTheme] = useState<Theme>(initialTheme)
+  const confirmedTheme = useRef<Theme>(initialTheme)
+  const requestCounter = useRef<number>(0)
   const next: Theme = theme === 'dark' ? 'light' : 'dark'
   const label = next === 'light' ? 'Ativar tema claro' : 'Ativar tema escuro'
   const Icon = theme === 'dark' ? Sun : Moon
 
   async function toggle() {
-    const previous = theme
+    const requestId = ++requestCounter.current
+    const previousConfirmed = confirmedTheme.current
     setTheme(next)
     applyTheme(next)
     try {
       await onChange(next)
+      confirmedTheme.current = next
     } catch {
-      setTheme(previous)
-      applyTheme(previous)
+      // Only revert if this is still the latest request
+      if (requestId === requestCounter.current) {
+        setTheme(previousConfirmed)
+        applyTheme(previousConfirmed)
+      }
     }
   }
 
