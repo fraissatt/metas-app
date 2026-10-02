@@ -146,7 +146,14 @@
   }
   html {
     @apply font-sans;
+    /* Keeps focused elements clear of the sticky header (and the bottom bar below md). */
+    scroll-padding-top: 4rem;
     -webkit-tap-highlight-color: transparent;
+  }
+  @media (width < 48rem) {
+    html {
+      scroll-padding-bottom: 4.5rem;
+    }
   }
   /* Removes the double-tap zoom delay on controls without disabling pinch zoom. */
   a,

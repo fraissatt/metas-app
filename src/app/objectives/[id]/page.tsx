@@ -15,6 +15,7 @@ import { ObjectiveStatsPanel } from '@/components/objective-stats'
 import { ObjectiveStatusButton } from '@/components/objective-status-button'
 import { WeeklyGoalsPanel } from '@/components/weekly-goals-panel'
 import { formatDate } from '@/lib/dates'
+import { Breadcrumbs } from '@/components/breadcrumbs'
 
 export async function generateMetadata({
   params,
@@ -40,6 +41,7 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
 
   return (
     <main className="mx-auto max-w-2xl p-8">
+      <Breadcrumbs items={[{ label: 'Objetivos', href: '/objectives' }, { label: objective.title }]} />
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <h1 className="min-w-0 text-2xl font-semibold break-words">{objective.title}</h1>
         <ObjectiveStatusButton

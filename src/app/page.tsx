@@ -29,7 +29,7 @@ export default async function Home() {
   const stats = await getLifetimeStats()
   const preview = await getMissingGoalsPreview()
   // A read, never a write. The write happens in the effect below, because
-  // Next prefetches the sidebar's link to "/" and a mutation here would run
+  // Next prefetches the header and bottom-bar links to "/" and a mutation here would run
   // on hover.
   const pendingRecurrences = await countPendingRecurrences()
 

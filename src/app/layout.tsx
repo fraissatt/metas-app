@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Sidebar } from "@/components/sidebar";
+import { AppHeader } from "@/components/app-header";
+import { BottomNav } from "@/components/bottom-nav";
 import { setTheme } from "@/lib/actions/theme";
 import { BROWSER_CHROME, getTheme } from "@/lib/theme";
 import "./globals.css";
@@ -48,14 +49,15 @@ export default async function RootLayout({
         >
           Pular para o conteúdo
         </a>
-        <Sidebar theme={theme} onThemeChange={setTheme} />
+        <AppHeader theme={theme} onThemeChange={setTheme} />
         <div
           id="conteudo"
           tabIndex={-1}
-          className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0 md:pl-14"
+          className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0"
         >
           {children}
         </div>
+        <BottomNav />
       </body>
     </html>
   );
