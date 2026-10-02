@@ -29,7 +29,9 @@ export function BottomNav() {
               active ? 'text-sidebar-accent-foreground' : 'text-sidebar-foreground/60 hover:text-sidebar-foreground',
             )}
           >
-            <Icon className="size-5" />
+            <span className={cn('rounded-full px-4 py-0.5 transition-colors', active && 'bg-sidebar-accent')}>
+              <Icon className="size-5" />
+            </span>
             {label}
           </Link>
         )

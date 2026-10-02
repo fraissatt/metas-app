@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
+import { BottomNav } from "@/components/bottom-nav";
 import { setTheme } from "@/lib/actions/theme";
 import { BROWSER_CHROME, getTheme } from "@/lib/theme";
 import "./globals.css";
@@ -56,6 +57,7 @@ export default async function RootLayout({
         >
           {children}
         </div>
+        <BottomNav />
       </body>
     </html>
   );

@@ -47,7 +47,7 @@ export function DaySummary({ completed, total, weekStart }: { completed: number;
       </span>
       <span aria-hidden="true" className="hidden md:inline">
         <span className="text-foreground">{empty ? 'Nenhuma tarefa hoje' : `${completed} de ${total} hoje`}</span>
-        {` · ${week}`}
+        <span className="hidden lg:inline">{` · ${week}`}</span>
       </span>
     </Link>
   )
