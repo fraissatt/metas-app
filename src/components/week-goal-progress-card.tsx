@@ -22,9 +22,10 @@ export function WeekGoalProgressCard({
 
   return (
     <div
+      data-fulfilled={fulfilled}
       className={cn(
-        'flex overflow-hidden rounded-lg border transition-colors motion-reduce:transition-none',
-        fulfilled ? 'border-primary bg-accent' : 'border-border',
+        'flex overflow-hidden rounded-lg border transition-[border-color,box-shadow] motion-reduce:transition-none',
+        fulfilled ? 'border-primary/60 bg-card shadow-[0_0_18px_var(--glow)]' : 'border-border bg-card',
       )}
     >
       <div className="w-[3px] shrink-0 bg-primary" />
@@ -32,13 +33,13 @@ export function WeekGoalProgressCard({
         <div className="mb-3 flex min-w-0 flex-col text-left">
           <Link
             href={`/objectives/${goal.objective.id}/weeks/${goal.id}`}
-            className="text-sm font-semibold break-words hover:text-primary hover:underline"
+            className="text-sm font-semibold break-words hover:text-accent-foreground hover:underline"
           >
             {goal.title}
           </Link>
           <Link
             href={`/objectives/${goal.objective.id}`}
-            className="text-xs break-words text-muted-foreground hover:text-primary hover:underline"
+            className="text-xs break-words text-muted-foreground hover:text-accent-foreground hover:underline"
           >
             {goal.objective.title}
           </Link>
@@ -46,7 +47,7 @@ export function WeekGoalProgressCard({
 
         <div className="flex items-center gap-3">
           <div className="relative flex h-10 w-10 shrink-0 items-center justify-center">
-            <svg width="40" height="40" viewBox="0 0 40 40" className="-rotate-90">
+            <svg width="40" height="40" viewBox="0 0 40 40" className="-rotate-90 overflow-visible">
               <circle cx="20" cy="20" r={RING_RADIUS} fill="none" stroke="var(--muted)" strokeWidth="4" />
               <circle
                 cx="20"
@@ -59,7 +60,10 @@ export function WeekGoalProgressCard({
                 strokeDasharray={RING_CIRCUMFERENCE}
                 strokeDashoffset={ringOffset}
                 data-testid="progress-ring"
-                className="transition-[stroke-dashoffset] duration-300 ease-in-out motion-reduce:transition-none"
+                className={cn(
+                  'transition-[stroke-dashoffset] duration-300 ease-in-out motion-reduce:transition-none',
+                  fulfilled && 'drop-shadow-[0_0_4px_var(--primary)]',
+                )}
               />
             </svg>
             <span className="absolute text-[10px] font-semibold tabular-nums">{percent}%</span>
@@ -91,7 +95,7 @@ export function WeekGoalProgressCard({
             <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
               ✓ concluída
             </span>
-            <span className="text-xs font-medium text-primary">Meta da semana fechada <span aria-hidden="true">🎯</span></span>
+            <span className="text-xs font-medium text-accent-foreground">Meta da semana fechada <span aria-hidden="true">🎯</span></span>
           </div>
         ) : (
           <span className="mt-2 block text-sm text-muted-foreground tabular-nums">

@@ -102,6 +102,16 @@ describe('WeekGoalProgressCard', () => {
     expect(screen.queryByText('2/2 tarefas')).not.toBeInTheDocument()
   })
 
+  it('flags a fulfilled week so it can glow', () => {
+    const dailyTasks = [
+      task({ id: 'task-1', date: new Date('2026-07-27'), completed: true }),
+      task({ id: 'task-2', date: new Date('2026-07-28'), completed: true }),
+    ]
+    const { container } = render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks }} />)
+
+    expect(container.firstElementChild).toHaveAttribute('data-fulfilled', 'true')
+  })
+
   it('does not celebrate a partially complete week', () => {
     const dailyTasks = [
       task({ id: 'task-1', date: new Date('2026-07-27'), completed: true }),

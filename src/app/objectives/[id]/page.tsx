@@ -52,7 +52,7 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
       <div className="mb-6">
         <ObjectiveStatsPanel stats={stats} completed={!!objective.completedAt} />
         {objective.completedAt && (
-          <p className="mt-2 text-sm font-medium text-primary">
+          <p className="mt-2 text-sm font-medium text-accent-foreground">
             ✓ Concluído em {formatDate(objective.completedAt)}
             {schedule ? ` · ${schedule}` : ''}
           </p>
