@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Sidebar } from "@/components/sidebar";
 import { setTheme } from "@/lib/actions/theme";
-import { getTheme } from "@/lib/theme";
+import { BROWSER_CHROME, getTheme } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,10 +22,6 @@ export const metadata: Metadata = {
   },
   description: "Objetivos, metas semanais e tarefas do dia.",
 };
-
-// Mirrors `--background` for each theme in globals.css. A CSS variable can't
-// be used here, because the value ends up in a <meta> tag.
-const BROWSER_CHROME = { dark: "rgb(13 15 19)", light: "rgb(236 238 242)" } as const;
 
 export async function generateViewport(): Promise<Viewport> {
   const theme = await getTheme();

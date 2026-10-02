@@ -21,7 +21,7 @@ function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
         <CardTitle>
           <Link
             href={`/objectives/${objective.id}`}
-            className="break-words transition-colors hover:text-primary hover:underline"
+            className="break-words transition-colors hover:text-accent-foreground hover:underline"
           >
             {objective.title}
           </Link>
@@ -31,7 +31,7 @@ function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
         <ObjectiveStatsPanel stats={objective.stats} compact completed={!!objective.completedAt} />
 
         {objective.completedAt && (
-          <p className="text-sm font-medium text-primary">
+          <p className="text-sm font-medium text-accent-foreground">
             ✓ Concluído em {formatDate(objective.completedAt)}
             {schedule ? ` · ${schedule}` : ''}
           </p>

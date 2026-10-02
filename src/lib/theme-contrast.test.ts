@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { BROWSER_CHROME } from './theme'
 
 const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8')
 
@@ -36,6 +37,9 @@ const PAIRS: Array<[string, string]> = [
   ['support-foreground', 'background'],
   ['support-foreground', 'card'],
   ['primary-foreground', 'primary'],
+  ['accent-foreground', 'background'],
+  ['accent-foreground', 'card'],
+  ['destructive', 'background'],
 ]
 
 describe.each([
@@ -44,7 +48,12 @@ describe.each([
 ] as const)('%s palette', (_name, selector) => {
   const vars = palette(selector)
 
-  it.each(PAIRS)('%s on %s meets WCAG AA (4.5:1)', (fg, bg) => {
+  // The dark --destructive is oklch(), which the hex parser can't read, so that
+  // pair is skipped for the dark palette only. The light palette is never
+  // filtered, so a missing light token still fails.
+  const pairs = selector === '.dark' ? PAIRS.filter(([fg]) => fg !== 'destructive') : PAIRS
+
+  it.each(pairs)('%s on %s meets WCAG AA (4.5:1)', (fg, bg) => {
     expect(vars[fg], `--${fg} missing`).toBeDefined()
     expect(vars[bg], `--${bg} missing`).toBeDefined()
     expect(contrast(vars[fg], vars[bg])).toBeGreaterThanOrEqual(4.5)
@@ -52,6 +61,8 @@ describe.each([
 })
 
 describe('theme colors stay in tokens', () => {
+  const HEX_COLOR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3,4})\b/
+
   function files(dir: string): string[] {
     return readdirSync(dir).flatMap((entry) => {
       const path = join(dir, entry)
@@ -62,9 +73,24 @@ describe('theme colors stay in tokens', () => {
   it('no component hardcodes a hex color (it would ignore the active theme)', () => {
     const offenders = files(join(process.cwd(), 'src'))
       .filter((f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f))
-      .filter((f) => /#[0-9a-fA-F]{6}\b/.test(readFileSync(f, 'utf8')))
+      .filter((f) => HEX_COLOR.test(readFileSync(f, 'utf8')))
       .map((f) => f.replace(process.cwd(), ''))
 
     expect(offenders).toEqual([])
+  })
+})
+
+describe('browser chrome (theme-color) matches the page background', () => {
+  function rgbToHex(rgb: string): string {
+    const channels = rgb.match(/\d+/g)
+    if (channels?.length !== 3) throw new Error(`unexpected color: ${rgb}`)
+    return '#' + channels.map((c) => Number(c).toString(16).padStart(2, '0')).join('')
+  }
+
+  it.each([
+    ['light', ':root'],
+    ['dark', '.dark'],
+  ] as const)('%s theme-color equals --background', (name, selector) => {
+    expect(rgbToHex(BROWSER_CHROME[name]).toLowerCase()).toBe(palette(selector).background.toLowerCase())
   })
 })

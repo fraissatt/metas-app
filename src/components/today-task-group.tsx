@@ -34,13 +34,13 @@ export function TodayTaskGroup({
           <div className="flex min-w-0 flex-1 flex-col text-left">
             <Link
               href={`/objectives/${weeklyGoal.objective.id}/weeks/${weeklyGoal.id}`}
-              className="text-sm font-semibold break-words hover:text-primary hover:underline"
+              className="text-sm font-semibold break-words hover:text-accent-foreground hover:underline"
             >
               {weeklyGoal.title}
             </Link>
             <Link
               href={`/objectives/${weeklyGoal.objective.id}`}
-              className="text-xs break-words text-muted-foreground hover:text-primary hover:underline"
+              className="text-xs break-words text-muted-foreground hover:text-accent-foreground hover:underline"
             >
               {weeklyGoal.objective.title}
             </Link>
@@ -48,7 +48,7 @@ export function TodayTaskGroup({
           <span
             className={cn(
               'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums',
-              dayComplete ? 'bg-primary text-primary-foreground shadow-[0_0_10px_var(--glow)]' : 'bg-accent text-primary',
+              dayComplete ? 'bg-primary text-primary-foreground shadow-[0_0_10px_var(--glow)]' : 'bg-accent text-accent-foreground',
             )}
           >
             {dayComplete ? '✓ feito' : `${completed}/${tasks.length}`}
