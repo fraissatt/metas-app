@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
 import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
+import { getObjective } from '@/lib/actions/objectives'
 import { getWeeklyGoal, updateWeeklyGoal } from '@/lib/actions/weeklyGoals'
 import { WeeklyGoalForm } from '@/components/weekly-goal-form'
+import { Breadcrumbs } from '@/components/breadcrumbs'
 
 export const metadata: Metadata = { title: 'Editar meta semanal' }
 
@@ -14,6 +16,8 @@ export default async function EditWeeklyGoalPage({
   const { id, weekId } = await params
   const goal = await getWeeklyGoal(weekId)
   if (!goal) notFound()
+  const objective = await getObjective(id)
+  if (!objective) notFound()
 
   async function action(formData: FormData) {
     'use server'
@@ -23,6 +27,14 @@ export default async function EditWeeklyGoalPage({
 
   return (
     <main className="mx-auto max-w-md p-8">
+      <Breadcrumbs
+        items={[
+          { label: 'Objetivos', href: '/objectives' },
+          { label: objective.title, href: `/objectives/${id}` },
+          { label: goal.title, href: `/objectives/${id}/weeks/${weekId}` },
+          { label: 'Editar' },
+        ]}
+      />
       <h1 className="mb-6 text-2xl font-semibold">Editar meta semanal</h1>
       <WeeklyGoalForm
         action={action}
