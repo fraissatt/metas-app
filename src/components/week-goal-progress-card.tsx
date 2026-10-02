@@ -60,7 +60,10 @@ export function WeekGoalProgressCard({
                 strokeDasharray={RING_CIRCUMFERENCE}
                 strokeDashoffset={ringOffset}
                 data-testid="progress-ring"
-                className={`transition-[stroke-dashoffset] duration-300 ease-in-out motion-reduce:transition-none ${fulfilled ? 'drop-shadow-[0_0_4px_var(--primary)]' : ''}`}
+                className={cn(
+                  'transition-[stroke-dashoffset] duration-300 ease-in-out motion-reduce:transition-none',
+                  fulfilled && 'drop-shadow-[0_0_4px_var(--primary)]',
+                )}
               />
             </svg>
             <span className="absolute text-[10px] font-semibold tabular-nums">{percent}%</span>

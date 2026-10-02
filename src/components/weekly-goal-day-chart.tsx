@@ -50,7 +50,7 @@ export function WeeklyGoalDayChart({ weekStart, tasks }: { weekStart: Date; task
           fill="var(--support)"
           fillOpacity={0.35}
           radius={[2, 2, 0, 0]}
-          activeBar={{ fill: 'var(--primary)' }}
+          activeBar={{ fill: 'var(--primary)', fillOpacity: 1 }}
         />
       </BarChart>
     </ResponsiveContainer>
