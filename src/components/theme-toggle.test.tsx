@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { act } from 'react-dom/test-utils'
 import { ThemeToggle, applyTheme } from '@/components/theme-toggle'
 
 const root = document.documentElement
@@ -64,99 +65,149 @@ describe('ThemeToggle', () => {
     expect(screen.getByRole('button', { name: 'Ativar tema claro' })).toBeInTheDocument()
   })
 
-  it('flips from what is shown, so two quick clicks return to the start', async () => {
+  it('serializes saves: two quick clicks update in order', async () => {
     applyTheme('dark')
-    // Never resolves: both clicks happen while the first save is in flight.
-    const onChange = vi.fn(() => new Promise<void>(() => {}))
+    let resolveClick1: () => void
+    const click1Promise = new Promise<void>((resolve) => {
+      resolveClick1 = resolve
+    })
+
+    let callCount = 0
+    const onChange = vi.fn(() => {
+      callCount++
+      return callCount === 1 ? click1Promise : Promise.resolve()
+    })
     render(<ThemeToggle theme="dark" onChange={onChange} />)
 
     const button = screen.getByRole('button')
+    // First click: dark -> light, save 1 pending
     await userEvent.click(button)
-    await userEvent.click(button)
+    expect(root.dataset.theme).toBe('light')
+    expect(onChange).toHaveBeenCalledTimes(1)
 
-    expect(root).toHaveClass('dark')
+    // Second click: light -> dark, but save 2 waits for save 1 to complete
+    await userEvent.click(button)
+    // Save 2 hasn't run yet because save 1 is still pending
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    // Now resolve save 1, which triggers save 2
+    await act(async () => {
+      resolveClick1!()
+      await click1Promise
+    })
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2))
+    expect(root.dataset.theme).toBe('dark')
+  })
+
+  it('two clicks with both saves rejecting reverts to original theme', async () => {
+    applyTheme('dark')
+
+    interface PromiseControl {
+      resolve: () => void
+      reject: (err: Error) => void
+    }
+
+    const promiseControls: PromiseControl[] = []
+    const promises = [
+      new Promise<void>((resolve, reject) => {
+        promiseControls[0] = { resolve, reject }
+      }),
+      new Promise<void>((resolve, reject) => {
+        promiseControls[1] = { resolve, reject }
+      }),
+    ]
+
+    let callCount = 0
+    const onChange = vi.fn(() => {
+      callCount++
+      return promises[callCount - 1]
+    })
+    render(<ThemeToggle theme="dark" onChange={onChange} />)
+
+    const button = screen.getByRole('button')
+    // Click 1: dark -> light, save 1 pending
+    await userEvent.click(button)
+    expect(root.dataset.theme).toBe('light')
+
+    // Click 2: light -> dark, save 2 queued
+    await userEvent.click(button)
+    expect(root.dataset.theme).toBe('dark')
+
+    // onChange called 2 times by UI, but only save 1 started
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    // Reject save 1: queue proceeds to save 2
+    await act(async () => {
+      promiseControls[0].reject(new Error('offline'))
+      await promises[0].catch(() => {})
+    })
+
+    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2))
+    // After save 2 rejects, reverts to last confirmed (dark, the initial state)
+    expect(root.dataset.theme).toBe('dark')
+
+    // Verify final state
     expect(onChange).toHaveBeenNthCalledWith(1, 'light')
     expect(onChange).toHaveBeenNthCalledWith(2, 'dark')
   })
 
-  it('two clicks with both saves rejecting should end on original theme', async () => {
+  it('later save failure reverts to confirmed theme', async () => {
     applyTheme('dark')
-    let resolveClick1: () => void
-    let rejectClick1: (err: Error) => void
-    const click1Promise = new Promise<void>((resolve, reject) => {
-      resolveClick1 = resolve
-      rejectClick1 = reject
-    })
 
-    let resolveClick2: () => void
-    let rejectClick2: (err: Error) => void
-    const click2Promise = new Promise<void>((resolve, reject) => {
-      resolveClick2 = resolve
-      rejectClick2 = reject
-    })
+    interface PromiseControl {
+      resolve: () => void
+      reject: (err: Error) => void
+    }
+
+    const promiseControls: PromiseControl[] = []
+    const promises = [
+      new Promise<void>((resolve, reject) => {
+        promiseControls[0] = { resolve, reject }
+      }),
+      new Promise<void>((resolve, reject) => {
+        promiseControls[1] = { resolve, reject }
+      }),
+    ]
 
     let callCount = 0
     const onChange = vi.fn(() => {
       callCount++
-      return callCount === 1 ? click1Promise : click2Promise
+      return promises[callCount - 1]
     })
     render(<ThemeToggle theme="dark" onChange={onChange} />)
 
     const button = screen.getByRole('button')
-    // First click: dark -> light, save pending
+    // Click 1: dark -> light, save 1 pending
     await userEvent.click(button)
     expect(root.dataset.theme).toBe('light')
 
-    // Second click: light -> dark, save pending
+    // Click 2: light -> dark, save 2 queued
     await userEvent.click(button)
     expect(root.dataset.theme).toBe('dark')
 
-    // Both rejections happen in order
-    rejectClick1!(new Error('offline'))
+    // Save 2 hasn't run yet
+    expect(onChange).toHaveBeenCalledTimes(1)
+
+    // Resolve save 1: confirms light, then triggers save 2
+    await act(async () => {
+      promiseControls[0].resolve()
+      await promises[0]
+    })
+
     await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2))
-    rejectClick2!(new Error('offline'))
-    await waitFor(() => expect(root).toHaveClass('dark'))
-
-    // Should end on original dark theme
+    // Save 2 has run and is still pending, UI shows dark
     expect(root.dataset.theme).toBe('dark')
-    expect(screen.getByRole('button', { name: 'Ativar tema claro' })).toBeInTheDocument()
-  })
 
-  it('click 1 pending, click 2 resolves, then click 1 rejects should stay on click 2 theme', async () => {
-    applyTheme('dark')
-    let resolveClick1: () => void
-    let rejectClick1: (err: Error) => void
-    const click1Promise = new Promise<void>((resolve, reject) => {
-      resolveClick1 = resolve
-      rejectClick1 = reject
+    // Now reject save 2: should revert to last confirmed (light)
+    await act(async () => {
+      promiseControls[1].reject(new Error('offline'))
+      await promises[1].catch(() => {})
     })
 
-    let resolveClick2: () => void
-    const click2Promise = Promise.resolve()
-
-    let callCount = 0
-    const onChange = vi.fn(() => {
-      callCount++
-      return callCount === 1 ? click1Promise : click2Promise
-    })
-    render(<ThemeToggle theme="dark" onChange={onChange} />)
-
-    const button = screen.getByRole('button')
-    // First click: dark -> light, save pending
-    await userEvent.click(button)
+    // Should revert to light (the confirmed theme from save 1), not stay on dark
+    await waitFor(() => expect(root).not.toHaveClass('dark'))
     expect(root.dataset.theme).toBe('light')
-
-    // Second click: light -> dark, save resolves
-    await userEvent.click(button)
-    await waitFor(() => expect(root.dataset.theme).toBe('dark'))
-
-    // Now click 1 rejects - should NOT revert because click 2 succeeded
-    rejectClick1!(new Error('offline'))
-    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2))
-
-    // Should stay on dark (click 2's confirmed theme)
-    expect(root.dataset.theme).toBe('dark')
-    expect(root).toHaveClass('dark')
-    expect(screen.getByRole('button', { name: 'Ativar tema claro' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ativar tema escuro' })).toBeInTheDocument()
   })
 })

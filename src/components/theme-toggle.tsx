@@ -27,25 +27,29 @@ export function ThemeToggle({
   const [theme, setTheme] = useState<Theme>(initialTheme)
   const confirmedTheme = useRef<Theme>(initialTheme)
   const requestCounter = useRef<number>(0)
+  const queue = useRef<Promise<void>>(Promise.resolve())
   const next: Theme = theme === 'dark' ? 'light' : 'dark'
   const label = next === 'light' ? 'Ativar tema claro' : 'Ativar tema escuro'
   const Icon = theme === 'dark' ? Sun : Moon
 
-  async function toggle() {
-    const requestId = ++requestCounter.current
-    const previousConfirmed = confirmedTheme.current
-    setTheme(next)
-    applyTheme(next)
+  async function save(nextTheme: Theme, id: number): Promise<void> {
     try {
-      await onChange(next)
-      confirmedTheme.current = next
+      await onChange(nextTheme)
+      confirmedTheme.current = nextTheme
     } catch {
       // Only revert if this is still the latest request
-      if (requestId === requestCounter.current) {
-        setTheme(previousConfirmed)
-        applyTheme(previousConfirmed)
+      if (id === requestCounter.current) {
+        setTheme(confirmedTheme.current)
+        applyTheme(confirmedTheme.current)
       }
     }
+  }
+
+  async function toggle() {
+    const requestId = ++requestCounter.current
+    setTheme(next)
+    applyTheme(next)
+    queue.current = queue.current.then(() => save(next, requestId))
   }
 
   return (
