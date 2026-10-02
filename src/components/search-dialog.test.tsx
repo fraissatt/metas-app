@@ -50,6 +50,17 @@ describe('SearchDialog', () => {
     expect(await screen.findByRole('combobox')).toBeInTheDocument()
   })
 
+  it('ignores Ctrl+Shift+K, Ctrl+Alt+K and held-down repeats', async () => {
+    render(<SearchDialog onSearch={vi.fn()} />)
+
+    fireEvent.keyDown(window, { key: 'K', ctrlKey: true, shiftKey: true })
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true, altKey: true })
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true, repeat: true })
+    await new Promise((r) => setTimeout(r, 50))
+
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
+  })
+
   it('prevents the browser default for Ctrl+K and Cmd+K', async () => {
     render(<SearchDialog onSearch={vi.fn()} />)
 
@@ -89,6 +100,35 @@ describe('SearchDialog', () => {
     expect(input).toHaveValue('c')
     expect(screen.getByText('Digite pelo menos 2 letras')).toBeInTheDocument()
     expect(screen.queryByRole('option')).not.toBeInTheDocument()
+  })
+
+  it('keeps the last results visible, marked busy, while a newer query is pending', async () => {
+    const onSearch = vi.fn((q: string) => (q === 'corr' ? Promise.resolve(results) : new Promise<SearchResults>(() => {})))
+    render(<SearchDialog onSearch={onSearch} />)
+    const input = await openWithShortcut()
+    await userEvent.type(input, 'corr')
+    await screen.findByRole('option', { name: /Corrida longa/ })
+    expect(screen.getByRole('listbox')).not.toHaveAttribute('aria-busy', 'true')
+
+    await userEvent.type(input, 'e')
+    await waitFor(() => expect(onSearch).toHaveBeenCalledWith('corre'))
+
+    expect(screen.getByRole('option', { name: /Correr uma maratona/ })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /Corrida longa/ })).toBeInTheDocument()
+    expect(screen.getByRole('listbox')).toHaveAttribute('aria-busy', 'true')
+  })
+
+  it('does not show old results when the query drops below 2 letters', async () => {
+    const onSearch = vi.fn().mockResolvedValue(results)
+    render(<SearchDialog onSearch={onSearch} />)
+    const input = await openWithShortcut()
+    await userEvent.type(input, 'co')
+    await screen.findByRole('option', { name: /Corrida longa/ })
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(screen.queryByRole('option')).not.toBeInTheDocument()
+    expect(screen.getByText('Digite pelo menos 2 letras')).toBeInTheDocument()
   })
 
   it('resets the query and results when Ctrl+K closes and reopens the dialog', async () => {

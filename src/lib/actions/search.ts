@@ -3,24 +3,32 @@
 import { prisma } from '@/lib/db'
 import { EMPTY_RESULTS, MAX_RESULTS_PER_GROUP, normalizeQuery, type SearchResults } from '@/lib/search'
 
+// Prisma's `contains` does not escape LIKE wildcards, so "50%" would match
+// "50 km". Escape `\`, `%` and `_` (Postgres' default LIKE escape is `\`).
+function escapeLike(value: string) {
+  return value.replace(/[\\%_]/g, '\\$&')
+}
+
 // Server Actions are public endpoints: the query is re-normalised here, and
 // only ever reaches Postgres as a bound parameter through Prisma.
 export async function search(query: string): Promise<SearchResults> {
   const q = normalizeQuery(typeof query === 'string' ? query : '')
   if (!q) return EMPTY_RESULTS
 
-  const title = { contains: q, mode: 'insensitive' as const }
+  const title = { contains: escapeLike(q), mode: 'insensitive' as const }
   const [objectives, weeklyGoals] = await Promise.all([
     prisma.objective.findMany({
       where: { title },
-      // 'ACTIVE' sorts before 'COMPLETED' alphabetically.
-      orderBy: [{ status: 'asc' }, { title: 'asc' }],
+      // Enum order is Postgres' declaration order (ACTIVE, COMPLETED,
+      // ABANDONED in prisma/schema.prisma), not alphabetical; `id` makes ties
+      // deterministic.
+      orderBy: [{ status: 'asc' }, { title: 'asc' }, { id: 'asc' }],
       take: MAX_RESULTS_PER_GROUP,
       select: { id: true, title: true, status: true },
     }),
     prisma.weeklyGoal.findMany({
       where: { title },
-      orderBy: { weekStart: 'desc' },
+      orderBy: [{ weekStart: 'desc' }, { title: 'asc' }, { id: 'asc' }],
       take: MAX_RESULTS_PER_GROUP,
       select: { id: true, title: true, objectiveId: true, weekStart: true, objective: { select: { title: true } } },
     }),

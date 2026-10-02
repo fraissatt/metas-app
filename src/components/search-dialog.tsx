@@ -65,6 +65,7 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (event.shiftKey || event.altKey || event.repeat) return
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         if (openRef.current) close()
@@ -92,8 +93,12 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
     return () => clearTimeout(timer)
   }, [normalized, onSearch])
 
-  // Only a response for exactly what is typed now is ever shown.
-  const current = normalized && response?.query === normalized ? response : null
+  // While a newer query is pending, keep showing the last successful results
+  // (marked busy) instead of blanking the list on every keystroke. Late
+  // responses are dropped by `latest`, and below 2 letters nothing is shown.
+  const fresh = normalized && response?.query === normalized ? response : null
+  const pending = normalized !== null && !fresh
+  const current = fresh ?? (pending && response?.results ? response : null)
   const groups = current?.results ? toOptions(current.results) : null
   const options = groups?.all ?? []
 
@@ -118,13 +123,15 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
 
   const status = !normalized
     ? 'Digite pelo menos 2 letras'
-    : current?.failed
-      ? 'Não foi possível buscar agora.'
-      : groups && options.length === 0
-        ? `Nada encontrado para “${normalized}”`
-        : groups
-          ? `${options.length} ${options.length === 1 ? 'resultado' : 'resultados'}`
-          : ''
+    : pending
+      ? ''
+      : current?.failed
+        ? 'Não foi possível buscar agora.'
+        : groups && options.length === 0
+          ? `Nada encontrado para “${normalized}”`
+          : groups
+            ? `${options.length} ${options.length === 1 ? 'resultado' : 'resultados'}`
+            : ''
 
   function renderGroup(title: string, items: Option[]) {
     if (items.length === 0) return null
@@ -181,7 +188,7 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden h-8 w-56 items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground md:flex"
+        className="hidden h-8 items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground md:flex md:w-40 lg:w-56"
       >
         <Search className="size-4" />
         <span className="flex-1 text-left">Buscar…</span>
@@ -216,7 +223,7 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
               className="h-9 w-full bg-transparent text-base outline-none placeholder:text-muted-foreground md:text-sm"
             />
           </div>
-          <div id={listboxId} role="listbox" aria-label="Resultados" className="max-h-80 overflow-y-auto">
+          <div id={listboxId} role="listbox" aria-label="Resultados" aria-busy={pending} className="max-h-80 overflow-y-auto">
             {groups && renderGroup('Objetivos', groups.objectives)}
             {groups && renderGroup('Metas da semana', groups.weeklyGoals)}
           </div>

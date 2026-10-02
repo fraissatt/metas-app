@@ -34,9 +34,42 @@ describe('search', () => {
     ])
   })
 
-  it('returns nothing for queries under 2 characters, without hitting the database', async () => {
+  it('returns nothing for queries under 2 characters', async () => {
     await objective('A meta')
     expect(await search(' a ')).toEqual({ objectives: [], weeklyGoals: [] })
+  })
+
+  it('returns nothing when the input is not a string', async () => {
+    await objective('42')
+    expect(await search(42 as never)).toEqual({ objectives: [], weeklyGoals: [] })
+  })
+
+  it('treats % as a literal character, not a wildcard', async () => {
+    await objective('50 km')
+    await objective('Meta 50% concluída')
+
+    const results = await search('50%')
+
+    expect(results.objectives.map((o) => o.title)).toEqual(['Meta 50% concluída'])
+  })
+
+  it('treats _ as a literal character, not a wildcard', async () => {
+    await objective('Qualquer coisa')
+    await objective('Outro título')
+
+    const results = await search('__')
+
+    expect(results.objectives).toEqual([])
+    expect(results.weeklyGoals).toEqual([])
+  })
+
+  it('does not throw on a query ending in a backslash and matches a literal backslash', async () => {
+    await objective('Pasta C:\\dados')
+    await objective('Pasta D:/outros')
+
+    const results = await search('C:\\')
+
+    expect(results.objectives.map((o) => o.title)).toEqual(['Pasta C:\\dados'])
   })
 
   it('caps each group at 5 results', async () => {
