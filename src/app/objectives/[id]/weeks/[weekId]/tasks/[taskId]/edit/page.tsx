@@ -16,11 +16,11 @@ export default async function EditDailyTaskPage({
 }) {
   const { id, weekId, taskId } = await params
   const task = await getDailyTask(taskId)
-  if (!task) notFound()
+  if (!task || task.weeklyGoalId !== weekId) notFound()
   const objective = await getObjective(id)
   if (!objective) notFound()
   const goal = await getWeeklyGoal(weekId)
-  if (!goal) notFound()
+  if (!goal || goal.objectiveId !== id) notFound()
 
   async function action(formData: FormData) {
     'use server'

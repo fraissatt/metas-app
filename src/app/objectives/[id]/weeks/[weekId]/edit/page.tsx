@@ -15,7 +15,7 @@ export default async function EditWeeklyGoalPage({
 }) {
   const { id, weekId } = await params
   const goal = await getWeeklyGoal(weekId)
-  if (!goal) notFound()
+  if (!goal || goal.objectiveId !== id) notFound()
   const objective = await getObjective(id)
   if (!objective) notFound()
 
