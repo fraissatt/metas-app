@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { listDailyTasksByDate, toggleDailyTask } from '@/lib/actions/dailyTasks'
 import { countObjectives } from '@/lib/actions/objectives'
 import { getLifetimeStats } from '@/lib/actions/stats'
@@ -14,6 +15,9 @@ import { LifetimeProgressBanner } from '@/components/lifetime-progress-banner'
 import { MissingGoalsCard } from '@/components/missing-goals-card'
 import { ReturnEmptyState } from '@/components/return-empty-state'
 import { WeekMaterializer } from '@/components/week-materializer'
+
+// The layout's title template skips pages in its own segment, so spell it out.
+export const metadata: Metadata = { title: { absolute: 'Hoje · Metas' } }
 
 // This page's correctness depends on the wall clock at request time (it
 // filters tasks by "today" and computes "the current week" from `new

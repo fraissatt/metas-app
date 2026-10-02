@@ -1,8 +1,8 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SubmitButton } from '@/components/submit-button'
 
 export function ObjectiveForm({
   action,
@@ -20,11 +20,24 @@ export function ObjectiveForm({
     <form action={action} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="title">Título</Label>
-        <Input id="title" name="title" required defaultValue={defaultValues?.title} />
+        <Input
+          id="title"
+          name="title"
+          required
+          autoComplete="off"
+          placeholder="Ex.: Correr uma meia maratona…"
+          defaultValue={defaultValues?.title}
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="description">Descrição</Label>
-        <Input id="description" name="description" defaultValue={defaultValues?.description ?? ''} />
+        <Input
+          id="description"
+          name="description"
+          autoComplete="off"
+          placeholder="Por que isso importa para você…"
+          defaultValue={defaultValues?.description ?? ''}
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="startDate">Início</Label>
@@ -45,7 +58,7 @@ export function ObjectiveForm({
           defaultValue={defaultValues?.targetDate ?? ''}
         />
       </div>
-      <Button type="submit">Salvar</Button>
+      <SubmitButton>Salvar</SubmitButton>
     </form>
   )
 }

@@ -98,7 +98,7 @@ describe('WeekGoalProgressCard', () => {
     render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks }} />)
 
     expect(screen.getByText('✓ concluída')).toBeInTheDocument()
-    expect(screen.getByText('Meta da semana fechada 🎯')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Meta da semana fechada')
     expect(screen.queryByText('2/2 tarefas')).not.toBeInTheDocument()
   })
 

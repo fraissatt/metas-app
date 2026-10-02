@@ -1,11 +1,14 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { format } from 'date-fns'
 import { deleteObjective, listObjectivesWithStats, type ObjectiveWithStats } from '@/lib/actions/objectives'
 import { describeSchedule } from '@/lib/objectives'
 import { DeleteButton } from '@/components/delete-button'
 import { ObjectiveStatsPanel } from '@/components/objective-stats'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { formatDate } from '@/lib/dates'
+
+export const metadata: Metadata = { title: 'Objetivos' }
 
 function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
   const schedule = objective.completedAt
@@ -18,7 +21,7 @@ function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
         <CardTitle>
           <Link
             href={`/objectives/${objective.id}`}
-            className="transition-colors hover:text-primary hover:underline"
+            className="break-words transition-colors hover:text-primary hover:underline"
           >
             {objective.title}
           </Link>
@@ -29,7 +32,7 @@ function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
 
         {objective.completedAt && (
           <p className="text-sm font-medium text-primary">
-            ✓ Concluído em {format(objective.completedAt, 'dd/MM/yyyy')}
+            ✓ Concluído em {formatDate(objective.completedAt)}
             {schedule ? ` · ${schedule}` : ''}
           </p>
         )}
@@ -63,6 +66,14 @@ export default async function ObjectivesPage() {
           Novo objetivo
         </Button>
       </div>
+
+      {active.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          {completed.length > 0
+            ? 'Nenhum objetivo em andamento. Que tal começar o próximo?'
+            : 'Você ainda não tem objetivos. Crie o primeiro para planejar a semana.'}
+        </p>
+      )}
 
       <div className="flex flex-col gap-4">
         {active.map((objective) => (

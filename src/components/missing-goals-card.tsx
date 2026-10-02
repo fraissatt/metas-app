@@ -1,10 +1,10 @@
 'use client'
 
 import { useTransition } from 'react'
-import { format } from 'date-fns'
 import { RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { MissingGoalsPreview } from '@/lib/actions/weeklyGoals'
+import { formatDayMonth } from '@/lib/dates'
 
 export function MissingGoalsCard({
   preview,
@@ -21,7 +21,7 @@ export function MissingGoalsCard({
     // what they had committed to.
     <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
       <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Ficou para trás · semana de {format(preview.sourceWeekStart, 'dd/MM')}
+        Ficou para trás · semana de {formatDayMonth(preview.sourceWeekStart)}
       </span>
 
       <div className="flex flex-col gap-1">

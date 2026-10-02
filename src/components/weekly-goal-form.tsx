@@ -1,9 +1,9 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SubmitButton } from '@/components/submit-button'
 
 export function WeeklyGoalForm({
   action,
@@ -16,7 +16,14 @@ export function WeeklyGoalForm({
     <form action={action} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="title">Título</Label>
-        <Input id="title" name="title" required defaultValue={defaultValues?.title} />
+        <Input
+          id="title"
+          name="title"
+          required
+          autoComplete="off"
+          placeholder="Ex.: Correr 3 vezes…"
+          defaultValue={defaultValues?.title}
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="weekOf">Semana de</Label>
@@ -28,17 +35,12 @@ export function WeeklyGoalForm({
           defaultValue={defaultValues?.weekOf}
         />
       </div>
-      {/* `aria-label` rather than a `Label htmlFor`, matching how the day
-          pickers in `weekly-goal-card.tsx` label their Base UI checkboxes. */}
-      <div className="flex items-center gap-2">
-        <Checkbox
-          name="recurring"
-          aria-label="Repetir toda semana"
-          defaultChecked={defaultValues?.recurring}
-        />
-        <span className="text-sm">Repetir toda semana</span>
-      </div>
-      <Button type="submit">Salvar</Button>
+      {/* Wrapping label: the checkbox and its text share one hit target. */}
+      <Label className="w-fit cursor-pointer font-normal">
+        <Checkbox name="recurring" defaultChecked={defaultValues?.recurring} />
+        Repetir toda semana
+      </Label>
+      <SubmitButton>Salvar</SubmitButton>
     </form>
   )
 }

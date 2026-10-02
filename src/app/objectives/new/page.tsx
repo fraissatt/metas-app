@@ -1,6 +1,9 @@
+import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createObjective } from '@/lib/actions/objectives'
 import { ObjectiveForm } from '@/components/objective-form'
+
+export const metadata: Metadata = { title: 'Novo objetivo' }
 
 export default function NewObjectivePage() {
   async function action(formData: FormData) {

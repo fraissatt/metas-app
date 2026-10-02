@@ -128,5 +128,26 @@
   }
   html {
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Removes the double-tap zoom delay on controls without disabling pinch zoom. */
+  a,
+  button,
+  input,
+  label,
+  select,
+  textarea,
+  [role="button"],
+  [role="checkbox"] {
+    touch-action: manipulation;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  /* Anchor jumps (e.g. the skip link) land with breathing room above. */
+  :target {
+    scroll-margin-top: 1rem;
   }
 }

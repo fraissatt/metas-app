@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getWeekBounds, getWeekDays } from '@/lib/dates'
+import { getWeekBounds, getWeekDays, formatDate, formatDayMonth } from '@/lib/dates'
 
 describe('getWeekBounds', () => {
   it('returns Monday through Sunday for a mid-week date', () => {
@@ -30,5 +30,17 @@ describe('getWeekDays', () => {
     expect(days[0].getDate()).toBe(27) // Mon Jul 27
     expect(days[1].getDate()).toBe(28) // Tue Jul 28
     expect(days[6].getDate()).toBe(2) // Sun Aug 2
+  })
+})
+
+describe('formatDate', () => {
+  it('formats a full pt-BR date', () => {
+    expect(formatDate(new Date(2026, 6, 29))).toBe('29/07/2026')
+  })
+})
+
+describe('formatDayMonth', () => {
+  it('formats a pt-BR day and month without the year', () => {
+    expect(formatDayMonth(new Date(2026, 0, 5))).toBe('05/01')
   })
 })
