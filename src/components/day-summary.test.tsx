@@ -8,7 +8,7 @@ describe('DaySummary', () => {
   it("shows today's progress and the week, linking to Hoje", () => {
     render(<DaySummary completed={3} total={5} weekStart={weekStart} />)
 
-    const link = screen.getByRole('link', { name: '3 de 5 tarefas de hoje concluídas, semana de 28/09' })
+    const link = screen.getByRole('link', { name: '3 de 5 hoje, semana de 28/09' })
     expect(link).toHaveAttribute('href', '/')
     expect(screen.getByText('3 de 5 hoje')).toBeInTheDocument()
     expect(screen.getByText('3/5')).toBeInTheDocument()
@@ -26,5 +26,13 @@ describe('DaySummary', () => {
   it('glows the ring when every task is done', () => {
     render(<DaySummary completed={2} total={2} weekStart={weekStart} />)
     expect(screen.getByTestId('summary-ring')).toHaveAttribute('data-complete', 'true')
+  })
+
+  it('clamps the ring progress when completed exceeds total', () => {
+    const { container } = render(<DaySummary completed={3} total={2} weekStart={weekStart} />)
+    const ring = screen.getByTestId('summary-ring')
+    expect(ring).toHaveAttribute('data-complete', 'true')
+    const progressCircle = container.querySelectorAll('circle')[1]
+    expect(progressCircle).toHaveAttribute('stroke-dashoffset', '0')
   })
 })

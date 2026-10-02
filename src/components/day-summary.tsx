@@ -8,8 +8,9 @@ const C = 2 * Math.PI * R
 export function DaySummary({ completed, total, weekStart }: { completed: number; total: number; weekStart: Date }) {
   const week = `semana de ${formatDayMonth(weekStart)}`
   const empty = total === 0
-  const done = !empty && completed === total
-  const label = empty ? `Nenhuma tarefa hoje, ${week}` : `${completed} de ${total} tarefas de hoje concluídas, ${week}`
+  const done = !empty && completed >= total
+  const ratio = Math.min(1, Math.max(0, completed / total))
+  const label = empty ? `Nenhuma tarefa hoje, ${week}` : `${completed} de ${total} hoje, ${week}`
 
   return (
     <Link
@@ -37,7 +38,7 @@ export function DaySummary({ completed, total, weekStart }: { completed: number;
             strokeWidth="3"
             strokeLinecap="round"
             strokeDasharray={C}
-            strokeDashoffset={C - (completed / total) * C}
+            strokeDashoffset={C - ratio * C}
           />
         </svg>
       )}
