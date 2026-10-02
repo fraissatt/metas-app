@@ -50,16 +50,30 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
 
   const normalized = normalizeQuery(query)
 
+  const close = useCallback(() => {
+    setOpen(false)
+    setQuery('')
+    setResponse(null)
+    setActive(0)
+  }, [])
+
+  // Lets the global shortcut read the current state without re-subscribing.
+  const openRef = useRef(open)
+  useEffect(() => {
+    openRef.current = open
+  }, [open])
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        setOpen((value) => !value)
+        if (openRef.current) close()
+        else setOpen(true)
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
+  }, [close])
 
   useEffect(() => {
     const id = ++latest.current
@@ -77,13 +91,6 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
     }, DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [normalized, onSearch])
-
-  const close = useCallback(() => {
-    setOpen(false)
-    setQuery('')
-    setResponse(null)
-    setActive(0)
-  }, [])
 
   // Only a response for exactly what is typed now is ever shown.
   const current = normalized && response?.query === normalized ? response : null

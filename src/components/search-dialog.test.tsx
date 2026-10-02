@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SearchDialog } from '@/components/search-dialog'
 import type { SearchResults } from '@/lib/search'
@@ -50,15 +50,59 @@ describe('SearchDialog', () => {
     expect(await screen.findByRole('combobox')).toBeInTheDocument()
   })
 
+  it('prevents the browser default for Ctrl+K and Cmd+K', async () => {
+    render(<SearchDialog onSearch={vi.fn()} />)
+
+    // fireEvent returns false when preventDefault() was called.
+    expect(fireEvent.keyDown(window, { key: 'k', ctrlKey: true })).toBe(false)
+    expect(await screen.findByRole('combobox')).toBeInTheDocument()
+
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+    await waitFor(() => expect(screen.queryByRole('combobox')).not.toBeInTheDocument())
+
+    expect(fireEvent.keyDown(window, { key: 'k', metaKey: true })).toBe(false)
+    expect(await screen.findByRole('combobox')).toBeInTheDocument()
+  })
+
   it('asks for at least 2 letters before searching', async () => {
     const onSearch = vi.fn()
     render(<SearchDialog onSearch={onSearch} />)
     const input = await openWithShortcut()
 
     await userEvent.type(input, 'c')
+    // Wait past the debounce window so a late call would be caught.
+    await new Promise((r) => setTimeout(r, 250))
 
     expect(screen.getByText('Digite pelo menos 2 letras')).toBeInTheDocument()
     expect(onSearch).not.toHaveBeenCalled()
+  })
+
+  it('goes back to the hint when the query drops below 2 letters while a request is pending', async () => {
+    const onSearch = vi.fn(() => new Promise<SearchResults>(() => {}))
+    render(<SearchDialog onSearch={onSearch} />)
+    const input = await openWithShortcut()
+
+    await userEvent.type(input, 'co')
+    await waitFor(() => expect(onSearch).toHaveBeenCalledWith('co'))
+    await userEvent.keyboard('{Backspace}')
+
+    expect(input).toHaveValue('c')
+    expect(screen.getByText('Digite pelo menos 2 letras')).toBeInTheDocument()
+    expect(screen.queryByRole('option')).not.toBeInTheDocument()
+  })
+
+  it('resets the query and results when Ctrl+K closes and reopens the dialog', async () => {
+    render(<SearchDialog onSearch={vi.fn().mockResolvedValue(results)} />)
+    const input = await openWithShortcut()
+    await userEvent.type(input, 'corr')
+    await screen.findByRole('option', { name: /Corrida longa/ })
+
+    await userEvent.keyboard('{Control>}k{/Control}')
+    await waitFor(() => expect(screen.queryByRole('combobox')).not.toBeInTheDocument())
+    const reopened = await openWithShortcut()
+
+    expect(reopened).toHaveValue('')
+    expect(screen.queryByRole('option')).not.toBeInTheDocument()
   })
 
   it('searches once after typing stops and shows both groups', async () => {
