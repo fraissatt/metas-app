@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { act } from 'react-dom/test-utils'
 import { ThemeToggle, applyTheme } from '@/components/theme-toggle'
 
 const root = document.documentElement
@@ -89,6 +88,7 @@ describe('ThemeToggle', () => {
     await userEvent.click(button)
     // Save 2 hasn't run yet because save 1 is still pending
     expect(onChange).toHaveBeenCalledTimes(1)
+    expect(root).toHaveClass('dark')
 
     // Now resolve save 1, which triggers save 2
     await act(async () => {
@@ -100,7 +100,7 @@ describe('ThemeToggle', () => {
     expect(root.dataset.theme).toBe('dark')
   })
 
-  it('two clicks with both saves rejecting reverts to original theme', async () => {
+  it('three clicks whose saves all reject end on the last confirmed theme', async () => {
     applyTheme('dark')
 
     interface PromiseControl {
@@ -116,6 +116,9 @@ describe('ThemeToggle', () => {
       new Promise<void>((resolve, reject) => {
         promiseControls[1] = { resolve, reject }
       }),
+      new Promise<void>((resolve, reject) => {
+        promiseControls[2] = { resolve, reject }
+      }),
     ]
 
     let callCount = 0
@@ -126,30 +129,43 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle theme="dark" onChange={onChange} />)
 
     const button = screen.getByRole('button')
-    // Click 1: dark -> light, save 1 pending
+    // Click 1: dark -> light
     await userEvent.click(button)
     expect(root.dataset.theme).toBe('light')
 
-    // Click 2: light -> dark, save 2 queued
+    // Click 2: light -> dark
     await userEvent.click(button)
     expect(root.dataset.theme).toBe('dark')
 
-    // onChange called 2 times by UI, but only save 1 started
+    // Click 3: dark -> light
+    await userEvent.click(button)
+    expect(root.dataset.theme).toBe('light')
+
+    // onChange called 3 times by UI, but only save 1 started
     expect(onChange).toHaveBeenCalledTimes(1)
 
-    // Reject save 1: queue proceeds to save 2
+    // Reject save 1, then save 2, then save 3 in order
+    // Each rejection triggers the next queued save to run
     await act(async () => {
       promiseControls[0].reject(new Error('offline'))
       await promises[0].catch(() => {})
+      // After save 1 rejects, save 2 runs
+      promiseControls[1].reject(new Error('offline'))
+      await promises[1].catch(() => {})
+      // After save 2 rejects, save 3 runs
+      promiseControls[2].reject(new Error('offline'))
+      await promises[2].catch(() => {})
     })
 
-    await waitFor(() => expect(onChange).toHaveBeenCalledTimes(2))
-    // After save 2 rejects, reverts to last confirmed (dark, the initial state)
-    expect(root.dataset.theme).toBe('dark')
-
-    // Verify final state
+    // All 3 saves have been called and rejected
+    expect(onChange).toHaveBeenCalledTimes(3)
     expect(onChange).toHaveBeenNthCalledWith(1, 'light')
     expect(onChange).toHaveBeenNthCalledWith(2, 'dark')
+    expect(onChange).toHaveBeenNthCalledWith(3, 'light')
+
+    // Final state: dark (the last confirmed theme, which is the initial state)
+    expect(root).toHaveClass('dark')
+    expect(screen.getByRole('button', { name: 'Ativar tema claro' })).toBeInTheDocument()
   })
 
   it('later save failure reverts to confirmed theme', async () => {
