@@ -31,7 +31,7 @@ export function LifetimeProgressBanner({ totalCompleted, firstCompletedAt, weekW
                 data-testid="week-dot"
                 data-active={week.active}
                 title={`Semana de ${formatDayMonth(week.weekStart)}`}
-                className={cn('size-2 rounded-full', week.active ? 'bg-primary' : 'bg-muted')}
+                className={cn('size-2 rounded-full', week.active ? 'bg-primary' : 'bg-muted-foreground/30')}
               />
             ))}
           </div>

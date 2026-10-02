@@ -54,6 +54,11 @@ describe('TodayTaskGroup', () => {
     expect(screen.queryByText('✓ feito')).not.toBeInTheDocument()
   })
 
+  it('flags a fully done group so it can glow', () => {
+    const { container } = render(<TodayTaskGroup group={group([true, true])} onToggleTask={vi.fn()} />)
+    expect(container.firstElementChild).toHaveAttribute('data-complete', 'true')
+  })
+
   it('names each checkbox after its task', () => {
     render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
 

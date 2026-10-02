@@ -14,7 +14,7 @@ export function AddWeeklyGoalCard({ onCreate }: { onCreate: (formData: FormData)
         type="button"
         variant="outline"
         onClick={() => setAdding(true)}
-        className="h-auto w-full border-dashed border-primary py-4 text-primary hover:bg-primary/10 hover:text-primary"
+        className="h-auto w-full border-dashed border-primary py-4 text-accent-foreground hover:bg-primary/10 hover:text-accent-foreground"
       >
         + Nova meta semanal
       </Button>

@@ -90,7 +90,7 @@ export function FluidDayWeek({
         {optimisticState.tasks.length === 0 ? (
           <div className="flex flex-col items-start gap-2">
             <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
-            <Link href="/objectives" className="text-sm font-medium text-primary hover:underline">
+            <Link href="/objectives" className="text-sm font-medium text-accent-foreground hover:underline">
               + Adicionar tarefa a uma meta
             </Link>
           </div>
@@ -110,7 +110,7 @@ export function FluidDayWeek({
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
           aria-controls="week-section"
-          className="w-full border-dashed border-primary text-primary hover:bg-primary/10 hover:text-primary lg:hidden"
+          className="w-full border-dashed border-primary text-accent-foreground hover:bg-primary/10 hover:text-accent-foreground lg:hidden"
         >
           {expanded ? 'Recolher semana' : 'Ver semana'}
           {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}

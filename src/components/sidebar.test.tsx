@@ -8,9 +8,11 @@ vi.mock('next/navigation', () => ({
 }))
 
 describe('Sidebar', () => {
+  const onThemeChange = vi.fn().mockResolvedValue(undefined)
+
   it('renders links to Hoje and Objetivos, and no longer a Semana link', () => {
     vi.mocked(usePathname).mockReturnValue('/')
-    render(<Sidebar />)
+    render(<Sidebar theme="dark" onThemeChange={onThemeChange} />)
 
     expect(screen.getByRole('link', { name: /hoje/i })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: /objetivos/i })).toHaveAttribute('href', '/objectives')
@@ -20,7 +22,7 @@ describe('Sidebar', () => {
 
   it('marks the link matching the current route as active', () => {
     vi.mocked(usePathname).mockReturnValue('/objectives')
-    render(<Sidebar />)
+    render(<Sidebar theme="dark" onThemeChange={onThemeChange} />)
 
     expect(screen.getByRole('link', { name: /objetivos/i })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: /hoje/i })).not.toHaveAttribute('aria-current')
@@ -28,21 +30,21 @@ describe('Sidebar', () => {
 
   it('marks Objetivos as active for nested objective routes', () => {
     vi.mocked(usePathname).mockReturnValue('/objectives/123/weeks/456')
-    render(<Sidebar />)
+    render(<Sidebar theme="dark" onThemeChange={onThemeChange} />)
 
     expect(screen.getByRole('link', { name: /objetivos/i })).toHaveAttribute('aria-current', 'page')
   })
 
   it('does not mark Objetivos active on the home route', () => {
     vi.mocked(usePathname).mockReturnValue('/')
-    render(<Sidebar />)
+    render(<Sidebar theme="dark" onThemeChange={onThemeChange} />)
 
     expect(screen.getByRole('link', { name: /objetivos/i })).not.toHaveAttribute('aria-current')
   })
 
   it('provides accessible names for mobile navigation links', () => {
     vi.mocked(usePathname).mockReturnValue('/')
-    render(<Sidebar />)
+    render(<Sidebar theme="dark" onThemeChange={onThemeChange} />)
 
     expect(screen.getByRole('link', { name: 'Hoje' })).toHaveAttribute('aria-label', 'Hoje')
     expect(screen.getByRole('link', { name: 'Objetivos' })).toHaveAttribute('aria-label', 'Objetivos')
@@ -50,8 +52,15 @@ describe('Sidebar', () => {
 
   it('does not match routes with shared prefixes (path boundary safety)', () => {
     vi.mocked(usePathname).mockReturnValue('/objectives-archive')
-    render(<Sidebar />)
+    render(<Sidebar theme="dark" onThemeChange={onThemeChange} />)
 
     expect(screen.getByRole('link', { name: /objetivos/i })).not.toHaveAttribute('aria-current')
+  })
+
+  it('includes the theme toggle alongside the navigation links', () => {
+    vi.mocked(usePathname).mockReturnValue('/')
+    render(<Sidebar theme="light" onThemeChange={onThemeChange} />)
+
+    expect(screen.getByRole('button', { name: 'Ativar tema escuro' })).toBeInTheDocument()
   })
 })

@@ -29,6 +29,9 @@
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+  --color-support: var(--support);
+  --color-support-foreground: var(--support-foreground);
+  --color-support-muted: var(--support-muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -49,73 +52,81 @@
 }
 
 :root {
-  color-scheme: dark;
-  --background: #121214;
-  --foreground: #e4e4e7;
-  --card: #1a1a1d;
-  --card-foreground: #e4e4e7;
-  --popover: #1a1a1d;
-  --popover-foreground: #e4e4e7;
-  --primary: #39ff14;
-  --primary-foreground: #0a0a0a;
-  --secondary: #232326;
-  --secondary-foreground: #e4e4e7;
-  --muted: #1c1c1f;
-  --muted-foreground: #a1a1aa;
-  --accent: #1c2b18;
-  --accent-foreground: #39ff14;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: #26262a;
-  --input: #26262a;
-  --ring: #39ff14;
-  --chart-1: #3f3f46;
-  --chart-2: #52713f;
-  --chart-3: #4f8f2a;
-  --chart-4: #2fbf1a;
-  --chart-5: #39ff14;
+  color-scheme: light;
+  --background: #eceef2;
+  --foreground: #14171f;
+  --card: #ffffff;
+  --card-foreground: #14171f;
+  --popover: #ffffff;
+  --popover-foreground: #14171f;
+  --primary: #1f6bff;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e5eb;
+  --secondary-foreground: #14171f;
+  --muted: #e2e5eb;
+  --muted-foreground: #5b6170;
+  --accent: #dce7ff;
+  --accent-foreground: #1450cc;
+  --support: #f05a3c;
+  --support-foreground: #b4380a;
+  --support-muted: #f05a3c1f;
+  --glow: #1f6bff33;
+  --destructive: #b91c1c;
+  --border: #d7dbe3;
+  --input: #d7dbe3;
+  --ring: #1f6bff;
+  --chart-1: #cfd4dd;
+  --chart-2: #9db8f5;
+  --chart-3: #6b97f7;
+  --chart-4: #3f7bfa;
+  --chart-5: #1f6bff;
   --radius: 0.625rem;
-  --sidebar: #0f0f11;
-  --sidebar-foreground: #e4e4e7;
-  --sidebar-primary: #39ff14;
-  --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: #1c2b18;
-  --sidebar-accent-foreground: #39ff14;
-  --sidebar-border: #232326;
-  --sidebar-ring: #39ff14;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #14171f;
+  --sidebar-primary: #1f6bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #dce7ff;
+  --sidebar-accent-foreground: #1450cc;
+  --sidebar-border: #d7dbe3;
+  --sidebar-ring: #1f6bff;
 }
 
 .dark {
   color-scheme: dark;
-  --background: #121214;
-  --foreground: #e4e4e7;
-  --card: #1a1a1d;
-  --card-foreground: #e4e4e7;
-  --popover: #1a1a1d;
-  --popover-foreground: #e4e4e7;
+  --background: #0d0f13;
+  --foreground: #e6e8ee;
+  --card: #161a21;
+  --card-foreground: #e6e8ee;
+  --popover: #161a21;
+  --popover-foreground: #e6e8ee;
   --primary: #39ff14;
   --primary-foreground: #0a0a0a;
-  --secondary: #232326;
-  --secondary-foreground: #e4e4e7;
-  --muted: #1c1c1f;
-  --muted-foreground: #a1a1aa;
-  --accent: #1c2b18;
+  --secondary: #1f242e;
+  --secondary-foreground: #e6e8ee;
+  --muted: #1f242e;
+  --muted-foreground: #9aa1ae;
+  --accent: #14261a;
   --accent-foreground: #39ff14;
+  --support: #a78bfa;
+  --support-foreground: #c4b5fd;
+  --support-muted: #a78bfa26;
+  --glow: #39ff1440;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: #26262a;
-  --input: #26262a;
+  --border: #262b36;
+  --input: #262b36;
   --ring: #39ff14;
-  --chart-1: #3f3f46;
+  --chart-1: #2a303c;
   --chart-2: #52713f;
   --chart-3: #4f8f2a;
   --chart-4: #2fbf1a;
   --chart-5: #39ff14;
-  --sidebar: #0f0f11;
-  --sidebar-foreground: #e4e4e7;
+  --sidebar: #0a0c10;
+  --sidebar-foreground: #e6e8ee;
   --sidebar-primary: #39ff14;
   --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: #1c2b18;
+  --sidebar-accent: #14261a;
   --sidebar-accent-foreground: #39ff14;
-  --sidebar-border: #232326;
+  --sidebar-border: #262b36;
   --sidebar-ring: #39ff14;
 }
 
@@ -125,6 +136,13 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* The one ambient use of the neon: a soft wash at the top of every page. */
+    background-image: radial-gradient(
+      130% 45% at 60% 0%,
+      color-mix(in oklab, var(--primary) 18%, var(--background)) 0%,
+      var(--background) 65%
+    );
+    background-repeat: no-repeat;
   }
   html {
     @apply font-sans;

@@ -16,7 +16,7 @@ export function ObjectiveStatsPanel({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm tabular-nums">
-        <span className="font-semibold text-primary">
+        <span className="font-semibold text-accent-foreground">
           {weeksFulfilled} {weeksFulfilled === 1 ? 'semana cumprida' : 'semanas cumpridas'}
         </span>
         <span className="text-muted-foreground">

@@ -19,8 +19,8 @@ export function MissingGoalsCard({
     // Listed before the click rather than behind a confirmation step: it tells
     // the user what the button will do and, just as importantly, reminds them
     // what they had committed to.
-    <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
-      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="flex flex-col gap-3 rounded-lg border border-border border-l-[3px] border-l-support bg-card p-4">
+      <span className="text-xs font-medium uppercase tracking-wide text-support-foreground">
         Ficou para trás · semana de {formatDayMonth(preview.sourceWeekStart)}
       </span>
 
