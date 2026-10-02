@@ -73,7 +73,7 @@ describe('WeeklyGoalsPanel', () => {
       />,
     )
 
-    await userEvent.type(screen.getByPlaceholderText('Nova tarefa'), 'Alongamento')
+    await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 27' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
 

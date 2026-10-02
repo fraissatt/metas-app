@@ -1,6 +1,6 @@
-import { format } from 'date-fns'
 import type { ObjectiveStats } from '@/lib/objectives'
 import { cn } from '@/lib/utils'
+import { formatDayMonth } from '@/lib/dates'
 
 export function ObjectiveStatsPanel({
   stats,
@@ -15,7 +15,7 @@ export function ObjectiveStatsPanel({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-sm">
+      <p className="text-sm tabular-nums">
         <span className="font-semibold text-primary">
           {weeksFulfilled} {weeksFulfilled === 1 ? 'semana cumprida' : 'semanas cumpridas'}
         </span>
@@ -35,7 +35,7 @@ export function ObjectiveStatsPanel({
               key={week.weekStart.toISOString()}
               data-testid="week-segment"
               data-fulfilled={week.fulfilled}
-              title={`Semana de ${format(week.weekStart, 'dd/MM')}: ${week.completed}/${week.total}`}
+              title={`Semana de ${formatDayMonth(week.weekStart)}: ${week.completed}/${week.total}`}
               className={cn('flex-1 rounded-sm', week.fulfilled ? 'bg-primary' : 'bg-muted')}
             />
           ))}

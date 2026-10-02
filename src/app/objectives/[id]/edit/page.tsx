@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getObjective, updateObjective } from '@/lib/actions/objectives'
 import { ObjectiveForm } from '@/components/objective-form'
+
+export const metadata: Metadata = { title: 'Editar objetivo' }
 
 export default async function EditObjectivePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

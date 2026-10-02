@@ -5,13 +5,15 @@ import { useState } from 'react'
 import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
 import { format, isSameDay } from 'date-fns'
 import type { DailyTask } from '@prisma/client'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeleteButton } from '@/components/delete-button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
+import { SubmitButton } from '@/components/submit-button'
 import { WeeklyGoalDayChart } from '@/components/weekly-goal-day-chart'
-import { getWeekDays } from '@/lib/dates'
+import { getWeekDays, formatDayMonth } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
@@ -56,7 +58,7 @@ export function WeeklyGoalCard({
       <CardContent className="flex flex-col gap-3">
         <Progress value={percent} />
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground tabular-nums">
             {completed}/{total} tarefas ({percent}%)
           </span>
           <div className="flex shrink-0 gap-2">
@@ -75,7 +77,7 @@ export function WeeklyGoalCard({
         </div>
 
         <form action={onCreateTasks} className="flex flex-col gap-2">
-          <Input name="title" placeholder="Nova tarefa" required />
+          <Input name="title" aria-label="Nova tarefa" placeholder="Nova tarefa…" autoComplete="off" required />
           <div className="flex gap-1.5">
             {days.map((day, index) => {
               const iso = format(day, 'yyyy-MM-dd')
@@ -98,13 +100,14 @@ export function WeeklyGoalCard({
               )
             })}
           </div>
-          <Button type="submit" size="sm" className="self-end" disabled={checkedCount === 0}>
+          <SubmitButton size="sm" className="self-end" disabled={checkedCount === 0}>
             Criar
-          </Button>
+          </SubmitButton>
         </form>
 
         <Button type="button" variant="ghost" size="sm" onClick={onToggleExpand} aria-expanded={expanded}>
-          {expanded ? 'ver menos ▴' : 'ver detalhes ▾'}
+          {expanded ? 'Ver menos' : 'Ver detalhes'}
+          {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
         </Button>
 
         {expanded && (
@@ -116,7 +119,7 @@ export function WeeklyGoalCard({
                   key={task.id}
                   className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
                 >
-                  {format(task.date, 'dd/MM')} · {task.title}
+                  {formatDayMonth(task.date)} · {task.title}
                 </li>
               ))}
             </ul>

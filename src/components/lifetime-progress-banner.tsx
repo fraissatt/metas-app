@@ -1,6 +1,6 @@
-import { format } from 'date-fns'
 import type { LifetimeStats } from '@/lib/stats'
 import { cn } from '@/lib/utils'
+import { formatDate, formatDayMonth } from '@/lib/dates'
 
 export function LifetimeProgressBanner({ totalCompleted, firstCompletedAt, weekWindow }: LifetimeStats) {
   const activeWeeks = weekWindow.filter((week) => week.active).length
@@ -13,10 +13,10 @@ export function LifetimeProgressBanner({ totalCompleted, firstCompletedAt, weekW
       className="mb-6 flex flex-col gap-3 rounded-lg border border-primary bg-accent px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-primary">{totalCompleted}</span>
+        <span className="text-2xl font-bold text-primary tabular-nums">{totalCompleted}</span>
         <span className="text-sm text-muted-foreground">
           {totalCompleted === 1 ? 'tarefa concluída' : 'tarefas concluídas'}
-          {firstCompletedAt ? ` desde ${format(firstCompletedAt, 'dd/MM/yyyy')}` : ''}
+          {firstCompletedAt ? ` desde ${formatDate(firstCompletedAt)}` : ''}
         </span>
       </p>
 
@@ -30,7 +30,7 @@ export function LifetimeProgressBanner({ totalCompleted, firstCompletedAt, weekW
                 key={week.weekStart.toISOString()}
                 data-testid="week-dot"
                 data-active={week.active}
-                title={`Semana de ${format(week.weekStart, 'dd/MM')}`}
+                title={`Semana de ${formatDayMonth(week.weekStart)}`}
                 className={cn('size-2 rounded-full', week.active ? 'bg-primary' : 'bg-muted')}
               />
             ))}

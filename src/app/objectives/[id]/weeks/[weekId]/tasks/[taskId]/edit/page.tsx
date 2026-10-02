@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import { DailyTaskForm } from '@/components/daily-task-form'
+
+export const metadata: Metadata = { title: 'Editar tarefa' }
 
 export default async function EditDailyTaskPage({
   params,

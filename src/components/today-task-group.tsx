@@ -28,20 +28,20 @@ export function TodayTaskGroup({
           <div className="flex min-w-0 flex-1 flex-col text-left">
             <Link
               href={`/objectives/${weeklyGoal.objective.id}/weeks/${weeklyGoal.id}`}
-              className="text-sm font-semibold hover:text-primary hover:underline"
+              className="text-sm font-semibold break-words hover:text-primary hover:underline"
             >
               {weeklyGoal.title}
             </Link>
             <Link
               href={`/objectives/${weeklyGoal.objective.id}`}
-              className="text-xs text-muted-foreground hover:text-primary hover:underline"
+              className="text-xs break-words text-muted-foreground hover:text-primary hover:underline"
             >
               {weeklyGoal.objective.title}
             </Link>
           </div>
           <span
             className={cn(
-              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold',
+              'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums',
               dayComplete ? 'bg-primary text-primary-foreground' : 'bg-accent text-primary',
             )}
           >
@@ -50,17 +50,18 @@ export function TodayTaskGroup({
         </div>
         <div className="flex flex-col">
           {tasks.map((task) => (
-            <div
+            // A wrapping label makes the whole row the checkbox's hit target.
+            <label
               key={task.id}
-              className="flex items-center gap-3 border-b border-border/60 px-4 py-2 last:border-b-0 hover:bg-accent"
+              className="flex cursor-pointer items-center gap-3 border-b border-border/60 px-4 py-2 last:border-b-0 hover:bg-accent"
             >
               <TaskToggle taskId={task.id} completed={task.completed} action={onToggleTask} />
               <span
-                className={`break-words text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                className={`min-w-0 break-words text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}
               >
                 {task.title}
               </span>
-            </div>
+            </label>
           ))}
         </div>
       </div>

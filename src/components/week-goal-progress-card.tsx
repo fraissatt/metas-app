@@ -32,13 +32,13 @@ export function WeekGoalProgressCard({
         <div className="mb-3 flex min-w-0 flex-col text-left">
           <Link
             href={`/objectives/${goal.objective.id}/weeks/${goal.id}`}
-            className="text-sm font-semibold hover:text-primary hover:underline"
+            className="text-sm font-semibold break-words hover:text-primary hover:underline"
           >
             {goal.title}
           </Link>
           <Link
             href={`/objectives/${goal.objective.id}`}
-            className="text-xs text-muted-foreground hover:text-primary hover:underline"
+            className="text-xs break-words text-muted-foreground hover:text-primary hover:underline"
           >
             {goal.objective.title}
           </Link>
@@ -62,7 +62,7 @@ export function WeekGoalProgressCard({
                 className="transition-[stroke-dashoffset] duration-300 ease-in-out motion-reduce:transition-none"
               />
             </svg>
-            <span className="absolute text-[10px] font-semibold">{percent}%</span>
+            <span className="absolute text-[10px] font-semibold tabular-nums">{percent}%</span>
           </div>
 
           <div className="flex h-6 flex-1 items-end gap-1">
@@ -87,14 +87,14 @@ export function WeekGoalProgressCard({
         {/* The ring's own `stroke-dashoffset` transition already animates it to
             full; this is the part that names what just happened. */}
         {fulfilled ? (
-          <div className="mt-2 flex flex-col items-start gap-1">
+          <div role="status" className="mt-2 flex flex-col items-start gap-1">
             <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
               ✓ concluída
             </span>
-            <span className="text-xs font-medium text-primary">Meta da semana fechada 🎯</span>
+            <span className="text-xs font-medium text-primary">Meta da semana fechada <span aria-hidden="true">🎯</span></span>
           </div>
         ) : (
-          <span className="mt-2 block text-sm text-muted-foreground">
+          <span className="mt-2 block text-sm text-muted-foreground tabular-nums">
             {completed}/{total} tarefas
           </span>
         )}

@@ -93,7 +93,7 @@ describe('WeeklyGoalCard', () => {
       />,
     )
 
-    await userEvent.type(screen.getByPlaceholderText('Nova tarefa'), 'Alongamento')
+    await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
 
@@ -114,7 +114,7 @@ describe('WeeklyGoalCard', () => {
       />,
     )
 
-    await userEvent.type(screen.getByPlaceholderText('Nova tarefa'), 'Alongamento')
+    await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
     await userEvent.click(screen.getByRole('checkbox', { name: 'QUA 29' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
@@ -135,7 +135,7 @@ describe('WeeklyGoalCard', () => {
       <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} />,
     )
 
-    await userEvent.type(screen.getByPlaceholderText('Nova tarefa'), 'Alongamento')
+    await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
 
     expect(screen.getByRole('button', { name: /^criar$/i })).toBeDisabled()
   })

@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { format } from 'date-fns'
 import { notFound, redirect } from 'next/navigation'
 import { getWeeklyGoal, updateWeeklyGoal } from '@/lib/actions/weeklyGoals'
 import { WeeklyGoalForm } from '@/components/weekly-goal-form'
+
+export const metadata: Metadata = { title: 'Editar meta semanal' }
 
 export default async function EditWeeklyGoalPage({
   params,

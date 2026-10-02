@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import type { TaskGroup } from '@/lib/tasks'
 
@@ -51,5 +52,21 @@ describe('TodayTaskGroup', () => {
 
     expect(screen.getByText('1/2')).toBeInTheDocument()
     expect(screen.queryByText('✓ feito')).not.toBeInTheDocument()
+  })
+
+  it('names each checkbox after its task', () => {
+    render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
+
+    expect(screen.getByRole('checkbox', { name: 'Tarefa 0' })).toBeInTheDocument()
+  })
+
+  it("toggles a task exactly once when its title is clicked", async () => {
+    const onToggleTask = vi.fn().mockResolvedValue(undefined)
+    render(<TodayTaskGroup group={group([false])} onToggleTask={onToggleTask} />)
+
+    await userEvent.click(screen.getByText('Tarefa 0'))
+
+    expect(onToggleTask).toHaveBeenCalledTimes(1)
+    expect(onToggleTask).toHaveBeenCalledWith('task-0')
   })
 })

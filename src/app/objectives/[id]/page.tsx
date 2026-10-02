@@ -1,5 +1,5 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { format } from 'date-fns'
 import {
   completeObjective,
   getObjective,
@@ -14,6 +14,17 @@ import { ObjectiveProgressChart } from '@/components/objective-progress-chart'
 import { ObjectiveStatsPanel } from '@/components/objective-stats'
 import { ObjectiveStatusButton } from '@/components/objective-status-button'
 import { WeeklyGoalsPanel } from '@/components/weekly-goals-panel'
+import { formatDate } from '@/lib/dates'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const objective = await getObjective(id)
+  return { title: objective?.title ?? 'Objetivo' }
+}
 
 export default async function ObjectiveDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -42,7 +53,7 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
         <ObjectiveStatsPanel stats={stats} completed={!!objective.completedAt} />
         {objective.completedAt && (
           <p className="mt-2 text-sm font-medium text-primary">
-            ✓ Concluído em {format(objective.completedAt, 'dd/MM/yyyy')}
+            ✓ Concluído em {formatDate(objective.completedAt)}
             {schedule ? ` · ${schedule}` : ''}
           </p>
         )}
