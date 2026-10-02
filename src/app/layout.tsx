@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Sidebar } from "@/components/sidebar";
+import { setTheme } from "@/lib/actions/theme";
+import { getTheme } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,21 +23,27 @@ export const metadata: Metadata = {
   description: "Objetivos, metas semanais e tarefas do dia.",
 };
 
-// Matches `--background` in globals.css so the browser chrome blends in.
-export const viewport: Viewport = {
-  themeColor: "#121214",
-  colorScheme: "dark",
-};
+// Mirrors `--background` for each theme in globals.css. A CSS variable can't
+// be used here, because the value ends up in a <meta> tag.
+const BROWSER_CHROME = { dark: "rgb(13 15 19)", light: "rgb(236 238 242)" } as const;
 
-export default function RootLayout({
+export async function generateViewport(): Promise<Viewport> {
+  const theme = await getTheme();
+  return { themeColor: BROWSER_CHROME[theme], colorScheme: theme };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const theme = await getTheme();
+
   return (
     <html
       lang="pt-BR"
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-theme={theme}
+      className={`${theme === "dark" ? "dark " : ""}${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <a
@@ -44,7 +52,7 @@ export default function RootLayout({
         >
           Pular para o conteúdo
         </a>
-        <Sidebar />
+        <Sidebar theme={theme} onThemeChange={setTheme} />
         <div
           id="conteudo"
           tabIndex={-1}

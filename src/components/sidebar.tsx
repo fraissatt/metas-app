@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Sun, Target } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
+import type { Theme } from '@/lib/theme'
 import { cn } from '@/lib/utils'
 
 const links = [
@@ -14,7 +16,13 @@ function isLinkActive(pathname: string, href: string) {
   return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export function Sidebar() {
+export function Sidebar({
+  theme,
+  onThemeChange,
+}: {
+  theme: Theme
+  onThemeChange: (theme: Theme) => Promise<void>
+}) {
   const pathname = usePathname()
 
   return (
@@ -45,6 +53,14 @@ export function Sidebar() {
           </Link>
         )
       })}
+      {/* Temporary home until the header exists. On desktop it sinks to the
+          bottom of the rail; on mobile it is the bottom bar's third item. */}
+      <ThemeToggle
+        theme={theme}
+        onChange={onThemeChange}
+        className="md:mt-auto md:w-full md:justify-center md:group-hover:justify-start md:group-focus-within:justify-start"
+        labelClassName="hidden overflow-hidden whitespace-nowrap opacity-0 transition-opacity md:inline md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+      />
     </nav>
   )
 }
