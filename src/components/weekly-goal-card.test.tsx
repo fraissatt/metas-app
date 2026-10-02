@@ -224,6 +224,7 @@ describe('WeeklyGoalCard', () => {
     )
 
     expect(screen.getByText('repete toda semana')).toBeInTheDocument()
+    expect(screen.getByText('repete toda semana')).toHaveClass('text-support-foreground')
   })
 
   it('does not mark a one-off goal', () => {

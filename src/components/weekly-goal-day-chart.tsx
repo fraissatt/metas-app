@@ -47,7 +47,8 @@ export function WeeklyGoalDayChart({ weekStart, tasks }: { weekStart: Date; task
         <Bar
           dataKey="remaining"
           stackId="day"
-          fill="var(--chart-1)"
+          fill="var(--support)"
+          fillOpacity={0.35}
           radius={[2, 2, 0, 0]}
           activeBar={{ fill: 'var(--primary)' }}
         />

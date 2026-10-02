@@ -22,9 +22,10 @@ export function WeekGoalProgressCard({
 
   return (
     <div
+      data-fulfilled={fulfilled}
       className={cn(
-        'flex overflow-hidden rounded-lg border transition-colors motion-reduce:transition-none',
-        fulfilled ? 'border-primary bg-accent' : 'border-border',
+        'flex overflow-hidden rounded-lg border transition-[border-color,box-shadow] motion-reduce:transition-none',
+        fulfilled ? 'border-primary/60 bg-card shadow-[0_0_18px_var(--glow)]' : 'border-border bg-card',
       )}
     >
       <div className="w-[3px] shrink-0 bg-primary" />
@@ -59,7 +60,7 @@ export function WeekGoalProgressCard({
                 strokeDasharray={RING_CIRCUMFERENCE}
                 strokeDashoffset={ringOffset}
                 data-testid="progress-ring"
-                className="transition-[stroke-dashoffset] duration-300 ease-in-out motion-reduce:transition-none"
+                className={`transition-[stroke-dashoffset] duration-300 ease-in-out motion-reduce:transition-none ${fulfilled ? 'drop-shadow-[0_0_4px_var(--primary)]' : ''}`}
               />
             </svg>
             <span className="absolute text-[10px] font-semibold tabular-nums">{percent}%</span>
