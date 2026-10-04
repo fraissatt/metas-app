@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -10,14 +10,17 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 
-export function DeleteButton({
+export function DeleteConfirmDialog({
+  open,
+  onOpenChange,
   action,
   label = 'Excluir',
   confirmDescription = 'Esta ação não pode ser desfeita.',
 }: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   action: () => Promise<void>
   label?: string
   /** Customize to warn about cascade-deleted children (e.g. weekly goals, daily tasks). */
@@ -26,10 +29,7 @@ export function DeleteButton({
   const [isPending, startTransition] = useTransition()
 
   return (
-    <Dialog>
-      <DialogTrigger render={<Button type="button" variant="destructive" disabled={isPending} />}>
-        {label}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Confirmar exclusão</DialogTitle>
@@ -52,5 +52,43 @@ export function DeleteButton({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+export function DeleteButton({
+  action,
+  label = 'Excluir',
+  confirmDescription,
+}: {
+  action: () => Promise<void>
+  label?: string
+  confirmDescription?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="destructive"
+        disabled={isPending}
+        onClick={() => setOpen(true)}
+      >
+        {label}
+      </Button>
+      <DeleteConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        action={() => {
+          startTransition(() => {
+            void action()
+          })
+          return Promise.resolve()
+        }}
+        label={label}
+        confirmDescription={confirmDescription}
+      />
+    </>
   )
 }
