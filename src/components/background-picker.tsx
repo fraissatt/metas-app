@@ -19,7 +19,8 @@ export function BackgroundPicker() {
     <Menu.Root>
       <Menu.Trigger
         aria-label={`Fundo: ${BACKGROUND_LABELS[style]}`}
-        className="rounded-md px-2 py-2 text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 outline-none"
+        title={`Fundo: ${BACKGROUND_LABELS[style]}`}
+        className="flex items-center transition-colors rounded-md px-2 py-2 text-muted-foreground hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 outline-none"
       >
         <Sparkles className="size-5" />
       </Menu.Trigger>

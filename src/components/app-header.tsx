@@ -28,7 +28,7 @@ export async function AppHeader({
         </Link>
         <HeaderNav />
         <div className="flex-1" />
-        {/* Desktop: search, summary, toggle. Mobile: summary, search, toggle (spec). */}
+        {/* Desktop: search, summary, background picker, theme toggle. Mobile: summary, search, then background picker and theme toggle (spec). */}
         <div className="flex items-center max-md:order-2">
           <SearchDialog onSearch={search} />
         </div>

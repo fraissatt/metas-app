@@ -12,6 +12,9 @@ const FALLBACK_NEUTRAL: Rgb = [42, 48, 60]
 const MAX_DPR = 2
 const EASE = 0.12
 const SETTLE_DISTANCE = 0.5
+const PULL_SETTLE = 0.01
+const AURORA_SCALE = 0.5
+const AURORA_FRAME_MS = 33
 
 const AURORA_BLOBS = [
   { x: 0.25, y: 0.35, tone: 'primary' },
@@ -21,7 +24,7 @@ const AURORA_BLOBS = [
 ] as const
 const AURORA_RADIUS = 0.35
 const AURORA_ALPHA_DARK = 0.18
-const AURORA_ALPHA_LIGHT = 0.14
+const AURORA_ALPHA_LIGHT = 0.16
 const AURORA_DRIFT_X = 0.08
 const AURORA_DRIFT_Y = 0.1
 const AURORA_DRIFT_SPEED = 0.00012
@@ -33,6 +36,11 @@ const DOT_ALPHA = 0.6
 const DOT_INFLUENCE = 140
 const DOT_GROWTH = 1.6
 const DOT_PUSH = 8
+
+export function stepPull(current: number, goal: number): number {
+  const next = current + (goal - current) * EASE
+  return Math.abs(goal - next) <= PULL_SETTLE ? goal : next
+}
 
 const HEX_PATTERN = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i
 
@@ -82,6 +90,7 @@ function drawAurora(
   time: number,
   palette: Palette,
   pointer: Point | null,
+  pull: number,
 ) {
   const radius = Math.max(width, height) * AURORA_RADIUS
   const alpha = palette.isDark ? AURORA_ALPHA_DARK : AURORA_ALPHA_LIGHT
@@ -90,12 +99,13 @@ function drawAurora(
     let x = (blob.x + Math.sin(phase) * AURORA_DRIFT_X) * width
     let y = (blob.y + Math.cos(phase * 0.9) * AURORA_DRIFT_Y) * height
     if (pointer) {
-      x += (pointer.x - x) * AURORA_PULL
-      y += (pointer.y - y) * AURORA_PULL
+      x += (pointer.x - x) * AURORA_PULL * pull
+      y += (pointer.y - y) * AURORA_PULL * pull
     }
     const color = blob.tone === 'primary' ? palette.primary : palette.support
     const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius)
     gradient.addColorStop(0, rgba(color, alpha))
+    gradient.addColorStop(0.5, rgba(color, alpha * 0.55))
     gradient.addColorStop(1, rgba(color, 0))
     ctx.fillStyle = gradient
     ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2)
@@ -108,6 +118,7 @@ function drawDots(
   height: number,
   palette: Palette,
   pointer: Point | null,
+  pull: number,
 ) {
   const neutral = rgba(palette.neutral, DOT_ALPHA)
   for (let x = DOT_SPACING / 2; x < width; x += DOT_SPACING) {
@@ -121,7 +132,7 @@ function drawDots(
         const oy = y - pointer.y
         const distance = Math.hypot(ox, oy)
         if (distance < DOT_INFLUENCE) {
-          const f = 1 - distance / DOT_INFLUENCE
+          const f = (1 - distance / DOT_INFLUENCE) * pull
           if (distance > 0) {
             dx += (ox / distance) * DOT_PUSH * f
             dy += (oy / distance) * DOT_PUSH * f
@@ -157,10 +168,15 @@ export function InteractiveBackground({ style }: { style: BackgroundStyle }) {
     let height = 0
     let target: Point | null = null
     let eased: Point | null = null
+    let pull = 0
+    let lastDraw = -Infinity
     let frame = 0
 
     const size = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR)
+      const dpr =
+        style === 'aurora'
+          ? AURORA_SCALE
+          : Math.min(window.devicePixelRatio || 1, MAX_DPR)
       width = window.innerWidth
       height = window.innerHeight
       canvas.width = Math.round(width * dpr)
@@ -168,39 +184,56 @@ export function InteractiveBackground({ style }: { style: BackgroundStyle }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
-    const isSettled = () =>
-      !target ||
-      !eased ||
-      Math.hypot(target.x - eased.x, target.y - eased.y) < SETTLE_DISTANCE
+    const isSettled = () => {
+      if (!target) return pull === 0
+      if (pull !== 1 || !eased) return false
+      return (
+        Math.hypot(target.x - eased.x, target.y - eased.y) < SETTLE_DISTANCE
+      )
+    }
 
     const draw = (time: number) => {
       if (isStatic) {
         eased = null
-      } else if (target) {
-        eased = eased
-          ? {
-              x: eased.x + (target.x - eased.x) * EASE,
-              y: eased.y + (target.y - eased.y) * EASE,
-            }
-          : { ...target }
+        pull = 0
       } else {
-        eased = null
+        if (target) {
+          eased = eased
+            ? {
+                x: eased.x + (target.x - eased.x) * EASE,
+                y: eased.y + (target.y - eased.y) * EASE,
+              }
+            : { ...target }
+        }
+        pull = stepPull(pull, target ? 1 : 0)
       }
       ctx.clearRect(0, 0, width, height)
+      const pointer = pull > 0 ? eased : null
       if (style === 'aurora') {
-        drawAurora(ctx, width, height, isStatic ? 0 : time, palette, eased)
+        drawAurora(
+          ctx,
+          width,
+          height,
+          isStatic ? 0 : time,
+          palette,
+          pointer,
+          pull,
+        )
       } else {
-        drawDots(ctx, width, height, palette, eased)
+        drawDots(ctx, width, height, palette, pointer, pull)
       }
     }
 
     const shouldContinue = () =>
-      !document.hidden &&
-      !isStatic &&
-      (style === 'aurora' || !isSettled())
+      !document.hidden && !isStatic && (style === 'aurora' || !isSettled())
 
     const tick = (time: number) => {
       frame = 0
+      if (style === 'aurora' && time - lastDraw < AURORA_FRAME_MS) {
+        if (shouldContinue()) frame = requestAnimationFrame(tick)
+        return
+      }
+      lastDraw = time
       draw(time)
       if (shouldContinue()) frame = requestAnimationFrame(tick)
     }
@@ -255,6 +288,8 @@ export function InteractiveBackground({ style }: { style: BackgroundStyle }) {
 
     if (isStatic) {
       draw(0)
+    } else if (document.hidden) {
+      draw(performance.now())
     } else {
       frame = requestAnimationFrame(tick)
     }
@@ -276,7 +311,7 @@ export function InteractiveBackground({ style }: { style: BackgroundStyle }) {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 h-full w-full"
+      className="pointer-events-none fixed inset-0 -z-10 h-full w-full print:hidden forced-colors:hidden"
     />
   )
 }
