@@ -8,9 +8,11 @@ import { SubmitButton } from '@/components/submit-button'
 export function WeeklyGoalForm({
   action,
   defaultValues,
+  autoFocusTitle,
 }: {
   action: (formData: FormData) => Promise<void>
   defaultValues?: { title: string; weekOf: string; recurring?: boolean }
+  autoFocusTitle?: boolean
 }) {
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -20,6 +22,7 @@ export function WeeklyGoalForm({
           id="title"
           name="title"
           required
+          autoFocus={autoFocusTitle}
           autoComplete="off"
           placeholder="Ex.: Correr 3 vezes…"
           defaultValue={defaultValues?.title}

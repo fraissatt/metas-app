@@ -43,4 +43,20 @@ describe('AddWeeklyGoalCard', () => {
     expect(screen.getByRole('button', { name: /nova meta semanal/i })).toBeInTheDocument()
     expect(onCreate).not.toHaveBeenCalled()
   })
+
+  it('opens straight into the form with the title focused when defaultOpen is set', () => {
+    render(<AddWeeklyGoalCard onCreate={vi.fn()} defaultOpen />)
+
+    const title = screen.getByLabelText('Título')
+    expect(title).toBeInTheDocument()
+    expect(title).toHaveFocus()
+    expect(screen.queryByRole('button', { name: /nova meta semanal/i })).not.toBeInTheDocument()
+  })
+
+  it('does not steal focus when opened by the trigger', async () => {
+    render(<AddWeeklyGoalCard onCreate={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: /nova meta semanal/i }))
+
+    expect(screen.getByLabelText('Título')).not.toHaveFocus()
+  })
 })

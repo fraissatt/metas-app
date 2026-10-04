@@ -97,4 +97,20 @@ describe('WeeklyGoalsPanel', () => {
 
     expect(onDeleteWeeklyGoal).toHaveBeenCalledWith('goal-a')
   })
+
+  it('opens the new-goal form inside the #nova-meta anchor when openNewGoal is set', () => {
+    const { container } = render(
+      <WeeklyGoalsPanel
+        goals={[goalA]}
+        onCreateTasks={vi.fn()}
+        onCreateWeeklyGoal={vi.fn()}
+        onDeleteWeeklyGoal={vi.fn()}
+        openNewGoal
+      />,
+    )
+
+    const anchor = container.querySelector('#nova-meta')
+    expect(anchor).not.toBeNull()
+    expect(within(anchor as HTMLElement).getByLabelText('Título')).toBeInTheDocument()
+  })
 })

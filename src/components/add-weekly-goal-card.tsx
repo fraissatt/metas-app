@@ -5,8 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { WeeklyGoalForm } from '@/components/weekly-goal-form'
 
-export function AddWeeklyGoalCard({ onCreate }: { onCreate: (formData: FormData) => Promise<void> }) {
-  const [adding, setAdding] = useState(false)
+export function AddWeeklyGoalCard({
+  onCreate,
+  defaultOpen,
+}: {
+  onCreate: (formData: FormData) => Promise<void>
+  defaultOpen?: boolean
+}) {
+  const [adding, setAdding] = useState(defaultOpen ?? false)
 
   if (!adding) {
     return (
@@ -29,7 +35,7 @@ export function AddWeeklyGoalCard({ onCreate }: { onCreate: (formData: FormData)
   return (
     <Card>
       <CardContent className="flex flex-col gap-3">
-        <WeeklyGoalForm action={handleCreate} />
+        <WeeklyGoalForm action={handleCreate} autoFocusTitle={defaultOpen} />
         <Button type="button" variant="ghost" size="sm" onClick={() => setAdding(false)}>
           Cancelar
         </Button>
