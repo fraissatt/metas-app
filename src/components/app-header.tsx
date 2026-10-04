@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getTodaySummary } from '@/lib/actions/summary'
 import { search } from '@/lib/actions/search'
+import { BackgroundPicker } from '@/components/background-picker'
 import { DaySummary } from '@/components/day-summary'
 import { HeaderNav } from '@/components/header-nav'
 import { RefreshOnFocus } from '@/components/refresh-on-focus'
@@ -27,7 +28,7 @@ export async function AppHeader({
         </Link>
         <HeaderNav />
         <div className="flex-1" />
-        {/* Desktop: search, summary, toggle. Mobile: summary, search, toggle (spec). */}
+        {/* Desktop: search, summary, background picker, theme toggle. Mobile: summary, search, then background picker and theme toggle (spec). */}
         <div className="flex items-center max-md:order-2">
           <SearchDialog onSearch={search} />
         </div>
@@ -36,6 +37,9 @@ export async function AppHeader({
             <DaySummary {...summary} />
           </div>
         )}
+        <div className="flex items-center max-md:order-3">
+          <BackgroundPicker />
+        </div>
         <ThemeToggle
           theme={theme}
           onChange={onThemeChange}
