@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore }
 import { useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { SmoothCaretInput } from '@/components/ui/smooth-caret-input'
 import { formatDayMonth } from '@/lib/dates'
 import { normalizeQuery, type SearchResults } from '@/lib/search'
 import { cn } from '@/lib/utils'
@@ -208,7 +209,7 @@ export function SearchDialog({ onSearch }: { onSearch: (query: string) => Promis
           <DialogTitle className="sr-only">Buscar</DialogTitle>
           <div className="flex items-center gap-2 border-b border-border pb-2">
             <Search className="size-4 shrink-0 text-muted-foreground" />
-            <input
+            <SmoothCaretInput
               autoFocus
               role="combobox"
               aria-expanded={options.length > 0}
