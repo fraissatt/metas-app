@@ -42,7 +42,17 @@ describe('ObjectiveDashboardCard', () => {
     expect(screen.getByText('média das últimas 8 semanas')).toBeInTheDocument()
     expect(screen.getByText('início 01/06 · 62% do prazo · meta 15/11')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: '+ Meta da semana' })).toHaveAttribute('href', '/objectives/o1?nova-meta=1#nova-meta')
-    expect(screen.getByRole('button', { name: 'Ações do objetivo' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ações de Correr uma maratona' })).toBeInTheDocument()
+  })
+
+  it('uses the singular in the streak chip for one week', () => {
+    render(<ObjectiveDashboardCard {...base} weeks={weeks(true)} streak={1} timeline={{ kind: 'open', weeksActive: 2 }} />)
+    expect(screen.getByText('1 semana seguida cumprida')).toBeInTheDocument()
+  })
+
+  it('renders the title as a level-3 heading', () => {
+    render(<ObjectiveDashboardCard {...base} weeks={weeks(true)} streak={0} timeline={{ kind: 'open', weeksActive: 2 }} />)
+    expect(screen.getByRole('heading', { level: 3, name: 'Correr uma maratona' })).toBeInTheDocument()
   })
 
   it('nudges to plan when the current week has no goal and there is no streak', () => {

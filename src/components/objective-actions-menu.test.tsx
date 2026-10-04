@@ -8,17 +8,17 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 
 describe('ObjectiveActionsMenu', () => {
   it('offers Editar and Excluir… from a labeled trigger', async () => {
-    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={vi.fn()} />)
+    render(<ObjectiveActionsMenu objectiveId="o1" title="Maratona" onDelete={vi.fn()} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Ações do objetivo' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Ações de Maratona' }))
 
     expect(await screen.findByRole('menuitem', { name: 'Editar' })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: 'Excluir…' })).toBeInTheDocument()
   })
 
   it('goes to the edit page from Editar', async () => {
-    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={vi.fn()} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Ações do objetivo' }))
+    render(<ObjectiveActionsMenu objectiveId="o1" title="Maratona" onDelete={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Ações de Maratona' }))
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Editar' }))
 
     expect(push).toHaveBeenCalledWith('/objectives/o1/edit')
@@ -26,9 +26,9 @@ describe('ObjectiveActionsMenu', () => {
 
   it('asks for confirmation before deleting, then calls the action', async () => {
     const onDelete = vi.fn().mockResolvedValue(undefined)
-    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={onDelete} />)
+    render(<ObjectiveActionsMenu objectiveId="o1" title="Maratona" onDelete={onDelete} />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Ações do objetivo' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Ações de Maratona' }))
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Excluir…' }))
 
     const dialog = await screen.findByRole('dialog')
@@ -40,8 +40,8 @@ describe('ObjectiveActionsMenu', () => {
   })
 
   it('closes the menu with Escape', async () => {
-    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={vi.fn()} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Ações do objetivo' }))
+    render(<ObjectiveActionsMenu objectiveId="o1" title="Maratona" onDelete={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Ações de Maratona' }))
     await screen.findByRole('menuitem', { name: 'Editar' })
 
     await userEvent.keyboard('{Escape}')
@@ -50,8 +50,8 @@ describe('ObjectiveActionsMenu', () => {
   })
 
   it('returns focus to the trigger after cancelling the confirmation', async () => {
-    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={vi.fn()} />)
-    const trigger = screen.getByRole('button', { name: 'Ações do objetivo' })
+    render(<ObjectiveActionsMenu objectiveId="o1" title="Maratona" onDelete={vi.fn()} />)
+    const trigger = screen.getByRole('button', { name: 'Ações de Maratona' })
     await userEvent.click(trigger)
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Excluir…' }))
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancelar' }))
@@ -61,11 +61,11 @@ describe('ObjectiveActionsMenu', () => {
 
   it('disables the trigger while a delete is pending', async () => {
     const onDelete = vi.fn(() => new Promise<void>(() => {}))
-    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={onDelete} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Ações do objetivo' }))
+    render(<ObjectiveActionsMenu objectiveId="o1" title="Maratona" onDelete={onDelete} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Ações de Maratona' }))
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Excluir…' }))
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Excluir' }))
 
-    expect(screen.getByRole('button', { name: 'Ações do objetivo' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Ações de Maratona' })).toBeDisabled()
   })
 })

@@ -11,9 +11,11 @@ const itemClass =
 
 export function ObjectiveActionsMenu({
   objectiveId,
+  title,
   onDelete,
 }: {
   objectiveId: string
+  title: string
   onDelete: () => Promise<void>
 }) {
   const router = useRouter()
@@ -27,7 +29,7 @@ export function ObjectiveActionsMenu({
         <Menu.Trigger
           ref={triggerRef}
           disabled={isPending}
-          aria-label="Ações do objetivo"
+          aria-label={`Ações de ${title}`}
           className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary"
         >
           <MoreHorizontal className="size-4" />

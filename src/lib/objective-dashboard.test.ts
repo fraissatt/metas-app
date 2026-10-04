@@ -23,6 +23,15 @@ describe('calendarWeeks', () => {
     expect(weeks.every((w) => w.weekStart.getDay() === 1)).toBe(true)
   })
 
+  it('merges two entries that fall in the same calendar week', () => {
+    const a = week(2026, 8, 28, 1, 2, false)
+    const b = { ...week(2026, 8, 28, 3, 3, true), weekStart: new Date(2026, 8, 28, 20) }
+    const [, , , , , , , current] = calendarWeeks([a, b], now)
+    expect(current).toMatchObject({ completed: 4, total: 5, percent: 80, fulfilled: false, hasGoal: true })
+    const both = calendarWeeks([week(2026, 8, 28, 2, 2), { ...week(2026, 8, 28, 3, 3), weekStart: new Date(2026, 8, 28, 20) }], now)
+    expect(both[7]).toMatchObject({ completed: 5, total: 5, fulfilled: true })
+  })
+
   it('accepts a custom count', () => {
     expect(calendarWeeks([], now, 3)).toHaveLength(3)
   })
@@ -70,6 +79,13 @@ describe('timeline', () => {
     const t = timeline(new Date(2026, 8, 1, 15), new Date(2026, 9, 31, 15), now)
     expect(t).toMatchObject({ kind: 'dated', overdue: false })
     expect(t.kind === 'dated' && t.elapsedPercent).toBe(50)
+  })
+
+  it('treats the whole target day as inside the deadline', () => {
+    const target = new Date(2026, 9, 1)
+    const start = new Date(2026, 8, 1)
+    expect(timeline(start, target, new Date(2026, 9, 1, 15))).toMatchObject({ overdue: false })
+    expect(timeline(start, target, new Date(2026, 9, 2, 0, 0, 1))).toMatchObject({ overdue: true })
   })
 
   it('clamps to 100 and flags an overdue target', () => {

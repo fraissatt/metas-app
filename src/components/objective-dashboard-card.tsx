@@ -14,7 +14,9 @@ function Chip({ streak, currentHasGoal }: { streak: number; currentHasGoal: bool
     return (
       <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
         <span aria-hidden="true">🔥 {pluralWeeks(streak)}</span>
-        <span className="sr-only">{pluralWeeks(streak)} seguidas cumpridas</span>
+        <span className="sr-only">
+          {streak === 1 ? '1 semana seguida cumprida' : `${streak} semanas seguidas cumpridas`}
+        </span>
       </span>
     )
   }
@@ -81,13 +83,15 @@ export function ObjectiveDashboardCard({
   const currentHasGoal = weeks.find((w) => w.current)?.hasGoal ?? false
 
   return (
-    <div className="group/card rounded-lg border border-border bg-card p-4 flex flex-col gap-3 motion-safe:transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_0_16px_var(--glow)] focus-within:border-primary/40">
+    <div className="group/card rounded-lg border border-border bg-card p-4 flex flex-col gap-3 motion-safe:transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_0_16px_var(--glow)] focus-within:border-primary/40 focus-within:shadow-[0_0_16px_var(--glow)]">
       <div className="flex items-start gap-2">
-        <Link href={`/objectives/${id}`} className="min-w-0 flex-1 font-semibold line-clamp-2 break-words">
-          {title}
-        </Link>
+        <h3 className="min-w-0 flex-1">
+          <Link href={`/objectives/${id}`} className="block font-semibold line-clamp-2 break-words">
+            {title}
+          </Link>
+        </h3>
         <Chip streak={streak} currentHasGoal={currentHasGoal} />
-        <ObjectiveActionsMenu objectiveId={id} onDelete={onDelete} />
+        <ObjectiveActionsMenu objectiveId={id} title={title} onDelete={onDelete} />
       </div>
 
       <div className="flex items-end justify-between gap-4">

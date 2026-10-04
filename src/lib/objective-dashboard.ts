@@ -1,4 +1,4 @@
-import { differenceInCalendarWeeks, format, subWeeks } from 'date-fns'
+import { differenceInCalendarWeeks, endOfDay, format, subWeeks } from 'date-fns'
 import { getWeekBounds } from '@/lib/dates'
 import type { ObjectiveWeek } from '@/lib/objectives'
 import type { ObjectiveWithStats } from '@/lib/actions/objectives'
@@ -19,7 +19,22 @@ function weekKey(date: Date): string {
 }
 
 export function calendarWeeks(weeks: ObjectiveWeek[], now: Date, count = DASHBOARD_WEEKS): DashboardWeek[] {
-  const byWeek = new Map(weeks.map((w) => [weekKey(w.weekStart), w]))
+  const byWeek = new Map<string, ObjectiveWeek>()
+  for (const w of weeks) {
+    const key = weekKey(w.weekStart)
+    const existing = byWeek.get(key)
+    byWeek.set(
+      key,
+      existing
+        ? {
+            ...existing,
+            total: existing.total + w.total,
+            completed: existing.completed + w.completed,
+            fulfilled: existing.fulfilled && w.fulfilled,
+          }
+        : w,
+    )
+  }
   const currentStart = getWeekBounds(now).weekStart
 
   return Array.from({ length: count }, (_, i) => {
@@ -60,14 +75,16 @@ export function timeline(startDate: Date, targetDate: Date | null, now: Date): T
   if (!targetDate) {
     return { kind: 'open', weeksActive: Math.max(1, differenceInCalendarWeeks(now, startDate, { weekStartsOn: 1 }) + 1) }
   }
-  const span = targetDate.getTime() - startDate.getTime()
+  // The target day itself still counts as inside the deadline.
+  const deadline = endOfDay(targetDate).getTime()
+  const span = deadline - startDate.getTime()
   const elapsed = now.getTime() - startDate.getTime()
   const raw = span <= 0 ? 100 : (elapsed / span) * 100
   return {
     kind: 'dated',
     elapsedPercent: Math.min(100, Math.max(0, Math.round(raw))),
     targetDate,
-    overdue: now.getTime() > targetDate.getTime(),
+    overdue: now.getTime() > deadline,
   }
 }
 

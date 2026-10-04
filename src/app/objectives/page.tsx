@@ -71,7 +71,7 @@ export default async function ObjectivesPage() {
                     key={objective.id}
                     id={objective.id}
                     title={objective.title}
-                    completedAt={objective.completedAt!}
+                    completedAt={objective.completedAt}
                     targetDate={objective.targetDate}
                     weeksFulfilled={objective.stats.weeksFulfilled}
                     tasksCompleted={objective.stats.tasksCompleted}
