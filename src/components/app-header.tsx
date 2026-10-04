@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getTodaySummary } from '@/lib/actions/summary'
 import { search } from '@/lib/actions/search'
+import { BackgroundPicker } from '@/components/background-picker'
 import { DaySummary } from '@/components/day-summary'
 import { HeaderNav } from '@/components/header-nav'
 import { RefreshOnFocus } from '@/components/refresh-on-focus'
@@ -36,6 +37,9 @@ export async function AppHeader({
             <DaySummary {...summary} />
           </div>
         )}
+        <div className="flex items-center max-md:order-3">
+          <BackgroundPicker />
+        </div>
         <ThemeToggle
           theme={theme}
           onChange={onThemeChange}
