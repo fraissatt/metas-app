@@ -21,7 +21,7 @@ export function ThemeToggle({
   theme: Theme
   onChange: (theme: Theme) => Promise<void>
   className?: string
-  /** Lets the sidebar hide the text until it expands, like its nav links. */
+  /** Lets a caller hide the text label. */
   labelClassName?: string
 }) {
   const [theme, setTheme] = useState<Theme>(initialTheme)

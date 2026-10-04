@@ -1,12 +1,14 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { getObjective } from '@/lib/actions/objectives'
 import { getWeeklyGoal } from '@/lib/actions/weeklyGoals'
 import { createDailyTask, deleteDailyTask, listDailyTasksByWeeklyGoal, toggleDailyTask } from '@/lib/actions/dailyTasks'
 import { DailyTaskForm } from '@/components/daily-task-form'
 import { TaskToggle } from '@/components/task-toggle'
 import { DeleteButton } from '@/components/delete-button'
 import { Button } from '@/components/ui/button'
+import { Breadcrumbs } from '@/components/breadcrumbs'
 
 export async function generateMetadata({
   params,
@@ -25,7 +27,9 @@ export default async function WeeklyGoalDetailPage({
 }) {
   const { id, weekId } = await params
   const goal = await getWeeklyGoal(weekId)
-  if (!goal) notFound()
+  if (!goal || goal.objectiveId !== id) notFound()
+  const objective = await getObjective(id)
+  if (!objective) notFound()
 
   const tasks = await listDailyTasksByWeeklyGoal(weekId)
 
@@ -36,6 +40,13 @@ export default async function WeeklyGoalDetailPage({
 
   return (
     <main className="mx-auto max-w-2xl p-8">
+      <Breadcrumbs
+        items={[
+          { label: 'Objetivos', href: '/objectives' },
+          { label: objective.title, href: `/objectives/${id}` },
+          { label: goal.title },
+        ]}
+      />
       <h1 className="mb-6 text-2xl font-semibold break-words">{goal.title}</h1>
       <DailyTaskForm action={addTask} />
       {tasks.length === 0 && (

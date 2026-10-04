@@ -10,7 +10,7 @@ import { useEffect, useRef } from 'react'
  * side-effect (`docs/01-app/02-guides/data-security.md`), and that they belong
  * in an effect or an action triggered from a Client Component
  * (`docs/01-app/02-guides/prefetching.md`). That is not academic here: the
- * sidebar renders `<Link href="/">`, which Next prefetches — a write in
+ * header and bottom bar render `<Link href="/">`, which Next prefetches — a write in
  * `page.tsx` would create the week when the pointer crossed "Hoje".
  *
  * The ref guards against re-renders, including React Strict Mode's simulated
