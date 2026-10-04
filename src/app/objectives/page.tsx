@@ -1,65 +1,22 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { deleteObjective, listObjectivesWithStats, type ObjectiveWithStats } from '@/lib/actions/objectives'
-import { describeSchedule } from '@/lib/objectives'
-import { DeleteButton } from '@/components/delete-button'
-import { ObjectiveStatsPanel } from '@/components/objective-stats'
+import { deleteObjective, listObjectivesWithStats } from '@/lib/actions/objectives'
+import { calendarWeeks, overview, streak, timeline } from '@/lib/objective-dashboard'
+import { CompletedObjectiveCard } from '@/components/completed-objective-card'
+import { ObjectiveDashboardCard } from '@/components/objective-dashboard-card'
+import { ObjectivesOverview } from '@/components/objectives-overview'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDate } from '@/lib/dates'
 
 export const metadata: Metadata = { title: 'Objetivos' }
 
-function ObjectiveRow({ objective }: { objective: ObjectiveWithStats }) {
-  const schedule = objective.completedAt
-    ? describeSchedule(objective.completedAt, objective.targetDate)
-    : null
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <Link
-            href={`/objectives/${objective.id}`}
-            className="break-words transition-colors hover:text-accent-foreground hover:underline"
-          >
-            {objective.title}
-          </Link>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <ObjectiveStatsPanel stats={objective.stats} compact completed={!!objective.completedAt} />
-
-        {objective.completedAt && (
-          <p className="text-sm font-medium text-accent-foreground">
-            ✓ Concluído em {formatDate(objective.completedAt)}
-            {schedule ? ` · ${schedule}` : ''}
-          </p>
-        )}
-
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="secondary"
-            nativeButton={false}
-            render={<Link href={`/objectives/${objective.id}/edit`} />}
-          >
-            Editar
-          </Button>
-          <DeleteButton
-            action={deleteObjective.bind(null, objective.id)}
-            confirmDescription="Isso também excluirá todas as metas semanais e tarefas diárias relacionadas. Esta ação não pode ser desfeita."
-          />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 export default async function ObjectivesPage() {
   const { active, completed } = await listObjectivesWithStats()
+  const now = new Date()
+  const totals = overview(active, now)
+  const hasAny = active.length + completed.length > 0
 
   return (
-    <main className="mx-auto max-w-2xl p-8">
+    <main className="mx-auto max-w-5xl p-4 md:p-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Objetivos</h1>
         <Button nativeButton={false} render={<Link href="/objectives/new" />}>
@@ -67,32 +24,63 @@ export default async function ObjectivesPage() {
         </Button>
       </div>
 
-      {active.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          {completed.length > 0
-            ? 'Nenhum objetivo em andamento. Que tal começar o próximo?'
-            : 'Você ainda não tem objetivos. Crie o primeiro para planejar a semana.'}
-        </p>
-      )}
-
-      <div className="flex flex-col gap-4">
-        {active.map((objective) => (
-          <ObjectiveRow key={objective.id} objective={objective} />
-        ))}
-      </div>
-
-      {/* Kept below the active ones rather than mixed in: with ten achievements
-          the two objectives still in play would otherwise disappear among them. */}
-      {completed.length > 0 && (
+      {!hasAny ? (
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <p className="text-muted-foreground">Você ainda não tem objetivos.</p>
+          <Button nativeButton={false} render={<Link href="/objectives/new" />}>
+            Criar meu primeiro objetivo
+          </Button>
+        </div>
+      ) : (
         <>
-          <h2 className="mt-10 mb-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Concluídos
-          </h2>
-          <div className="flex flex-col gap-4">
-            {completed.map((objective) => (
-              <ObjectiveRow key={objective.id} objective={objective} />
-            ))}
+          <div className="mb-6">
+            <ObjectivesOverview {...totals} />
           </div>
+
+          {active.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum objetivo em andamento. Que tal começar o próximo?
+            </p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {active.map((objective) => (
+                <ObjectiveDashboardCard
+                  key={objective.id}
+                  id={objective.id}
+                  title={objective.title}
+                  startDate={objective.startDate}
+                  weeks={calendarWeeks(objective.stats.recentWeeks, now)}
+                  streak={streak(objective.stats.recentWeeks, now)}
+                  timeline={timeline(objective.startDate, objective.targetDate, now)}
+                  onDelete={deleteObjective.bind(null, objective.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Kept below the active ones rather than mixed in: with ten achievements
+              the two objectives still in play would otherwise disappear among them. */}
+          {completed.length > 0 && (
+            <>
+              <h2 className="mt-10 mb-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Concluídos
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {completed.map((objective) => (
+                  <CompletedObjectiveCard
+                    key={objective.id}
+                    id={objective.id}
+                    title={objective.title}
+                    completedAt={objective.completedAt!}
+                    targetDate={objective.targetDate}
+                    weeksFulfilled={objective.stats.weeksFulfilled}
+                    tasksCompleted={objective.stats.tasksCompleted}
+                    onDelete={deleteObjective.bind(null, objective.id)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </main>

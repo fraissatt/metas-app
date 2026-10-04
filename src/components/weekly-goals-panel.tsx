@@ -10,11 +10,13 @@ export function WeeklyGoalsPanel({
   onCreateTasks,
   onCreateWeeklyGoal,
   onDeleteWeeklyGoal,
+  openNewGoal,
 }: {
   goals: WeeklyGoalWithTasks[]
   onCreateTasks: (weeklyGoalId: string, formData: FormData) => Promise<void>
   onCreateWeeklyGoal: (formData: FormData) => Promise<void>
   onDeleteWeeklyGoal: (weeklyGoalId: string) => Promise<void>
+  openNewGoal?: boolean
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -30,7 +32,9 @@ export function WeeklyGoalsPanel({
           onDelete={() => onDeleteWeeklyGoal(goal.id)}
         />
       ))}
-      <AddWeeklyGoalCard onCreate={onCreateWeeklyGoal} />
+      <div id="nova-meta" className="scroll-mt-20">
+        <AddWeeklyGoalCard onCreate={onCreateWeeklyGoal} defaultOpen={openNewGoal} />
+      </div>
     </div>
   )
 }
