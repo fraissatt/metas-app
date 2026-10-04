@@ -27,8 +27,15 @@ export async function generateMetadata({
   return { title: objective?.title ?? 'Objetivo' }
 }
 
-export default async function ObjectiveDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ObjectiveDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const { id } = await params
+  const { 'nova-meta': novaMeta } = await searchParams
   const objective = await getObjective(id)
   if (!objective) notFound()
 
@@ -69,6 +76,7 @@ export default async function ObjectiveDetailPage({ params }: { params: Promise<
         onCreateTasks={createDailyTasks}
         onCreateWeeklyGoal={createWeeklyGoal.bind(null, id)}
         onDeleteWeeklyGoal={deleteWeeklyGoal}
+        openNewGoal={novaMeta === '1'}
       />
     </main>
   )
