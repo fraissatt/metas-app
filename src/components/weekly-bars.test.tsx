@@ -41,12 +41,28 @@ describe('WeeklyBars', () => {
     render(<WeeklyBars weeks={weeks} />)
 
     await userEvent.hover(screen.getByRole('img', { name: '07/09 · 5/5 ✓' }))
-    expect(screen.getByRole('tooltip')).toHaveTextContent('07/09 · 5/5 ✓')
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('07/09 · 5/5 ✓')
 
     await userEvent.unhover(screen.getByRole('img', { name: '07/09 · 5/5 ✓' }))
     await userEvent.tab()
-    expect(screen.getByRole('tooltip')).toHaveTextContent('07/09 · 5/5 ✓')
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('07/09 · 5/5 ✓')
     await userEvent.tab()
-    expect(screen.getByRole('tooltip')).toHaveTextContent('14/09 · sem meta')
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveTextContent('14/09 · sem meta')
+  })
+
+  it('keeps the tooltip inside the card at the first and last bars', async () => {
+    render(<WeeklyBars weeks={weeks} />)
+
+    await userEvent.hover(screen.getByRole('img', { name: '07/09 · 5/5 ✓' }))
+    const first = screen.getByRole('tooltip', { hidden: true })
+    expect(first).toHaveAttribute('aria-hidden', 'true')
+    expect(first).not.toHaveClass('-translate-x-1/2')
+    expect(first).not.toHaveClass('-translate-x-full')
+
+    await userEvent.hover(screen.getByRole('img', { name: '21/09 · 3/5' }))
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveClass('-translate-x-1/2')
+
+    await userEvent.hover(screen.getByRole('img', { name: '28/09 · 2/4 (em andamento)' }))
+    expect(screen.getByRole('tooltip', { hidden: true })).toHaveClass('-translate-x-full')
   })
 })

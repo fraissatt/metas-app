@@ -12,6 +12,19 @@ export function barLabel(week: DashboardWeek): string {
   return `${day} · ${progress}${week.current ? ' (em andamento)' : ''}`
 }
 
+// Edge bars anchor the tooltip to their outer edge so it never overflows the card.
+function tooltipAnchor(index: number, count: number): number {
+  if (index === 0) return 0
+  if (index === count - 1) return count
+  return index + 0.5
+}
+
+function tooltipShift(index: number, count: number): string {
+  if (index === 0) return 'translate-x-0'
+  if (index === count - 1) return '-translate-x-full'
+  return '-translate-x-1/2'
+}
+
 export function WeeklyBars({ weeks, className }: { weeks: DashboardWeek[]; className?: string }) {
   const [active, setActive] = useState<number | null>(null)
 
@@ -38,8 +51,12 @@ export function WeeklyBars({ weeks, className }: { weeks: DashboardWeek[]; class
       {active !== null && (
         <span
           role="tooltip"
-          style={{ left: `${((active + 0.5) / weeks.length) * 100}%` }}
-          className="pointer-events-none absolute bottom-full mb-1 -translate-x-1/2 whitespace-nowrap rounded border border-border bg-popover px-1.5 py-0.5 text-[11px] text-popover-foreground shadow"
+          aria-hidden="true"
+          style={{ left: `${(tooltipAnchor(active, weeks.length) / weeks.length) * 100}%` }}
+          className={cn(
+            'pointer-events-none absolute bottom-full mb-1 whitespace-nowrap rounded border border-border bg-popover px-1.5 py-0.5 text-[11px] text-popover-foreground shadow',
+            tooltipShift(active, weeks.length),
+          )}
         >
           {barLabel(weeks[active])}
         </span>
