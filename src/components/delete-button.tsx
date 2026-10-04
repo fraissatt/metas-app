@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, type RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -18,6 +18,8 @@ export function DeleteConfirmDialog({
   action,
   label = 'Excluir',
   confirmDescription = 'Esta ação não pode ser desfeita.',
+  onPendingChange,
+  finalFocus,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -25,12 +27,20 @@ export function DeleteConfirmDialog({
   label?: string
   /** Customize to warn about cascade-deleted children (e.g. weekly goals, daily tasks). */
   confirmDescription?: string
+  /** Reports whether the confirmed action is still running. */
+  onPendingChange?: (pending: boolean) => void
+  /** Element to focus after the dialog closes. */
+  finalFocus?: RefObject<HTMLElement | null>
 }) {
   const [isPending, startTransition] = useTransition()
 
+  useEffect(() => {
+    onPendingChange?.(isPending)
+  }, [isPending, onPendingChange])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent finalFocus={finalFocus}>
         <DialogHeader>
           <DialogTitle>Confirmar exclusão</DialogTitle>
           <DialogDescription>{confirmDescription}</DialogDescription>
@@ -65,7 +75,7 @@ export function DeleteButton({
   confirmDescription?: string
 }) {
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
   return (
     <>
@@ -80,14 +90,10 @@ export function DeleteButton({
       <DeleteConfirmDialog
         open={open}
         onOpenChange={setOpen}
-        action={() => {
-          startTransition(() => {
-            void action()
-          })
-          return Promise.resolve()
-        }}
+        action={action}
         label={label}
         confirmDescription={confirmDescription}
+        onPendingChange={setIsPending}
       />
     </>
   )

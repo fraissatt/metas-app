@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Menu } from '@base-ui/react/menu'
 import { MoreHorizontal } from 'lucide-react'
@@ -18,11 +18,15 @@ export function ObjectiveActionsMenu({
 }) {
   const router = useRouter()
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [isPending, setIsPending] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
 
   return (
     <>
       <Menu.Root>
         <Menu.Trigger
+          ref={triggerRef}
+          disabled={isPending}
           aria-label="Ações do objetivo"
           className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary"
         >
@@ -51,6 +55,8 @@ export function ObjectiveActionsMenu({
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         action={onDelete}
+        onPendingChange={setIsPending}
+        finalFocus={triggerRef}
         confirmDescription="Isso também excluirá todas as metas semanais e tarefas diárias relacionadas. Esta ação não pode ser desfeita."
       />
     </>

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ObjectiveActionsMenu } from '@/components/objective-actions-menu'
 
@@ -47,5 +47,25 @@ describe('ObjectiveActionsMenu', () => {
     await userEvent.keyboard('{Escape}')
 
     expect(screen.queryByRole('menuitem', { name: 'Editar' })).not.toBeInTheDocument()
+  })
+
+  it('returns focus to the trigger after cancelling the confirmation', async () => {
+    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={vi.fn()} />)
+    const trigger = screen.getByRole('button', { name: 'Ações do objetivo' })
+    await userEvent.click(trigger)
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Excluir…' }))
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancelar' }))
+
+    await waitFor(() => expect(trigger).toHaveFocus())
+  })
+
+  it('disables the trigger while a delete is pending', async () => {
+    const onDelete = vi.fn(() => new Promise<void>(() => {}))
+    render(<ObjectiveActionsMenu objectiveId="o1" onDelete={onDelete} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Ações do objetivo' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Excluir…' }))
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Excluir' }))
+
+    expect(screen.getByRole('button', { name: 'Ações do objetivo' })).toBeDisabled()
   })
 })
