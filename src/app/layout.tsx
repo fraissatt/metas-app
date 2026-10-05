@@ -25,6 +25,9 @@ export const metadata: Metadata = {
     default: "Metas",
   },
   description: "Objetivos, metas semanais e tarefas do dia.",
+  // iOS ignores the manifest icons, so it needs its own link and title.
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Metas" },
 };
 
 export async function generateViewport(): Promise<Viewport> {
