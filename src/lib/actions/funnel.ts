@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/db'
 import { isValidSessionId } from '@/lib/quiz/session'
-import { STEP_ORDER, WEEKDAYS, getStep, optionLabel, type Area, type StepId } from '@/lib/quiz/definition'
+import { ALL_FOCUS_OPTIONS, STEP_ORDER, WEEKDAYS, getStep, optionLabel, type StepId } from '@/lib/quiz/definition'
 
 export type FunnelEventType =
   | 'quiz_started'
@@ -53,15 +53,13 @@ function isStepId(value: unknown): value is StepId {
   return typeof value === 'string' && (STEP_ORDER as readonly string[]).includes(value)
 }
 
-const AREAS: readonly Area[] = ['saude', 'estudos', 'financas', 'carreira']
-
 function isValidAnswer(step: StepId, value: string): boolean {
   if (step === 'dias') {
     const days = value.split(',')
     return days.every((d) => (WEEKDAYS as readonly string[]).includes(d))
   }
   if (step === 'foco') {
-    return AREAS.some((area) => getStep('foco', { area }).options.some((o) => o.id === value))
+    return ALL_FOCUS_OPTIONS.some((o) => o.id === value)
   }
   return getStep(step, {}).options.some((o) => o.id === value)
 }
@@ -104,33 +102,32 @@ function median(values: number[]): number | null {
 }
 
 export async function getFunnelStats() {
-  const events = await prisma.funnelEvent.findMany({ orderBy: { createdAt: 'asc' } })
+  const events = await prisma.funnelEvent.findMany({
+    select: { sessionId: true, type: true, step: true, value: true, createdAt: true },
+    orderBy: { createdAt: 'asc' },
+  })
 
   type Session = {
     startedAt: Date | null
     planAt: Date | null
     viewed: Set<StepId>
     result: boolean
+    // Latest answer per step: events are ordered, so a later one overwrites.
+    answered: Map<StepId, string>
   }
   const sessions = new Map<string, Session>()
-  const answerCounts = new Map<StepId, Map<string, number>>()
 
   for (const e of events) {
     let s = sessions.get(e.sessionId)
     if (!s) {
-      s = { startedAt: null, planAt: null, viewed: new Set(), result: false }
+      s = { startedAt: null, planAt: null, viewed: new Set(), result: false, answered: new Map() }
       sessions.set(e.sessionId, s)
     }
     if (e.type === 'quiz_started') s.startedAt ??= e.createdAt
     else if (e.type === 'plan_created') s.planAt ??= e.createdAt
     else if (e.type === 'result_viewed') s.result = true
     else if (e.type === 'step_viewed' && isStepId(e.step)) s.viewed.add(e.step)
-    else if (e.type === 'step_answered' && isStepId(e.step) && e.value) {
-      const values = e.step === 'dias' ? e.value.split(',') : [e.value]
-      const counts = answerCounts.get(e.step) ?? new Map<string, number>()
-      for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
-      answerCounts.set(e.step, counts)
-    }
+    else if (e.type === 'step_answered' && isStepId(e.step) && e.value) s.answered.set(e.step, e.value)
   }
 
   // Only sessions that have quiz_started take part, so every stage is a
@@ -173,19 +170,33 @@ export async function getFunnelStats() {
     .map(([, s]) => Math.round((s.planAt!.getTime() - s.startedAt!.getTime()) / 1000))
 
   const answers = STEP_ORDER.map((step) => {
-    const counts = answerCounts.get(step) ?? new Map<string, number>()
-    const total = [...counts.values()].reduce((sum, n) => sum + n, 0)
-    const known = step === 'dias' ? WEEKDAYS.map(String) : getStep(step, {}).options.map((o) => o.id)
+    // Shares are per session: each started session that answered the step
+    // counts once (dias: each weekday once), over sessions that answered it.
+    const counts = new Map<string, number>()
+    let answeredSessions = 0
+    for (const [, s] of started) {
+      const answer = s.answered.get(step)
+      if (answer === undefined) continue
+      answeredSessions++
+      const values = step === 'dias' ? new Set(answer.split(',')) : [answer]
+      for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1)
+    }
+    const known: string[] =
+      step === 'dias'
+        ? [...WEEKDAYS]
+        : step === 'foco'
+          ? ALL_FOCUS_OPTIONS.map((o) => o.id)
+          : getStep(step, {}).options.map((o) => o.id)
     const order = (v: string) => (known.includes(v) ? known.indexOf(v) : known.length)
     const options = [...counts.entries()]
       .map(([value, count]) => ({
         value,
         label: optionLabel(step, value),
         count,
-        share: percent(count, total),
+        share: percent(count, answeredSessions),
       }))
       .sort((a, b) => b.count - a.count || order(a.value) - order(b.value))
-    return { step, title: getStep(step, {}).title, options }
+    return { step, title: STAGE_LABELS[step], options }
   })
 
   const recent = [...started]

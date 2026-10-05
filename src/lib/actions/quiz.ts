@@ -1,9 +1,10 @@
 'use server'
 
-import { startOfDay } from 'date-fns'
+import { isSameDay, startOfDay } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
+import { getWeekBounds } from '@/lib/dates'
 import { buildPlan } from '@/lib/quiz/build-plan'
 import { validateAnswers, type QuizAnswers } from '@/lib/quiz/definition'
 import { isValidSessionId } from '@/lib/quiz/session'
@@ -23,7 +24,7 @@ export async function createPlanFromQuiz(input: { sessionId: string; answers: un
   // Tracking must never block the user: an invalid sessionId only skips the event.
   const sessionId = input.sessionId
 
-  await prisma.$transaction(async (tx) => {
+  const objectiveId = await prisma.$transaction(async (tx) => {
     const objective = await tx.objective.create({
       data: {
         title: plan.objective.title,
@@ -50,10 +51,15 @@ export async function createPlanFromQuiz(input: { sessionId: string; answers: un
     if (isValidSessionId(sessionId)) {
       await tx.funnelEvent.create({ data: { sessionId, type: 'plan_created' } })
     }
+
+    return objective.id
   })
 
   revalidatePath('/')
   revalidatePath('/objectives')
   // redirect throws in real Next, so it must come last.
-  redirect('/')
+  // A plan that only starts next week would land on an empty Hoje, so send
+  // the user to the objective, where the first week is visible.
+  const startsThisWeek = isSameDay(plan.weeks[0].weekStart, getWeekBounds(now).weekStart)
+  redirect(startsThisWeek ? '/' : `/objectives/${objectiveId}`)
 }

@@ -52,6 +52,17 @@ describe('createPlanFromQuiz', () => {
     expect(redirect).toHaveBeenCalledWith('/')
   })
 
+  it('redirects to the objective when the plan has no task in the current week', async () => {
+    vi.setSystemTime(new Date(2026, 9, 8, 15)) // Thursday: seg and ter have passed
+    await createPlanFromQuiz({ sessionId: SID, answers: { ...answers, dias: ['seg', 'ter'] } })
+
+    const [objective] = await prisma.objective.findMany()
+    const goals = await prisma.weeklyGoal.findMany()
+    expect(goals.map((g) => g.recurring)).toEqual([true])
+    expect(ymd(goals[0].weekStart)).toBe('2026-10-12')
+    expect(redirect).toHaveBeenCalledWith(`/objectives/${objective.id}`)
+  })
+
   it('still creates the plan but skips the event when the sessionId is invalid', async () => {
     await createPlanFromQuiz({ sessionId: 'x', answers })
     expect(await prisma.objective.count()).toBe(1)

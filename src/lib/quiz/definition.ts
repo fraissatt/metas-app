@@ -97,6 +97,11 @@ const OBSTACULO_OPTIONS: QuizOption[] = [
 
 const DIAS_OPTIONS: QuizOption[] = WEEKDAYS.map((id) => ({ id, label: WEEKDAY_LABELS[id] }))
 
+export const AREA_IDS = Object.keys(FOCO_BY_AREA) as readonly Area[]
+
+// Every focus option across the areas, in definition order.
+export const ALL_FOCUS_OPTIONS: readonly QuizOption[] = AREA_IDS.flatMap((area) => FOCO_BY_AREA[area].options)
+
 export function isArea(value: unknown): value is Area {
   return typeof value === 'string' && Object.hasOwn(FOCO_BY_AREA, value)
 }

@@ -194,4 +194,82 @@ describe('getFunnelStats', () => {
     await prisma.funnelEvent.createMany({ data: rows })
     expect((await getFunnelStats()).medianSecondsToPlan).toBe(150)
   })
+
+  describe('answers', () => {
+    const T = Date.parse('2026-10-05T10:00:00Z')
+    const answersOf = async () => {
+      const stats = await getFunnelStats()
+      return Object.fromEntries(stats.answers.map((x) => [x.step, x]))
+    }
+
+    it('counts each weekday once per session, with the share over sessions that answered dias', async () => {
+      const r = run('sess-DAYSONE1', T)
+      r.ev('quiz_started', 0)
+      r.ev('step_answered', 1, 'dias', 'seg,qua,sex')
+      await prisma.funnelEvent.createMany({ data: r.rows })
+
+      const { dias } = await answersOf()
+      expect(dias.options.map((o) => [o.value, o.count, o.share])).toEqual([
+        ['seg', 1, 100],
+        ['qua', 1, 100],
+        ['sex', 1, 100],
+      ])
+    })
+
+    it('computes dias shares over the sessions that answered it', async () => {
+      const a = run('sess-DAYSAAAA', T)
+      a.ev('quiz_started', 0)
+      a.ev('step_answered', 1, 'dias', 'seg,qua')
+      const b = run('sess-DAYSBBBB', T + 1000_000)
+      b.ev('quiz_started', 0)
+      b.ev('step_answered', 1, 'dias', 'seg')
+      await prisma.funnelEvent.createMany({ data: [...a.rows, ...b.rows] })
+
+      const { dias } = await answersOf()
+      expect(dias.options.map((o) => [o.value, o.count, o.share])).toEqual([
+        ['seg', 2, 100],
+        ['qua', 1, 50],
+      ])
+    })
+
+    it('keeps only the latest answer per session and step', async () => {
+      const r = run('sess-TWICE001', T)
+      r.ev('quiz_started', 0)
+      r.ev('step_answered', 1, 'area', 'saude')
+      r.ev('step_answered', 5, 'area', 'estudos')
+      r.ev('step_answered', 6, 'area', 'estudos')
+      await prisma.funnelEvent.createMany({ data: r.rows })
+
+      const { area } = await answersOf()
+      expect(area.options.map((o) => [o.value, o.count, o.share])).toEqual([['estudos', 1, 100]])
+    })
+
+    it('excludes answers from a session that never recorded quiz_started', async () => {
+      const orphan = run('sess-ORPHAN02', T)
+      orphan.ev('step_answered', 0, 'area', 'saude')
+      const ok = run('sess-STARTED02', T)
+      ok.ev('quiz_started', 0)
+      ok.ev('step_answered', 1, 'area', 'estudos')
+      await prisma.funnelEvent.createMany({ data: [...orphan.rows, ...ok.rows] })
+
+      const { area } = await answersOf()
+      expect(area.options.map((o) => [o.value, o.count, o.share])).toEqual([['estudos', 1, 100]])
+    })
+
+    it('titles each card with the stage label and orders foco options by definition order', async () => {
+      const a = run('sess-FOCOAAAA', T)
+      a.ev('quiz_started', 0)
+      a.ev('step_answered', 1, 'foco', 'leitura')
+      const b = run('sess-FOCOBBBB', T + 1000_000)
+      b.ev('quiz_started', 0)
+      b.ev('step_answered', 1, 'foco', 'correr')
+      await prisma.funnelEvent.createMany({ data: [...a.rows, ...b.rows] })
+
+      const stats = await getFunnelStats()
+      expect(stats.answers.map((x) => x.title)).toEqual(['Área', 'Foco', 'Prazo', 'Dias', 'Obstáculo'])
+      const { foco } = Object.fromEntries(stats.answers.map((x) => [x.step, x]))
+      // Equal counts: ties fall back to definition order (saúde before estudos).
+      expect(foco.options.map((o) => o.value)).toEqual(['correr', 'leitura'])
+    })
+  })
 })
