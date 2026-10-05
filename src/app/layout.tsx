@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
+import { BackgroundProvider } from "@/components/background-provider";
 import { BottomNav } from "@/components/bottom-nav";
+import { setBackground } from "@/lib/actions/background";
 import { setTheme } from "@/lib/actions/theme";
+import { getBackground } from "@/lib/background";
 import { BROWSER_CHROME, getTheme } from "@/lib/theme";
 import "./globals.css";
 
@@ -22,6 +25,9 @@ export const metadata: Metadata = {
     default: "Metas",
   },
   description: "Objetivos, metas semanais e tarefas do dia.",
+  // iOS ignores the manifest icons, so it needs its own link and title.
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Metas" },
 };
 
 export async function generateViewport(): Promise<Viewport> {
@@ -35,6 +41,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const theme = await getTheme();
+  const background = await getBackground();
 
   return (
     <html
@@ -49,15 +56,17 @@ export default async function RootLayout({
         >
           Pular para o conteúdo
         </a>
-        <AppHeader theme={theme} onThemeChange={setTheme} />
-        <div
-          id="conteudo"
-          tabIndex={-1}
-          className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0"
-        >
-          {children}
-        </div>
-        <BottomNav />
+        <BackgroundProvider initial={background} onChange={setBackground}>
+          <AppHeader theme={theme} onThemeChange={setTheme} />
+          <div
+            id="conteudo"
+            tabIndex={-1}
+            className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0"
+          >
+            {children}
+          </div>
+          <BottomNav />
+        </BackgroundProvider>
       </body>
     </html>
   );

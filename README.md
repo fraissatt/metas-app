@@ -1,7 +1,8 @@
 # Metas
 
 Acompanhe **objetivos**, quebre-os em **metas semanais** e execute com **tarefas diárias** — com
-gráficos de progresso e sequência de semanas cumpridas.
+gráficos de progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular e no
+desktop.
 
 ![Tela Hoje, em tema escuro: tarefas do dia agrupadas por meta e o progresso da semana](docs/screenshots/hoje.jpg)
 
@@ -24,8 +25,8 @@ gráficos de progresso e sequência de semanas cumpridas.
   perde um dia.
 - **Busca global (`Ctrl K`):** encontra objetivos e metas semanais, de qualquer semana, a partir de
   qualquer tela.
-- **Tema claro e escuro**, lembrado entre as visitas.
-- **Layout próprio para celular**, com navegação inferior.
+- **Tema claro e escuro** e **fundo interativo** (aurora ou grade de pontos, desenhado em canvas).
+- **Instalável como app (PWA)** e com layout próprio para celular, com navegação inferior.
 
 ## Capturas de tela
 
@@ -49,6 +50,18 @@ gráficos de progresso e sequência de semanas cumpridas.
 
 ![Telas Hoje e Objetivos no celular](docs/screenshots/mobile.png)
 
+## Instalar como app (PWA)
+
+O Metas tem manifest, ícones e atalhos (Hoje e Objetivos), então pode ser instalado:
+
+- **Chrome / Edge (desktop):** ícone de instalar na barra de endereço.
+- **Android (Chrome):** menu ⋮ → **Instalar app**.
+- **iPhone / iPad (Safari):** **Compartilhar** → **Adicionar à Tela de Início**.
+
+A instalação exige HTTPS (ou `localhost`). O app **não funciona offline** de propósito: os dados ficam no
+Postgres, atrás de Server Actions, e guardar páginas em cache mostraria metas desatualizadas e quebraria
+as gravações.
+
 ## Stack
 
 - [Next.js](https://nextjs.org) (App Router, Server Components e Server Actions) e React 19
@@ -61,9 +74,9 @@ gráficos de progresso e sequência de semanas cumpridas.
 ## Decisões de projeto
 
 - **Testes contra um Postgres de verdade.** A camada de dados é testada com o banco `metas_app_test`, sem
-  mocks do Prisma. Os componentes têm testes com Testing Library. A suíte tem mais de 350 testes.
+  mocks do Prisma. Os componentes têm testes com Testing Library. A suíte tem mais de 380 testes.
 - **Tema vindo do servidor.** O tema fica em um cookie e a página já sai renderizada com ele; a cor da
-  barra do navegador (`theme-color`) vem da mesma fonte da paleta.
+  barra do navegador (`theme-color`) e do manifest vem da mesma fonte da paleta.
 - **Cores só por tokens.** Um teste reprova qualquer cor hexadecimal fixa nos componentes (ela ignoraria o
   tema ativo), e outros testes garantem contraste WCAG AA nas duas paletas.
 - **Acessibilidade.** Link "Pular para o conteúdo", atributos ARIA, gráficos com tooltip acessível por

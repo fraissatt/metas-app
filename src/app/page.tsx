@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { listDailyTasksByDate, toggleDailyTask } from '@/lib/actions/dailyTasks'
 import { countObjectives } from '@/lib/actions/objectives'
 import { getLifetimeStats } from '@/lib/actions/stats'
@@ -55,14 +56,9 @@ export default async function Home() {
     )
   }
 
-  // S1 — nothing exists yet. Neither banner nor materialiser can apply.
-  if ((await countObjectives()) === 0) {
-    return (
-      <main className="mx-auto max-w-2xl p-8">
-        <HomeEmptyState variant="no-objective" />
-      </main>
-    )
-  }
+  // S1 — nothing exists yet. Neither banner nor materialiser can apply. A
+  // read-only redirect (safe under prefetch) to the onboarding quiz.
+  if ((await countObjectives()) === 0) redirect('/quiz')
 
   // S2 when something can be brought forward, S2b when nothing can. A pending
   // recurrence is often exactly why this week is still empty, so the

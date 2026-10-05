@@ -46,3 +46,15 @@ enum Status {
   COMPLETED
   ABANDONED
 }
+
+model FunnelEvent {
+  id        String   @id @default(cuid())
+  sessionId String
+  type      String // 'quiz_started' | 'step_viewed' | 'step_answered' | 'result_viewed' | 'plan_created'
+  step      String? // step id for step_* events
+  value     String? // answer (comma-joined for 'dias')
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([type, step])
+}
