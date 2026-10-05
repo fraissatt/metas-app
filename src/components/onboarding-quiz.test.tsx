@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -14,11 +15,12 @@ function deferred() {
   return { promise, resolve }
 }
 
-function setup(overrides: Partial<Props> = {}) {
+function setup(overrides: Partial<Props> = {}, strict = false) {
   const onTrack = overrides.onTrack ?? vi.fn<Props['onTrack']>().mockResolvedValue(undefined)
   const onCreate = overrides.onCreate ?? vi.fn<Props['onCreate']>().mockResolvedValue(undefined)
   const user = userEvent.setup()
-  render(<OnboardingQuiz onTrack={onTrack} onCreate={onCreate} />)
+  const ui = <OnboardingQuiz onTrack={onTrack} onCreate={onCreate} />
+  render(strict ? <StrictMode>{ui}</StrictMode> : ui)
   return { onTrack: vi.mocked(onTrack), onCreate: vi.mocked(onCreate), user }
 }
 
@@ -56,6 +58,8 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 describe('OnboardingQuiz', () => {
@@ -183,7 +187,8 @@ describe('OnboardingQuiz', () => {
       },
     })
     const busy = screen.getByRole('button', { name: /Criando/ })
-    expect(busy).toBeDisabled()
+    expect(busy).toHaveAttribute('aria-disabled', 'true')
+    expect(busy).toHaveFocus()
     pending.resolve()
   })
 
@@ -210,6 +215,7 @@ describe('OnboardingQuiz', () => {
     expect(await screen.findByText('Não foi possível criar o plano. Tente de novo.')).toBeInTheDocument()
     const retry = screen.getByRole('button', { name: 'Criar meu plano' })
     expect(retry).toBeEnabled()
+    expect(retry).not.toHaveAttribute('aria-disabled', 'true')
 
     await user.click(retry)
     expect(onCreate).toHaveBeenCalledTimes(2)
@@ -352,5 +358,84 @@ describe('OnboardingQuiz', () => {
 
     await user.keyboard(' ')
     expect(days[1]).toHaveAttribute('aria-checked', 'true')
+  })
+  it('still renders and tracks a valid session id when crypto.randomUUID is unavailable', async () => {
+    vi.stubGlobal('crypto', { getRandomValues: globalThis.crypto.getRandomValues.bind(globalThis.crypto) })
+    const { onTrack } = setup()
+
+    expect(screen.getByText('Etapa 1 de 5')).toBeInTheDocument()
+    await waitFor(() => expect(onTrack).toHaveBeenCalledTimes(2))
+    const id = onTrack.mock.calls[0][0].sessionId
+    expect(id).toMatch(/^[A-Za-z0-9-]{8,40}$/)
+  })
+
+  it('does not render the step counter on the result screen', async () => {
+    const { user } = setup()
+    await walkToResult(user)
+
+    expect(screen.getByText('Seu plano está pronto')).toBeInTheDocument()
+    expect(screen.queryByText(/Etapa \d de 5/)).not.toBeInTheDocument()
+  })
+
+  it('labels the option group with the question heading', () => {
+    setup()
+    expect(screen.getByRole('radiogroup', { name: 'O que você quer conquistar?' })).toBeInTheDocument()
+    expect(screen.getByRole('radiogroup')).toHaveAttribute('aria-labelledby')
+    expect(screen.getByRole('radiogroup')).not.toHaveAttribute('aria-label')
+  })
+
+  it('does not move focus to the heading on mount, even under StrictMode', () => {
+    setup({}, true)
+    expect(screen.getByRole('heading', { level: 1 })).not.toHaveFocus()
+  })
+
+  it('resets the foco options when the area changes after going back', async () => {
+    const { user } = setup()
+    await pick(user, 'Saúde e corpo')
+    await next(user)
+    await pick(user, 'Correr uma prova')
+    await user.click(screen.getByRole('button', { name: /Voltar/ }))
+    await pick(user, 'Estudos')
+    await next(user)
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Nos estudos, qual é o seu foco?' })).toBeInTheDocument()
+    const radios = screen.getAllByRole('radio')
+    expect(radios.map((r) => r.textContent)).toEqual(['Ler mais livros', 'Aprender um idioma', 'Fazer um curso'])
+    for (const radio of radios) expect(radio).toHaveAttribute('aria-checked', 'false')
+  })
+
+  describe('result when the chosen days have all passed this week', () => {
+    async function walkWithDays(user: User, days: string[]) {
+      await pick(user, 'Saúde e corpo')
+      await next(user)
+      await pick(user, 'Correr uma prova')
+      await next(user)
+      await pick(user, '3 meses')
+      await next(user)
+      for (const day of days) await user.click(screen.getByRole('checkbox', { name: day }))
+      await next(user)
+      await pick(user, 'Falta de constância')
+      await next(user)
+    }
+
+    it('tells the user the plan starts next Monday', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 9, 8, 12)) // Thursday
+      const { user } = setup()
+      await walkWithDays(user, ['Seg', 'Ter'])
+
+      expect(screen.getByText('Começa na segunda, 12/10')).toBeInTheDocument()
+      expect(screen.queryByText(/Começa nesta semana/)).not.toBeInTheDocument()
+      expect(screen.getByText(/^Seg · /)).toBeInTheDocument()
+    })
+
+    it('does not show the line when the plan starts this week', async () => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 9, 5, 12)) // Monday
+      const { user } = setup()
+      await walkWithDays(user, ['Seg', 'Ter'])
+
+      expect(screen.queryByText(/Começa na segunda/)).not.toBeInTheDocument()
+    })
   })
 })

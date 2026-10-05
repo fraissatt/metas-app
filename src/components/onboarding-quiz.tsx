@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { formatDate } from '@/lib/dates'
+import { formatDate, formatDayMonth, getWeekBounds } from '@/lib/dates'
 import type { FunnelEventInput } from '@/lib/actions/funnel'
 import {
   STEP_ORDER,
@@ -15,6 +15,7 @@ import {
   type Weekday,
 } from '@/lib/quiz/definition'
 import { buildPlan, type Plan } from '@/lib/quiz/build-plan'
+import { newSessionId } from '@/lib/quiz/session'
 
 type Props = {
   onTrack: (event: FunnelEventInput) => Promise<void>
@@ -65,7 +66,7 @@ const optionClass = (selected: boolean) =>
 export function OnboardingQuiz({ onTrack, onCreate }: Props) {
   const [stepIndex, setStepIndex] = useState(0)
   const [answers, setAnswers] = useState<Answers>({})
-  const [sessionId, setSessionId] = useState(() => crypto.randomUUID())
+  const [sessionId, setSessionId] = useState(newSessionId)
   const [status, setStatus] = useState<Status>('answering')
   const [plan, setPlan] = useState<Plan | null>(null)
   const [attempted, setAttempted] = useState(false)
@@ -76,7 +77,7 @@ export function OnboardingQuiz({ onTrack, onCreate }: Props) {
   const trackChain = useRef<Promise<void>>(Promise.resolve())
   const started = useRef(false)
   const creating = useRef(false)
-  const mounted = useRef(false)
+  const previousView = useRef<number | 'result'>(0)
 
   // Events are chained so a later step is never stored before an earlier one,
   // and a failing tracker can never break the quiz.
@@ -95,10 +96,10 @@ export function OnboardingQuiz({ onTrack, onCreate }: Props) {
 
   const view = status === 'answering' ? stepIndex : 'result'
   useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true
-      return
-    }
+    // Only a real view change moves focus; StrictMode's double effect run on
+    // mount must not steal it.
+    if (previousView.current === view) return
+    previousView.current = view
     headingRef.current?.focus()
   }, [view])
 
@@ -167,7 +168,7 @@ export function OnboardingQuiz({ onTrack, onCreate }: Props) {
 
   function restart() {
     if (creating.current) return
-    const next = crypto.randomUUID()
+    const next = newSessionId()
     setSessionId(next)
     setAnswers({})
     setPlan(null)
@@ -198,9 +199,11 @@ export function OnboardingQuiz({ onTrack, onCreate }: Props) {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-6">
       <div className="flex flex-col gap-2">
-        <span className="text-sm text-muted-foreground">
-          Etapa {status === 'answering' ? stepIndex + 1 : TOTAL} de {TOTAL}
-        </span>
+        {status === 'answering' && (
+          <span className="text-sm text-muted-foreground">
+            Etapa {stepIndex + 1} de {TOTAL}
+          </span>
+        )}
         <div className="h-1 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
           <div
             className="h-full rounded-full bg-gradient-to-r from-support to-primary motion-safe:transition-[width] motion-safe:duration-300"
@@ -214,13 +217,13 @@ export function OnboardingQuiz({ onTrack, onCreate }: Props) {
           key={stepId}
           className="flex flex-col gap-5 motion-safe:transition-[opacity,transform] motion-safe:duration-200 starting:opacity-0 motion-safe:starting:translate-y-2"
         >
-          <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-semibold outline-none">
+          <h1 id="quiz-step-heading" ref={headingRef} tabIndex={-1} className="text-2xl font-semibold outline-none">
             {step.title}
           </h1>
 
           <div
             role={step.multiple ? 'group' : 'radiogroup'}
-            aria-label={step.title}
+            aria-labelledby="quiz-step-heading"
             className={step.multiple ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}
             onKeyDown={onGroupKeyDown}
           >
@@ -311,6 +314,8 @@ function ResultView({
 }) {
   const recurring = plan.weeks.find((w) => w.recurring)
   const partial = plan.weeks.find((w) => !w.recurring)
+  const startsNextWeek =
+    plan.weeks[0].weekStart.getTime() > getWeekBounds(plan.objective.startDate).weekStart.getTime()
   const months = answers.prazo === 1 ? '1 mês' : `${answers.prazo} meses`
 
   return (
@@ -337,6 +342,11 @@ function ResultView({
             <li key={task.date.toISOString()}>{`${WEEKDAY_LABELS[weekdayOf(task.date)]} · ${task.title}`}</li>
           ))}
         </ul>
+        {startsNextWeek && (
+          <p className="text-sm text-muted-foreground">
+            Começa na segunda, {formatDayMonth(plan.weeks[0].weekStart)}
+          </p>
+        )}
         {partial && (
           <p className="text-sm text-muted-foreground">
             Começa nesta semana com {partial.tasks.length} {partial.tasks.length === 1 ? 'tarefa' : 'tarefas'}
@@ -358,8 +368,9 @@ function ResultView({
         </Button>
         <Button
           type="button"
-          className="min-h-11 px-6 text-base"
-          disabled={busy}
+          className="min-h-11 px-6 text-base aria-disabled:pointer-events-none aria-disabled:opacity-50"
+          // aria-disabled instead of disabled keeps focus on the button while creating.
+          aria-disabled={busy}
           aria-busy={busy}
           onClick={onCreate}
         >
