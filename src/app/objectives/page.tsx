@@ -19,7 +19,7 @@ export default async function ObjectivesPage() {
     <main className="mx-auto max-w-5xl p-4 md:p-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Objetivos</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" nativeButton={false} render={<Link href="/quiz" />}>
             Montar plano com o quiz
           </Button>
