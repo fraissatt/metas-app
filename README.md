@@ -4,6 +4,11 @@ Acompanhe **objetivos**, quebre-os em **metas semanais** e execute com **tarefas
 quiz de onboarding que monta o primeiro plano, um funil de conversão medido no próprio app, gráficos de
 progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular e no desktop.
 
+**[Ver online](https://metas-app-flax.vercel.app)** · [abrir direto no quiz](https://metas-app-flax.vercel.app/quiz)
+· [ver o funil](https://metas-app-flax.vercel.app/funil)
+
+> A versão online é uma demonstração sem login: qualquer pessoa com o link vê e edita os mesmos dados.
+
 ![Tela Hoje, em tema escuro: tarefas do dia agrupadas por meta e o progresso da semana](docs/screenshots/hoje.jpg)
 
 > As imagens deste README foram geradas com dados fictícios.
