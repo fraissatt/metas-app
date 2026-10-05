@@ -51,6 +51,10 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 
 ![Detalhe do objetivo com o gráfico de conclusão semanal](docs/screenshots/objetivo-detalhe.jpg)
 
+### Funil do quiz (`/funil`)
+
+![Funil do quiz com passagens, taxa de criação do plano, tempo até o plano e o abandono por etapa, com o maior abandono destacado](docs/screenshots/funil.jpg)
+
 ### Tema claro
 
 ![Tela Hoje no tema claro](docs/screenshots/tema-claro.jpg)
