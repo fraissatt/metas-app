@@ -17,17 +17,25 @@ export default async function ObjectivesPage() {
 
   return (
     <main className="mx-auto max-w-5xl p-4 md:p-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Objetivos</h1>
-        <Button nativeButton={false} render={<Link href="/objectives/new" />}>
-          Novo objetivo
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" nativeButton={false} render={<Link href="/quiz" />}>
+            Montar plano com o quiz
+          </Button>
+          <Button nativeButton={false} render={<Link href="/objectives/new" />}>
+            Novo objetivo
+          </Button>
+        </div>
       </div>
 
       {!hasAny ? (
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <p className="text-muted-foreground">Você ainda não tem objetivos.</p>
-          <Button nativeButton={false} render={<Link href="/objectives/new" />}>
+          <Button nativeButton={false} render={<Link href="/quiz" />}>
+            Montar plano com o quiz
+          </Button>
+          <Button variant="secondary" nativeButton={false} render={<Link href="/objectives/new" />}>
             Criar meu primeiro objetivo
           </Button>
         </div>
@@ -83,6 +91,12 @@ export default async function ObjectivesPage() {
           )}
         </>
       )}
+
+      <p className="mt-10 text-center text-xs">
+        <Link href="/funil" className="text-muted-foreground underline-offset-4 hover:underline">
+          Ver métricas do quiz
+        </Link>
+      </p>
     </main>
   )
 }

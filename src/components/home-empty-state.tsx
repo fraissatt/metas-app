@@ -2,12 +2,6 @@ import Link from 'next/link'
 import { buttonVariants } from '@/components/ui/button'
 
 const COPY = {
-  'no-objective': {
-    heading: 'Comece pelo primeiro objetivo',
-    body: 'Um objetivo se divide em metas semanais, e cada meta em tarefas do dia.',
-    cta: 'Criar meu primeiro objetivo',
-    href: '/objectives/new',
-  },
   'no-goal': {
     heading: 'Defina a primeira meta semanal',
     body: 'Seu objetivo já existe. Falta quebrá-lo em uma meta para esta semana.',
