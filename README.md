@@ -2,7 +2,7 @@
 
 Acompanhe **objetivos**, quebre-os em **metas semanais** e execute com **tarefas diárias** — com um
 quiz de onboarding que monta o primeiro plano, um funil de conversão medido no próprio app, gráficos de
-progresso e sequência de semanas cumpridas.
+progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular e no desktop.
 
 ![Tela Hoje, em tema escuro: tarefas do dia agrupadas por meta e o progresso da semana](docs/screenshots/hoje.jpg)
 
@@ -34,7 +34,7 @@ progresso e sequência de semanas cumpridas.
 - **Busca global (`Ctrl K`):** encontra objetivos e metas semanais, de qualquer semana, a partir de
   qualquer tela.
 - **Tema claro e escuro** e **fundo interativo** (aurora ou grade de pontos, desenhado em canvas).
-- **Layout próprio para celular**, com navegação inferior.
+- **Instalável como app (PWA)** e com layout próprio para celular, com navegação inferior.
 
 ## Capturas de tela
 
@@ -58,6 +58,18 @@ progresso e sequência de semanas cumpridas.
 
 ![Telas Hoje e Objetivos no celular](docs/screenshots/mobile.png)
 
+## Instalar como app (PWA)
+
+O Metas tem manifest, ícones e atalhos (Hoje e Objetivos), então pode ser instalado:
+
+- **Chrome / Edge (desktop):** ícone de instalar na barra de endereço.
+- **Android (Chrome):** menu ⋮ → **Instalar app**.
+- **iPhone / iPad (Safari):** **Compartilhar** → **Adicionar à Tela de Início**.
+
+Instalado, ele abre em tela cheia, sem a barra do navegador. A instalação exige HTTPS (ou `localhost`).
+O app **não funciona offline** de propósito: os dados ficam no Postgres, atrás de Server Actions, e
+guardar páginas em cache mostraria metas desatualizadas e quebraria as gravações.
+
 ## Stack
 
 - [Next.js](https://nextjs.org) (App Router, Server Components e Server Actions) e React 19
@@ -66,6 +78,8 @@ progresso e sequência de semanas cumpridas.
   [Base UI](https://base-ui.com/), não Radix)
 - [Recharts](https://recharts.org/) para os gráficos e [Motion](https://motion.dev/) para as animações
 - [Vitest](https://vitest.dev/) + Testing Library
+- Deploy na [Vercel](https://vercel.com/) com Postgres na [Neon](https://neon.com/); as migrations rodam a
+  cada deploy (script `vercel-build`)
 
 ## Decisões de projeto
 
