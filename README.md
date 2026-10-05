@@ -28,32 +28,27 @@ desktop.
 - **Tema claro e escuro** e **fundo interativo** (aurora ou grade de pontos, desenhado em canvas).
 - **Instalável como app (PWA)** e com layout próprio para celular, com navegação inferior.
 
-<details>
-<summary><strong>Mais capturas de tela</strong></summary>
+## Capturas de tela
 
-&nbsp;
-
-**Objetivos**
+### Objetivos
 
 ![Dashboard de objetivos com média, semanas cumpridas e sequências](docs/screenshots/objetivos.jpg)
 
-**Detalhe de um objetivo**
+### Detalhe de um objetivo
 
 ![Detalhe do objetivo com o gráfico de conclusão semanal](docs/screenshots/objetivo-detalhe.jpg)
 
-**Tema claro**
+### Tema claro
 
 ![Tela Hoje no tema claro](docs/screenshots/tema-claro.jpg)
 
-**Busca (`Ctrl K`)**
+### Busca (`Ctrl K`)
 
 ![Paleta de busca com resultados](docs/screenshots/busca.jpg)
 
-**Celular**
+### No celular
 
 ![Telas Hoje e Objetivos no celular](docs/screenshots/mobile.png)
-
-</details>
 
 ## Instalar como app (PWA)
 
