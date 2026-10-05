@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
-import { STEP_ORDER, WEEKDAYS, getStep, optionLabel, type StepId } from '@/lib/quiz/definition'
+import { STEP_ORDER, WEEKDAYS, getStep, optionLabel, type Area, type StepId } from '@/lib/quiz/definition'
 
 export type FunnelEventType =
   | 'quiz_started'
@@ -53,6 +53,19 @@ function isStepId(value: unknown): value is StepId {
   return typeof value === 'string' && (STEP_ORDER as readonly string[]).includes(value)
 }
 
+const AREAS: readonly Area[] = ['saude', 'estudos', 'financas', 'carreira']
+
+function isValidAnswer(step: StepId, value: string): boolean {
+  if (step === 'dias') {
+    const days = value.split(',')
+    return days.every((d) => (WEEKDAYS as readonly string[]).includes(d))
+  }
+  if (step === 'foco') {
+    return AREAS.some((area) => getStep('foco', { area }).options.some((o) => o.id === value))
+  }
+  return getStep(step, {}).options.some((o) => o.id === value)
+}
+
 // Tracking must never break the quiz: invalid events are dropped silently.
 export async function trackFunnelEvent(event: FunnelEventInput): Promise<void> {
   try {
@@ -64,12 +77,13 @@ export async function trackFunnelEvent(event: FunnelEventInput): Promise<void> {
     if (needsStep && !isStepId(step)) return
     if (step !== undefined && !isStepId(step)) return
     if (value !== undefined && typeof value !== 'string') return
+    if (type === 'step_answered' && step && value !== undefined && !isValidAnswer(step, value)) return
 
     await prisma.funnelEvent.create({
       data: {
         sessionId,
         type,
-        step: step ?? null,
+        step: needsStep ? (step ?? null) : null,
         value: value === undefined ? null : value.slice(0, MAX_VALUE_LENGTH),
       },
     })
@@ -119,23 +133,31 @@ export async function getFunnelStats() {
     }
   }
 
-  const all = [...sessions.entries()]
-  const started = all.filter(([, s]) => s.startedAt !== null)
+  // Only sessions that have quiz_started take part, so every stage is a
+  // subset of `starts`. Each session counts for every stage up to the
+  // furthest one it reached, which keeps the funnel monotonic even when a
+  // stage view was never recorded.
+  const started = [...sessions.entries()].filter(([, s]) => s.startedAt !== null)
   const starts = started.length
 
   const reached = (s: Session, id: FunnelStage['id']) =>
     id === 'plan' ? s.planAt !== null : id === 'result' ? s.result : s.viewed.has(id)
+  const furthestIndex = (s: Session) => {
+    for (let i = STAGE_IDS.length - 1; i >= 0; i--) if (reached(s, STAGE_IDS[i])) return i
+    return -1
+  }
+  const furthest = started.map(([, s]) => furthestIndex(s))
 
   const stages: FunnelStage[] = []
   STAGE_IDS.forEach((id, i) => {
-    const count = all.filter(([, s]) => reached(s, id)).length
+    const count = furthest.filter((f) => f >= i).length
     const previous = i === 0 ? null : stages[i - 1].sessions
     stages.push({
       id,
       label: STAGE_LABELS[id],
       sessions: count,
       percentOfStart: percent(count, stages[0]?.sessions ?? count),
-      dropFromPrevious: previous === null ? null : percent(previous - count, previous),
+      dropFromPrevious: previous === null ? null : Math.max(0, percent(previous - count, previous)),
     })
   })
 
@@ -170,7 +192,7 @@ export async function getFunnelStats() {
     .sort(([, a], [, b]) => b.startedAt!.getTime() - a.startedAt!.getTime())
     .slice(0, RECENT_LIMIT)
     .map(([sessionId, s]) => {
-      const furthestId = [...STAGE_IDS].reverse().find((id) => reached(s, id))
+      const furthestId = STAGE_IDS[furthestIndex(s)]
       return {
         sessionId,
         startedAt: s.startedAt!,

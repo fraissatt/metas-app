@@ -13,9 +13,29 @@ describe('trackFunnelEvent', () => {
   })
 
   it('truncates a value longer than 100 characters', async () => {
-    await trackFunnelEvent({ sessionId: SID, type: 'step_answered', step: 'area', value: 'x'.repeat(150) })
+    await trackFunnelEvent({ sessionId: SID, type: 'step_viewed', step: 'area', value: 'x'.repeat(150) })
     const [row] = await prisma.funnelEvent.findMany()
     expect(row.value).toBe('x'.repeat(100))
+  })
+
+  it('drops a step_answered whose value is not an option of that step', async () => {
+    await trackFunnelEvent({ sessionId: SID, type: 'step_answered', step: 'area', value: 'nope' })
+    await trackFunnelEvent({ sessionId: SID, type: 'step_answered', step: 'dias', value: 'seg,xyz' })
+    await trackFunnelEvent({ sessionId: SID, type: 'step_answered', step: 'foco', value: 'saude' })
+    expect(await prisma.funnelEvent.count()).toBe(0)
+  })
+
+  it('accepts valid answers, including any focus and comma-joined days', async () => {
+    await trackFunnelEvent({ sessionId: SID, type: 'step_answered', step: 'foco', value: 'idioma' })
+    await trackFunnelEvent({ sessionId: SID, type: 'step_answered', step: 'dias', value: 'seg,qua' })
+    await trackFunnelEvent({ sessionId: SID, type: 'step_answered', step: 'prazo', value: '12' })
+    expect(await prisma.funnelEvent.count()).toBe(3)
+  })
+
+  it('stores step as null for non-step event types', async () => {
+    await trackFunnelEvent({ sessionId: SID, type: 'quiz_started', step: 'area' })
+    const [row] = await prisma.funnelEvent.findMany()
+    expect(row.step).toBeNull()
   })
 
   it.each([
@@ -132,5 +152,46 @@ describe('getFunnelStats', () => {
     const stats = await getFunnelStats()
     expect(stats.recent).toHaveLength(10)
     expect(stats.recent[0].sessionId).toBe('session-0011')
+  })
+
+  it('counts a session that skipped stage views up to its furthest stage, with no negative drop', async () => {
+    const r = run('sess-SKIPSKIP', Date.parse('2026-10-05T10:00:00Z'))
+    r.ev('quiz_started', 0)
+    r.ev('step_viewed', 1, 'area')
+    r.ev('result_viewed', 2)
+    await prisma.funnelEvent.createMany({ data: r.rows })
+
+    const stats = await getFunnelStats()
+    expect(stats.stages.map((x) => x.sessions)).toEqual([1, 1, 1, 1, 1, 1, 0])
+    expect(stats.stages.every((x) => (x.dropFromPrevious ?? 0) >= 0)).toBe(true)
+    expect(stats.recent[0].furthest).toBe('Resultado')
+  })
+
+  it('excludes a plan_created session that has no quiz_started', async () => {
+    const t = Date.parse('2026-10-05T10:00:00Z')
+    const orphan = run('sess-ORPHAN01', t)
+    orphan.ev('plan_created', 0)
+    const ok = run('sess-STARTED01', t)
+    ok.ev('quiz_started', 0)
+    ok.ev('step_viewed', 1, 'area')
+    await prisma.funnelEvent.createMany({ data: [...orphan.rows, ...ok.rows] })
+
+    const stats = await getFunnelStats()
+    expect(stats.starts).toBe(1)
+    expect(stats.stages[6].sessions).toBe(0)
+    expect(stats.conversion).toBe(0)
+    expect(stats.conversion).toBeLessThanOrEqual(100)
+  })
+
+  it('averages the two middle values for an even count of plan sessions', async () => {
+    const t = Date.parse('2026-10-05T10:00:00Z')
+    const rows = [100, 200].flatMap((secs, i) => {
+      const r = run(`sess-MEDIAN0${i}`, t + i * 1000_000)
+      r.ev('quiz_started', 0)
+      r.ev('plan_created', secs)
+      return r.rows
+    })
+    await prisma.funnelEvent.createMany({ data: rows })
+    expect((await getFunnelStats()).medianSecondsToPlan).toBe(150)
   })
 })
