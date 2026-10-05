@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/db'
+import { isValidSessionId } from '@/lib/quiz/session'
 import { STEP_ORDER, WEEKDAYS, getStep, optionLabel, type Area, type StepId } from '@/lib/quiz/definition'
 
 export type FunnelEventType =
@@ -25,7 +26,6 @@ export type FunnelStage = {
   dropFromPrevious: number | null
 }
 
-const SESSION_ID = /^[A-Za-z0-9-]{8,40}$/
 const MAX_VALUE_LENGTH = 100
 const RECENT_LIMIT = 10
 
@@ -70,7 +70,7 @@ function isValidAnswer(step: StepId, value: string): boolean {
 export async function trackFunnelEvent(event: FunnelEventInput): Promise<void> {
   try {
     const { sessionId, type, step, value } = event ?? ({} as FunnelEventInput)
-    if (typeof sessionId !== 'string' || !SESSION_ID.test(sessionId)) return
+    if (!isValidSessionId(sessionId)) return
     if (typeof type !== 'string' || !EVENT_TYPES.includes(type)) return
 
     const needsStep = type === 'step_viewed' || type === 'step_answered'
