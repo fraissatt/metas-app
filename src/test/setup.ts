@@ -16,6 +16,7 @@ vi.mock('next/cache', () => ({
 
 afterEach(async () => {
   cleanup()
+  await prisma.funnelEvent.deleteMany()
   await prisma.dailyTask.deleteMany()
   await prisma.weeklyGoal.deleteMany()
   await prisma.objective.deleteMany()
