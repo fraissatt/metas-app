@@ -195,3 +195,7 @@ o banco.
 - `npm run lint` — roda o linter.
 - `npm run db:migrate` — aplica as migrations pendentes no banco apontado por `DATABASE_URL` (não
   interativo; use `npx prisma migrate dev` ao desenvolver novas migrations).
+
+## Licença
+
+[MIT](LICENSE).
