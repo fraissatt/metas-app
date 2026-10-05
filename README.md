@@ -1,98 +1,166 @@
-# metas-app
+# Metas
 
-Objectives -> Weekly Goals -> Daily Tasks tracker, built with Next.js (App Router),
-Prisma, and Postgres.
+Acompanhe **objetivos**, quebre-os em **metas semanais** e execute com **tarefas diárias** — com
+gráficos de progresso e sequência de semanas cumpridas.
 
-## Prerequisites
+![Tela Hoje, em tema escuro: tarefas do dia agrupadas por meta e o progresso da semana](docs/screenshots/hoje.jpg)
 
-- [Node.js](https://nodejs.org/) 20.9 or later
-- [Docker](https://www.docker.com/) (for running Postgres locally via Docker Compose)
-- npm (this project is npm-only — do not use yarn, pnpm, or bun)
+> As imagens deste README foram geradas com dados fictícios.
 
-## Setup
+## Funcionalidades
 
-1. Start Postgres:
+- **Hierarquia de três níveis:** objetivo → metas semanais → tarefas diárias, com prazo e acompanhamento
+  do tempo decorrido até a data-alvo.
+- **Tela Hoje:** as tarefas do dia agrupadas por meta, ao lado do progresso da semana (anel de progresso
+  e uma barra por dia). Marcar uma tarefa atualiza a tela na hora, antes de o servidor responder.
+- **Metas recorrentes:** uma meta marcada como "repete toda semana" é recriada, com suas tarefas, a cada
+  nova semana. Quem volta depois de dias fora vê o que foi planejado e repete a última semana com um clique.
+- **Dashboard de objetivos:** média de conclusão das últimas 8 semanas, barras por semana, sequência de
+  semanas cumpridas e quanto do prazo já passou.
+- **Detalhe do objetivo:** gráfico de conclusão por semana (Recharts), linha do tempo das semanas e as
+  metas de cada uma.
+- **Progresso acumulado:** um contador que só cresce (tarefas concluídas desde o início) e a constância
+  das últimas semanas. A constância é medida em semanas, não em dias seguidos, para não punir quem
+  perde um dia.
+- **Busca global (`Ctrl K`):** encontra objetivos e metas semanais, de qualquer semana, a partir de
+  qualquer tela.
+- **Tema claro e escuro**, lembrado entre as visitas.
+- **Layout próprio para celular**, com navegação inferior.
+
+## Capturas de tela
+
+### Objetivos
+
+![Dashboard de objetivos com média, semanas cumpridas e sequências](docs/screenshots/objetivos.jpg)
+
+### Detalhe de um objetivo
+
+![Detalhe do objetivo com o gráfico de conclusão semanal](docs/screenshots/objetivo-detalhe.jpg)
+
+### Tema claro
+
+![Tela Hoje no tema claro](docs/screenshots/tema-claro.jpg)
+
+### Busca (`Ctrl K`)
+
+![Paleta de busca com resultados](docs/screenshots/busca.jpg)
+
+### No celular
+
+![Telas Hoje e Objetivos no celular](docs/screenshots/mobile.png)
+
+## Stack
+
+- [Next.js](https://nextjs.org) (App Router, Server Components e Server Actions) e React 19
+- [Prisma](https://www.prisma.io/) + Postgres
+- [Tailwind CSS](https://tailwindcss.com/) 4 + [shadcn/ui](https://ui.shadcn.com/) (sobre
+  [Base UI](https://base-ui.com/), não Radix)
+- [Recharts](https://recharts.org/) para os gráficos e [Motion](https://motion.dev/) para as animações
+- [Vitest](https://vitest.dev/) + Testing Library
+
+## Decisões de projeto
+
+- **Testes contra um Postgres de verdade.** A camada de dados é testada com o banco `metas_app_test`, sem
+  mocks do Prisma. Os componentes têm testes com Testing Library. A suíte tem mais de 350 testes.
+- **Tema vindo do servidor.** O tema fica em um cookie e a página já sai renderizada com ele; a cor da
+  barra do navegador (`theme-color`) vem da mesma fonte da paleta.
+- **Cores só por tokens.** Um teste reprova qualquer cor hexadecimal fixa nos componentes (ela ignoraria o
+  tema ativo), e outros testes garantem contraste WCAG AA nas duas paletas.
+- **Acessibilidade.** Link "Pular para o conteúdo", atributos ARIA, gráficos com tooltip acessível por
+  foco e animações que respeitam `prefers-reduced-motion`.
+- **Estado derivado, não armazenado.** Uma meta semanal está cumprida quando todas as suas tarefas estão
+  feitas; isso é calculado na leitura, não gravado.
+- **Cada funcionalidade tem spec e plano.** O raciocínio por trás das decisões está em
+  [`docs/superpowers/specs`](docs/superpowers/specs) e [`docs/superpowers/plans`](docs/superpowers/plans).
+
+## Como rodar
+
+### Pré-requisitos
+
+- [Node.js](https://nodejs.org/) 20.9 ou superior
+- [Docker](https://www.docker.com/) (para subir o Postgres localmente com Docker Compose)
+- npm (o projeto usa só npm — não use yarn, pnpm nem bun)
+
+### Passo a passo
+
+1. Suba o Postgres:
 
    ```bash
    docker compose up -d
    ```
 
-   This starts a Postgres 16 container on `localhost:5433` (remapped from the default
-   `5432` to avoid clashing with a Postgres instance you might already have running
-   locally) and creates both the app database (`metas_app`) and the test database
-   (`metas_app_test`).
+   Isso inicia um contêiner Postgres 16 em `localhost:5433` (remapeado da porta padrão `5432` para não
+   conflitar com um Postgres que você já tenha rodando) e cria o banco do app (`metas_app`) e o banco de
+   testes (`metas_app_test`).
 
-2. Copy the environment file:
+2. Copie o arquivo de ambiente:
 
    ```bash
    cp .env.example .env
    ```
 
-   The default `DATABASE_URL` already matches the Docker Compose setup above, so no
-   further editing is needed for local development.
+   A `DATABASE_URL` padrão já corresponde ao Docker Compose acima, então não precisa editar nada para
+   desenvolver localmente.
 
-3. Install dependencies:
+3. Instale as dependências:
 
    ```bash
    npm install
    ```
 
-   This also runs `prisma generate` automatically via the `postinstall` script.
+   Isso também roda `prisma generate`, pelo script `postinstall`.
 
-4. Apply database migrations:
+4. Aplique as migrations:
 
    ```bash
    npx prisma migrate dev
    ```
 
-5. Start the dev server:
+5. Inicie o servidor de desenvolvimento:
 
    ```bash
    npm run dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000).
+   Abra [http://localhost:3000](http://localhost:3000).
 
-## Running tests
+## Testes
 
-Tests run against a real Postgres database (`metas_app_test`, from the Docker Compose
-setup above) rather than a mocked Prisma client — there are no unit tests with mocked
-data access in this project, only DB-integration tests.
+Os testes rodam contra um Postgres de verdade (`metas_app_test`, criado pelo Docker Compose acima), e não
+contra um Prisma mockado — não há testes unitários com acesso a dados falso, só testes de integração com
+o banco.
 
-1. Make sure Postgres is running (`docker compose up -d`) and `.env.test` exists (it's
-   already present in this repo, pointing at `metas_app_test` on port 5433).
+1. Garanta que o Postgres está rodando (`docker compose up -d`).
 
-2. Apply migrations to the test database:
+2. Crie o arquivo `.env.test` na raiz, apontando para o banco de testes (ele é ignorado pelo git, então
+   não vem no clone):
+
+   ```bash
+   DATABASE_URL="postgresql://metas:metas@localhost:5433/metas_app_test"
+   ```
+
+3. Aplique as migrations no banco de testes:
 
    ```bash
    npm run test:migrate
    ```
 
-3. Run the test suite:
+4. Rode a suíte:
 
    ```bash
    npm run test
    ```
 
-   Or in watch mode:
+   Ou em modo watch:
 
    ```bash
    npm run test:watch
    ```
 
-## Other scripts
+## Outros scripts
 
-- `npm run build` — production build.
-- `npm run start` — run the production build.
-- `npm run lint` — lint the codebase.
-- `npm run db:migrate` — apply pending migrations to the database pointed at by
-  `DATABASE_URL` (non-interactive; use `npx prisma migrate dev` instead when actively
-  developing new migrations).
-
-## Tech stack
-
-- [Next.js](https://nextjs.org) (App Router, Server Actions)
-- [Prisma](https://www.prisma.io/) + Postgres
-- [Tailwind CSS](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) (on
-  [Base UI](https://base-ui.com/), not Radix)
-- [Vitest](https://vitest.dev/) + Testing Library
+- `npm run build` — build de produção.
+- `npm run start` — roda o build de produção.
+- `npm run lint` — roda o linter.
+- `npm run db:migrate` — aplica as migrations pendentes no banco apontado por `DATABASE_URL` (não
+  interativo; use `npx prisma migrate dev` ao desenvolver novas migrations).
