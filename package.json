@@ -13,7 +13,7 @@
     "test:migrate": "dotenv -e .env.test -- prisma migrate deploy",
     "test": "vitest run",
     "test:watch": "vitest",
-    "vercel-build": "DATABASE_URL=\"${DATABASE_URL_UNPOOLED:-$DATABASE_URL}\" prisma migrate deploy && next build"
+    "vercel-build": "if [ \"$VERCEL_ENV\" = production ]; then DATABASE_URL=\"${DATABASE_URL_UNPOOLED:-$DATABASE_URL}\" prisma migrate deploy; fi && next build"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

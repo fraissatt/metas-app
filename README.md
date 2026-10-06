@@ -92,7 +92,7 @@ guardar páginas em cache mostraria metas desatualizadas e quebraria as gravaç�
 - [Recharts](https://recharts.org/) para os gráficos e [Motion](https://motion.dev/) para as animações
 - [Vitest](https://vitest.dev/) + Testing Library
 - Deploy na [Vercel](https://vercel.com/) com Postgres na [Neon](https://neon.com/); as migrations rodam a
-  cada deploy (script `vercel-build`)
+  cada deploy de produção (script `vercel-build`)
 
 ## Decisões de projeto
 
