@@ -62,15 +62,17 @@ export function buildDemoData(now: Date): DemoObjective[] {
     {
       title: 'Correr 10 km',
       startDate: sevenAgo,
-      targetDate: addWeeks(startOfDay(now), 8),
+      // The race is close: this is the objective near its target date.
+      targetDate: addDays(startOfDay(now), 10),
       status: 'ACTIVE',
       completedAt: null,
       goals: weeksOf(RUN, sevenAgo, now, true),
     },
     {
-      title: 'Ler 12 livros no ano',
+      title: 'Ler 4 livros em 4 meses',
       startDate: sevenAgo,
-      targetDate: addDays(startOfDay(now), 10),
+      // Under half of the deadline gone after 7 weeks, so the pace looks believable.
+      targetDate: addWeeks(sevenAgo, 17),
       status: 'ACTIVE',
       completedAt: null,
       goals: weeksOf(READ, sevenAgo, now, true),
