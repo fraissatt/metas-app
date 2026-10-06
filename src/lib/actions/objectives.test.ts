@@ -14,6 +14,7 @@ import {
   reopenObjective,
   updateObjective,
 } from '@/lib/actions/objectives'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -31,10 +32,17 @@ describe('objective actions', () => {
     expect(all[0].status).toBe('ACTIVE')
   })
 
+  it('sets the current user as owner of the created objective', async () => {
+    await createObjective(formData({ title: 'Aprender React', startDate: '2026-01-01' }))
+
+    const created = await prisma.objective.findFirstOrThrow()
+    expect(created.userId).toBe(TEST_USER_ID)
+  })
+
   it('lists objectives newest first', async () => {
-    const first = await prisma.objective.create({ data: { title: 'A', startDate: new Date() } })
+    const first = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'A', startDate: new Date() } })
     await new Promise((resolve) => setTimeout(resolve, 5))
-    const second = await prisma.objective.create({ data: { title: 'B', startDate: new Date() } })
+    const second = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'B', startDate: new Date() } })
 
     const result = await listObjectives()
 
@@ -42,7 +50,7 @@ describe('objective actions', () => {
   })
 
   it('gets a single objective by id', async () => {
-    const created = await prisma.objective.create({ data: { title: 'A', startDate: new Date() } })
+    const created = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'A', startDate: new Date() } })
 
     const found = await getObjective(created.id)
 
@@ -50,7 +58,7 @@ describe('objective actions', () => {
   })
 
   it('updates an objective', async () => {
-    const created = await prisma.objective.create({ data: { title: 'A', startDate: new Date() } })
+    const created = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'A', startDate: new Date() } })
 
     await updateObjective(created.id, formData({ title: 'B', startDate: '2026-02-01' }))
 
@@ -73,7 +81,7 @@ describe('objective actions', () => {
   })
 
   it('deletes an objective', async () => {
-    const created = await prisma.objective.create({ data: { title: 'A', startDate: new Date() } })
+    const created = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'A', startDate: new Date() } })
 
     await deleteObjective(created.id)
 
@@ -125,8 +133,8 @@ describe('objective actions', () => {
 
     await prisma.objective.createMany({
       data: [
-        { title: 'Primeiro', startDate: new Date() },
-        { title: 'Segundo', startDate: new Date() },
+        { userId: TEST_USER_ID, title: 'Primeiro', startDate: new Date() },
+        { userId: TEST_USER_ID, title: 'Segundo', startDate: new Date() },
       ],
     })
 
@@ -135,7 +143,7 @@ describe('objective actions', () => {
 
   it('reports zeros for an objective with no weekly goals', async () => {
     const objective = await prisma.objective.create({
-      data: { title: 'Academia', startDate: new Date() },
+      data: { userId: TEST_USER_ID, title: 'Academia', startDate: new Date() },
     })
 
     const stats = await getObjectiveStats(objective.id)
@@ -147,7 +155,7 @@ describe('objective actions', () => {
 
   it('counts fulfilled weeks and completed tasks across weeks', async () => {
     const objective = await prisma.objective.create({
-      data: { title: 'Academia', startDate: parseISO('2026-07-06') },
+      data: { userId: TEST_USER_ID, title: 'Academia', startDate: parseISO('2026-07-06') },
     })
     const fullWeek = getWeekBounds(parseISO('2026-07-06'))
     const partialWeek = getWeekBounds(parseISO('2026-07-13'))
@@ -176,7 +184,7 @@ describe('objective actions', () => {
 
   it('measures weeks since the objective started', async () => {
     const objective = await prisma.objective.create({
-      data: { title: 'Academia', startDate: addWeeks(new Date(), -5) },
+      data: { userId: TEST_USER_ID, title: 'Academia', startDate: addWeeks(new Date(), -5) },
     })
 
     expect((await getObjectiveStats(objective.id)).weeksSinceStart).toBe(5)
@@ -186,7 +194,7 @@ describe('objective actions', () => {
     const startDate = addWeeks(new Date(), -10)
     const completedAt = addWeeks(startDate, 4)
     const objective = await prisma.objective.create({
-      data: { title: 'Academia', startDate, status: 'COMPLETED', completedAt },
+      data: { userId: TEST_USER_ID, title: 'Academia', startDate, status: 'COMPLETED', completedAt },
     })
 
     expect((await getObjectiveStats(objective.id)).weeksSinceStart).toBe(4)
@@ -194,7 +202,7 @@ describe('objective actions', () => {
 
   it('returns every week when there are fewer than 26, and the most recent 26 when there are more', async () => {
     const objective = await prisma.objective.create({
-      data: { title: 'Academia', startDate: parseISO('2026-01-05') },
+      data: { userId: TEST_USER_ID, title: 'Academia', startDate: parseISO('2026-01-05') },
     })
     const firstWeekStart = getWeekBounds(parseISO('2026-01-05')).weekStart
 
@@ -215,7 +223,7 @@ describe('objective actions', () => {
 
   it('completes an objective, recording when', async () => {
     const objective = await prisma.objective.create({
-      data: { title: 'Correr 5km', startDate: new Date() },
+      data: { userId: TEST_USER_ID, title: 'Correr 5km', startDate: new Date() },
     })
 
     await completeObjective(objective.id)
@@ -228,6 +236,7 @@ describe('objective actions', () => {
   it('reopens a completed objective, clearing the completion date', async () => {
     const objective = await prisma.objective.create({
       data: {
+        userId: TEST_USER_ID,
         title: 'Correr 5km',
         startDate: new Date(),
         status: 'COMPLETED',
@@ -245,7 +254,7 @@ describe('objective actions', () => {
   it('leaves an already-completed objective completed', async () => {
     // Idempotent by construction — no guard needed, and none is used.
     const objective = await prisma.objective.create({
-      data: { title: 'Correr 5km', startDate: new Date() },
+      data: { userId: TEST_USER_ID, title: 'Correr 5km', startDate: new Date() },
     })
 
     await completeObjective(objective.id)
@@ -257,10 +266,11 @@ describe('objective actions', () => {
 
   it('splits objectives into active and completed, each carrying its stats', async () => {
     const active = await prisma.objective.create({
-      data: { title: 'Em andamento', startDate: new Date() },
+      data: { userId: TEST_USER_ID, title: 'Em andamento', startDate: new Date() },
     })
     const done = await prisma.objective.create({
       data: {
+        userId: TEST_USER_ID,
         title: 'Terminado',
         startDate: new Date(),
         status: 'COMPLETED',
@@ -278,6 +288,7 @@ describe('objective actions', () => {
   it('orders completed objectives by most recently completed', async () => {
     const older = await prisma.objective.create({
       data: {
+        userId: TEST_USER_ID,
         title: 'Antigo',
         startDate: new Date(),
         status: 'COMPLETED',
@@ -286,6 +297,7 @@ describe('objective actions', () => {
     })
     const newer = await prisma.objective.create({
       data: {
+        userId: TEST_USER_ID,
         title: 'Recente',
         startDate: new Date(),
         status: 'COMPLETED',

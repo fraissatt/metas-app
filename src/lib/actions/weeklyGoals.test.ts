@@ -15,6 +15,7 @@ import {
   updateWeeklyGoal,
 } from '@/lib/actions/weeklyGoals'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -23,7 +24,7 @@ function formData(fields: Record<string, string>) {
 }
 
 async function makeObjective() {
-  return prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+  return prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
 }
 
 describe('weekly goal actions', () => {
@@ -326,7 +327,7 @@ describe('weekly goal actions', () => {
   it('treats a same-titled goal under a different objective as still missing', async () => {
     const first = await makeObjective()
     const second = await prisma.objective.create({
-      data: { title: 'Outro', startDate: new Date() },
+      data: { userId: TEST_USER_ID, title: 'Outro', startDate: new Date() },
     })
     const currentWeek = getWeekBounds(new Date())
     const lastWeek = getWeekBounds(addWeeks(currentWeek.weekStart, -1))
@@ -461,7 +462,7 @@ describe('weekly goal actions', () => {
   it('brings goals from several objectives in the same source week', async () => {
     const first = await makeObjective()
     const second = await prisma.objective.create({
-      data: { title: 'Outro', startDate: new Date() },
+      data: { userId: TEST_USER_ID, title: 'Outro', startDate: new Date() },
     })
     const currentWeekStart = getWeekBounds(new Date()).weekStart
     const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))
@@ -578,6 +579,7 @@ describe('weekly goal actions', () => {
   it('counts nothing for a recurring goal under a completed objective', async () => {
     const objective = await prisma.objective.create({
       data: {
+        userId: TEST_USER_ID,
         title: 'Terminado',
         startDate: new Date(),
         status: 'COMPLETED',
@@ -660,7 +662,7 @@ describe('weekly goal actions', () => {
 
   it('leaves goals under a completed objective behind', async () => {
     const objective = await prisma.objective.create({
-      data: { title: 'Terminado', startDate: new Date(), status: 'COMPLETED' },
+      data: { userId: TEST_USER_ID, title: 'Terminado', startDate: new Date(), status: 'COMPLETED' },
     })
     const currentWeekStart = getWeekBounds(new Date()).weekStart
     const lastWeek = getWeekBounds(addWeeks(currentWeekStart, -1))

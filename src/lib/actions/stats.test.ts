@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { getLifetimeStats } from '@/lib/actions/stats'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 async function makeGoal() {
   const objective = await prisma.objective.create({
-    data: { title: 'Obj', startDate: new Date() },
+    data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() },
   })
   const bounds = getWeekBounds(new Date())
   return prisma.weeklyGoal.create({

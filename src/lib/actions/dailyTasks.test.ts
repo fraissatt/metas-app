@@ -13,6 +13,7 @@ import {
   updateDailyTask,
 } from '@/lib/actions/dailyTasks'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -21,7 +22,7 @@ function formData(fields: Record<string, string>) {
 }
 
 async function makeWeeklyGoal() {
-  const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+  const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
   const bounds = getWeekBounds(new Date('2026-07-29'))
   return prisma.weeklyGoal.create({ data: { title: 'Goal', objectiveId: objective.id, ...bounds } })
 }

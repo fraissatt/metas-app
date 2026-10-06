@@ -3,10 +3,11 @@ import { parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getObjectiveProgressSeries } from '@/lib/actions/progress'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 describe('getObjectiveProgressSeries', () => {
   it('returns one point per week, ordered by week, with completion percent', async () => {
-    const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+    const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
     // Use parseISO (not `new Date(string)`) for date-only strings: `new Date('2026-07-06')`
     // parses as UTC midnight, which in negative-UTC-offset timezones rolls back to the
     // previous local day — the same off-by-one-week bug already regression-tested in
@@ -37,7 +38,7 @@ describe('getObjectiveProgressSeries', () => {
   })
 
   it('emits one point per week when an objective has several goals in the same week', async () => {
-    const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+    const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
     const week = getWeekBounds(parseISO('2026-07-06'))
 
     const first = await prisma.weeklyGoal.create({
@@ -62,7 +63,7 @@ describe('getObjectiveProgressSeries', () => {
   })
 
   it('reports 0% for a week whose goal has no tasks', async () => {
-    const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+    const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
     const week = getWeekBounds(parseISO('2026-07-06'))
     await prisma.weeklyGoal.create({
       data: { title: 'Vazia', objectiveId: objective.id, ...week },

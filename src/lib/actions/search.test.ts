@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { search } from '@/lib/actions/search'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 async function objective(title: string, completed = false) {
   return prisma.objective.create({
     data: {
+      userId: TEST_USER_ID,
       title,
       startDate: new Date('2026-01-01'),
       status: completed ? 'COMPLETED' : 'ACTIVE',

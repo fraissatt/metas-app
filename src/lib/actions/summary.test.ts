@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { getTodaySummary } from '@/lib/actions/summary'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 async function goal() {
-  const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date('2026-09-01') } })
+  const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date('2026-09-01') } })
   return prisma.weeklyGoal.create({
     data: { title: 'Meta', objectiveId: objective.id, ...getWeekBounds(new Date('2026-10-01T12:00:00')) },
   })

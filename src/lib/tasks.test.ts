@@ -9,6 +9,7 @@ const objective = {
   targetDate: null,
   status: 'ACTIVE' as const,
   createdAt: new Date('2026-07-01'),
+  userId: 'test-user',
 }
 
 const otherObjective = { ...objective, id: 'obj-2', title: 'Aprender inglês' }

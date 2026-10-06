@@ -3,6 +3,7 @@
 import { differenceInCalendarWeeks } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
+import { requireUser } from '@/lib/session'
 import { readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
 import { buildObjectiveWeeks, type ObjectiveStats } from '@/lib/objectives'
 import type { Objective } from '@prisma/client'
@@ -20,7 +21,8 @@ function readObjectiveFields(formData: FormData) {
 }
 
 export async function createObjective(formData: FormData): Promise<void> {
-  await prisma.objective.create({ data: readObjectiveFields(formData) })
+  const user = await requireUser()
+  await prisma.objective.create({ data: { ...readObjectiveFields(formData), userId: user.id } })
   revalidatePath('/objectives')
 }
 
