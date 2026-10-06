@@ -15,7 +15,8 @@ import {
   updateWeeklyGoal,
 } from '@/lib/actions/weeklyGoals'
 import { getWeekBounds } from '@/lib/dates'
-import { TEST_USER_ID } from '@/test/session-mock'
+import { NOT_FOUND } from '@/lib/owned'
+import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -706,5 +707,59 @@ describe('weekly goal actions', () => {
     await materializePendingWeek()
 
     expect(await prisma.weeklyGoal.findMany()).toHaveLength(0)
+  })
+})
+
+describe('isolation between users', () => {
+  async function objectiveFor(userId: string, title = 'O') {
+    return prisma.objective.create({ data: { title, startDate: new Date(2026, 8, 1), userId } })
+  }
+
+  it("does not list, get, update or delete another user's weekly goals", async () => {
+    await createTestUser('other')
+    const foreign = await objectiveFor('other')
+    const { weekStart, weekEnd } = getWeekBounds(new Date())
+    const goal = await prisma.weeklyGoal.create({ data: { title: 'Alheia', objectiveId: foreign.id, weekStart, weekEnd } })
+
+    expect(await listWeeklyGoalsByObjective(foreign.id)).toEqual([])
+    expect(await getWeeklyGoal(goal.id)).toBeNull()
+    expect(await listWeeklyGoalsForCurrentWeek()).toEqual([])
+    await expect(getWeekProgress(goal.id)).rejects.toThrow(NOT_FOUND)
+
+    const form = new FormData()
+    form.set('title', 'Hack')
+    form.set('weekOf', '2026-10-05')
+    await expect(updateWeeklyGoal(goal.id, form)).rejects.toThrow(NOT_FOUND)
+    await expect(deleteWeeklyGoal(goal.id)).rejects.toThrow(NOT_FOUND)
+    await expect(createWeeklyGoal(foreign.id, form)).rejects.toThrow(NOT_FOUND)
+    expect(await prisma.weeklyGoal.count({ where: { objectiveId: foreign.id } })).toBe(1)
+  })
+
+  it("never clones another user's recurring goals into the current week", async () => {
+    await createTestUser('other')
+    const foreign = await objectiveFor('other')
+    const lastWeek = getWeekBounds(addDays(new Date(), -7))
+    await prisma.weeklyGoal.create({
+      data: { title: 'Recorrente alheia', objectiveId: foreign.id, recurring: true, ...lastWeek },
+    })
+
+    expect(await countPendingRecurrences()).toBe(0)
+    expect(await getMissingGoalsPreview()).toBeNull()
+    await materializePendingWeek()
+    await repeatMissingGoals()
+    expect(await prisma.weeklyGoal.count()).toBe(1)
+  })
+
+  it("uses the current user's own last planned week as the source, ignoring others' newer weeks", async () => {
+    await createTestUser('other')
+    const mine = await objectiveFor(TEST_USER_ID, 'Meu')
+    const foreign = await objectiveFor('other', 'Alheio')
+    const twoWeeksAgo = getWeekBounds(addDays(new Date(), -14))
+    const lastWeek = getWeekBounds(addDays(new Date(), -7))
+    await prisma.weeklyGoal.create({ data: { title: 'Minha', objectiveId: mine.id, ...twoWeeksAgo } })
+    await prisma.weeklyGoal.create({ data: { title: 'Dele', objectiveId: foreign.id, ...lastWeek } })
+
+    const preview = await getMissingGoalsPreview()
+    expect(preview?.goals.map((g) => g.title)).toEqual(['Minha'])
   })
 })
