@@ -12,6 +12,7 @@ import { DeleteButton } from '@/components/delete-button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { SubmitButton } from '@/components/submit-button'
+import { TaskToggle } from '@/components/task-toggle'
 import { WeeklyGoalDayChart } from '@/components/weekly-goal-day-chart'
 import { getWeekDays, formatDayMonth } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
@@ -31,12 +32,14 @@ export function WeeklyGoalCard({
   onToggleExpand,
   onCreateTasks,
   onDelete,
+  onToggleTask,
 }: {
   goal: WeeklyGoalWithTasks
   expanded: boolean
   onToggleExpand: () => void
   onCreateTasks: (formData: FormData) => Promise<void>
   onDelete: () => Promise<void>
+  onToggleTask: (taskId: string) => Promise<void>
 }) {
   const days = getWeekDays(goal.weekStart)
   const today = new Date()
@@ -105,24 +108,35 @@ export function WeeklyGoalCard({
           </SubmitButton>
         </form>
 
+        {goal.dailyTasks.length > 0 && (
+          <ul aria-label="Tarefas da semana" className="flex flex-col border-t border-border pt-1">
+            {goal.dailyTasks.map((task) => (
+              <li key={task.id} className="flex items-center gap-3 py-1">
+                <span className="w-10 shrink-0 text-xs text-muted-foreground tabular-nums">
+                  {formatDayMonth(task.date)}
+                </span>
+                {/* A wrapping label makes the title part of the checkbox's hit target, as on Hoje. */}
+                <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+                  <TaskToggle taskId={task.id} completed={task.completed} action={onToggleTask} />
+                  <span
+                    className={`min-w-0 break-words text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
+                  >
+                    {task.title}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <Button type="button" variant="ghost" size="sm" onClick={onToggleExpand} aria-expanded={expanded}>
           {expanded ? 'Ver menos' : 'Ver detalhes'}
           {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
         </Button>
 
         {expanded && (
-          <div className="flex flex-col gap-3 border-t border-border pt-3">
+          <div className="border-t border-border pt-3">
             <WeeklyGoalDayChart weekStart={goal.weekStart} tasks={goal.dailyTasks} />
-            <ul className="flex flex-col gap-1">
-              {goal.dailyTasks.map((task) => (
-                <li
-                  key={task.id}
-                  className={`text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
-                >
-                  {formatDayMonth(task.date)} · {task.title}
-                </li>
-              ))}
-            </ul>
           </div>
         )}
       </CardContent>
