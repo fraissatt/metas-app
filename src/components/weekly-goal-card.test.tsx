@@ -6,6 +6,10 @@ import { WeeklyGoalCard } from '@/components/weekly-goal-card'
 import { getWeekBounds } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 
+async function openNewTaskForm() {
+  await userEvent.click(screen.getByRole('button', { name: '+ Nova tarefa' }))
+}
+
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
 const baseGoal: WeeklyGoalWithTasks = {
@@ -52,7 +56,7 @@ describe('WeeklyGoalCard', () => {
     expect(screen.getByText('1/2 tarefas (50%)')).toBeInTheDocument()
   })
 
-  it('renders one day toggle per day of the week, labeled with the real day-of-month number', () => {
+  it('renders one day toggle per day of the week, labeled with the real day-of-month number', async () => {
     render(
       <WeeklyGoalCard
         goal={baseGoal}
@@ -64,13 +68,14 @@ describe('WeeklyGoalCard', () => {
       />,
     )
 
+    await openNewTaskForm()
     // The task list has its own checkboxes; count only the day toggles.
     expect(screen.getAllByRole('checkbox', { name: /^(SEG|TER|QUA|QUI|SEX|SÁB|DOM) \d+$/ })).toHaveLength(7)
     expect(screen.getByRole('checkbox', { name: 'SEG 27' })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'DOM 2' })).toBeInTheDocument()
   })
 
-  it("pre-checks today's toggle when the goal's week contains today", () => {
+  it("pre-checks today's toggle when the goal's week contains today", async () => {
     const { weekStart, weekEnd } = getWeekBounds(new Date())
     const goal: WeeklyGoalWithTasks = { ...baseGoal, weekStart, weekEnd, dailyTasks: [] }
     const today = new Date()
@@ -81,6 +86,7 @@ describe('WeeklyGoalCard', () => {
       <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} />,
     )
 
+    await openNewTaskForm()
     expect(screen.getByRole('checkbox', { name: label })).toBeChecked()
   })
 
@@ -97,6 +103,7 @@ describe('WeeklyGoalCard', () => {
       />,
     )
 
+    await openNewTaskForm()
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
@@ -119,6 +126,7 @@ describe('WeeklyGoalCard', () => {
       />,
     )
 
+    await openNewTaskForm()
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
     await userEvent.click(screen.getByRole('checkbox', { name: 'QUA 29' }))
@@ -140,9 +148,53 @@ describe('WeeklyGoalCard', () => {
       <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} />,
     )
 
+    await openNewTaskForm()
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
 
     expect(screen.getByRole('button', { name: /^criar$/i })).toBeDisabled()
+  })
+
+  it('starts with the new-task form collapsed behind "+ Nova tarefa"', async () => {
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={vi.fn()}
+        onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByLabelText('Nova tarefa')).not.toBeInTheDocument()
+    await openNewTaskForm()
+    expect(screen.getByLabelText('Nova tarefa')).toHaveFocus()
+    expect(screen.queryByRole('button', { name: '+ Nova tarefa' })).not.toBeInTheDocument()
+  })
+
+  it('closes the form on Cancelar and keeps it open after creating a task', async () => {
+    const onCreateTasks = vi.fn().mockResolvedValue(undefined)
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={onCreateTasks}
+        onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+      />,
+    )
+
+    await openNewTaskForm()
+    await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
+    await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
+    expect(onCreateTasks).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText('Nova tarefa')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByLabelText('Nova tarefa')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ Nova tarefa' })).toBeInTheDocument()
   })
 
   it('shows every task with its day without expanding anything', () => {
