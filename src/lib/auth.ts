@@ -3,8 +3,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
 import { anonymous } from 'better-auth/plugins'
 import { prisma } from '@/lib/db'
-
-export const PASSWORD_MIN_LENGTH = 8
+import { PASSWORD_MIN_LENGTH } from '@/lib/auth-errors'
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
