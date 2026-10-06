@@ -1,8 +1,7 @@
 'use server'
 
-import { addWeeks } from 'date-fns'
 import { prisma } from '@/lib/db'
-import { getWeekBounds } from '@/lib/dates'
+import { addAppWeeks, getWeekBounds } from '@/lib/dates'
 import { requireUser } from '@/lib/session'
 import { buildWeekWindow, type LifetimeStats } from '@/lib/stats'
 
@@ -12,7 +11,7 @@ export async function getLifetimeStats(): Promise<LifetimeStats> {
   const user = await requireUser()
   const owned = { weeklyGoal: { objective: { userId: user.id } } }
   const now = new Date()
-  const windowStart = addWeeks(getWeekBounds(now).weekStart, -(WINDOW_WEEKS - 1))
+  const windowStart = addAppWeeks(getWeekBounds(now).weekStart, -(WINDOW_WEEKS - 1))
 
   const [totalCompleted, first, recent] = await Promise.all([
     prisma.dailyTask.count({ where: { completed: true, ...owned } }),

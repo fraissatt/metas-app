@@ -1,4 +1,4 @@
-import { parseISO } from 'date-fns'
+import { parseDay } from '@/lib/dates'
 
 // Server Actions are effectively public endpoints — the HTML `required` /
 // `type="date"` attributes on our forms only constrain well-behaved
@@ -16,12 +16,21 @@ export function readTitle(formData: FormData, field = 'title'): string {
   return title
 }
 
+// A form day means that day in Brasília, whatever time zone the server runs in.
+function safeParseDay(raw: string): Date | null {
+  try {
+    return parseDay(raw)
+  } catch {
+    return null
+  }
+}
+
 /** Reads a required date-only (`yyyy-MM-dd`) field, throwing if unparseable. */
 export function readDate(formData: FormData, field: string): Date {
   const raw = String(formData.get(field) ?? '').trim()
-  const date = raw ? parseISO(raw) : null
+  const date = raw ? safeParseDay(raw) : null
 
-  if (!date || Number.isNaN(date.getTime())) {
+  if (!date) {
     throw new Error(`"${field}" must be a valid date`)
   }
   return date
@@ -33,8 +42,8 @@ export function readOptionalDate(formData: FormData, field: string): Date | null
   const str = raw ? String(raw).trim() : ''
   if (!str) return null
 
-  const date = parseISO(str)
-  if (Number.isNaN(date.getTime())) {
+  const date = safeParseDay(str)
+  if (!date) {
     throw new Error(`"${field}" must be a valid date`)
   }
   return date

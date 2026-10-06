@@ -1,11 +1,10 @@
 'use server'
 
-import { isSameDay, startOfDay } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import { requireUser } from '@/lib/session'
-import { getWeekBounds } from '@/lib/dates'
+import { appToday, getWeekBounds, isSameAppDay } from '@/lib/dates'
 import { buildPlan } from '@/lib/quiz/build-plan'
 import { validateAnswers, type QuizAnswers } from '@/lib/quiz/definition'
 import { isValidSessionId } from '@/lib/quiz/session'
@@ -32,7 +31,7 @@ export async function createPlanFromQuiz(input: { sessionId: string; answers: un
       data: {
         title: plan.objective.title,
         userId: user.id,
-        startDate: startOfDay(now),
+        startDate: appToday(now),
         targetDate: plan.objective.targetDate,
       },
     })
@@ -64,6 +63,6 @@ export async function createPlanFromQuiz(input: { sessionId: string; answers: un
   // redirect throws in real Next, so it must come last.
   // A plan that only starts next week would land on an empty Hoje, so send
   // the user to the objective, where the first week is visible.
-  const startsThisWeek = isSameDay(plan.weeks[0].weekStart, getWeekBounds(now).weekStart)
+  const startsThisWeek = isSameAppDay(plan.weeks[0].weekStart, getWeekBounds(now).weekStart)
   redirect(startsThisWeek ? '/' : `/objectives/${objectiveId}`)
 }

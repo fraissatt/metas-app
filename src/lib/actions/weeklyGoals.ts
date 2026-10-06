@@ -1,9 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
-import { getWeekBounds } from '@/lib/dates'
+import { addAppDays, differenceInAppDays, formatDayKey, getWeekBounds, parseDay } from '@/lib/dates'
 import { findOwnedObjective, findOwnedWeeklyGoal } from '@/lib/owned'
 import { requireUser } from '@/lib/session'
 import { readCheckbox, readDate, readTitle } from '@/lib/actions/validation'
@@ -68,7 +67,7 @@ export async function listObjectiveWeeks(
   // Several goals can share a week; the row shows the week as a whole.
   const byWeek = new Map<string, PastWeekSummary>()
   for (const goal of pastGoals) {
-    const key = format(goal.weekStart, 'yyyy-MM-dd')
+    const key = formatDayKey(goal.weekStart)
     const week = byWeek.get(key) ?? { weekStart: key, total: 0, completed: 0 }
     week.total += goal.dailyTasks.length
     week.completed += goal.dailyTasks.filter((task) => task.completed).length
@@ -84,8 +83,12 @@ export async function listWeeklyGoalsForWeek(
   weekStart: string,
 ): Promise<WeeklyGoalWithTasks[]> {
   const user = await requireUser()
-  const day = typeof weekStart === 'string' ? parseISO(weekStart) : new Date(NaN)
-  if (Number.isNaN(day.getTime())) return []
+  let day: Date
+  try {
+    day = parseDay(String(weekStart))
+  } catch {
+    return []
+  }
   const bounds = getWeekBounds(day)
 
   return prisma.weeklyGoal.findMany({
@@ -250,7 +253,7 @@ async function cloneGoalsInto(
         // Offset in calendar days, not elapsed milliseconds: a DST change
         // inside the source week would otherwise shift a task onto the
         // wrong weekday.
-        date: addDays(currentWeekStart, differenceInCalendarDays(task.date, sourceWeekStart)),
+        date: addAppDays(currentWeekStart, differenceInAppDays(task.date, sourceWeekStart)),
       })),
     })
   }

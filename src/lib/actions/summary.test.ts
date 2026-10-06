@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { getTodaySummary } from '@/lib/actions/summary'
-import { getWeekBounds } from '@/lib/dates'
+import { getWeekBounds, parseDay } from '@/lib/dates'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 async function goal() {
@@ -54,5 +54,17 @@ describe('getTodaySummary isolation', () => {
       data: { title: 'Tarefa Alheio', weeklyGoalId: foreignGoal.id, date: new Date(), completed: true, completedAt: new Date() },
     })
     expect(await getTodaySummary()).toMatchObject({ completed: 0, total: 0 })
+  })
+})
+
+describe('getTodaySummary around midnight UTC', () => {
+  it('counts the Brasília day at 22:30 even though UTC is already the next day', async () => {
+    const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'O', startDate: parseDay('2026-10-01') } })
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'G', objectiveId: objective.id, ...getWeekBounds(parseDay('2026-10-06')) },
+    })
+    await prisma.dailyTask.create({ data: { title: 'hoje', weeklyGoalId: goal.id, date: parseDay('2026-10-06') } })
+    await prisma.dailyTask.create({ data: { title: 'amanhã', weeklyGoalId: goal.id, date: parseDay('2026-10-07') } })
+    expect(await getTodaySummary(new Date('2026-10-07T01:30:00Z'))).toMatchObject({ total: 1 })
   })
 })

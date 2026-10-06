@@ -1,5 +1,6 @@
 import {
   addDays,
+  addMonths,
   addWeeks,
   differenceInCalendarDays,
   differenceInCalendarWeeks,
@@ -48,6 +49,7 @@ export const startOfAppDay = (date: Date) => plain(startOfDay(date, inApp))
 export const endOfAppDay = (date: Date) => plain(endOfDay(date, inApp))
 export const isSameAppDay = (a: Date, b: Date) => isSameDay(a, b, inApp)
 export const addAppDays = (date: Date, n: number) => plain(addDays(date, n, inApp))
+export const addAppMonths = (date: Date, n: number) => plain(addMonths(date, n, inApp))
 export const addAppWeeks = (date: Date, n: number) => plain(addWeeks(date, n, inApp))
 export const appDayOfMonth = (date: Date) => getDate(date, inApp)
 export const differenceInAppDays = (a: Date, b: Date) => differenceInCalendarDays(a, b, inApp)

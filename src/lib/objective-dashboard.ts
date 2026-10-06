@@ -1,5 +1,4 @@
-import { differenceInCalendarWeeks, endOfDay, format, subWeeks } from 'date-fns'
-import { getWeekBounds } from '@/lib/dates'
+import { addAppWeeks, differenceInAppWeeks, endOfAppDay, formatDayKey, getWeekBounds } from '@/lib/dates'
 import type { ObjectiveWeek } from '@/lib/objectives'
 import type { ObjectiveWithStats } from '@/lib/actions/objectives'
 
@@ -15,7 +14,7 @@ export type Timeline =
 // Calendar date of the week's Monday: goal timestamps need not equal
 // getWeekBounds(now) to the millisecond (time of day, DST), only the date.
 function weekKey(date: Date): string {
-  return format(getWeekBounds(date).weekStart, 'yyyy-MM-dd')
+  return formatDayKey(getWeekBounds(date).weekStart)
 }
 
 export function calendarWeeks(weeks: ObjectiveWeek[], now: Date, count = DASHBOARD_WEEKS): DashboardWeek[] {
@@ -38,7 +37,7 @@ export function calendarWeeks(weeks: ObjectiveWeek[], now: Date, count = DASHBOA
   const currentStart = getWeekBounds(now).weekStart
 
   return Array.from({ length: count }, (_, i) => {
-    const weekStart = subWeeks(currentStart, count - 1 - i)
+    const weekStart = addAppWeeks(currentStart, -(count - 1 - i))
     const found = byWeek.get(weekKey(weekStart))
     const total = found?.total ?? 0
     const completed = found?.completed ?? 0
@@ -73,10 +72,10 @@ export function recentRate(weeks: DashboardWeek[]): number | null {
 
 export function timeline(startDate: Date, targetDate: Date | null, now: Date): Timeline {
   if (!targetDate) {
-    return { kind: 'open', weeksActive: Math.max(1, differenceInCalendarWeeks(now, startDate, { weekStartsOn: 1 }) + 1) }
+    return { kind: 'open', weeksActive: Math.max(1, differenceInAppWeeks(now, startDate) + 1) }
   }
   // The target day itself still counts as inside the deadline.
-  const deadline = endOfDay(targetDate).getTime()
+  const deadline = endOfAppDay(targetDate).getTime()
   const span = deadline - startDate.getTime()
   const elapsed = now.getTime() - startDate.getTime()
   const raw = span <= 0 ? 100 : (elapsed / span) * 100

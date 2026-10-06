@@ -1,5 +1,5 @@
-import { addWeeks, isWithinInterval, max, min } from 'date-fns'
-import { getWeekBounds } from '@/lib/dates'
+import { isWithinInterval, max, min } from 'date-fns'
+import { addAppWeeks, getWeekBounds } from '@/lib/dates'
 
 export type WeekWindowEntry = { weekStart: Date; active: boolean }
 
@@ -28,13 +28,13 @@ export function buildWeekWindow(
 
   const currentWeekStart = getWeekBounds(now).weekStart
   const earliestWeekStart = getWeekBounds(min(completedAts)).weekStart
-  const cappedStart = addWeeks(currentWeekStart, -(maxWeeks - 1))
+  const cappedStart = addAppWeeks(currentWeekStart, -(maxWeeks - 1))
   // Clamped on both sides: never earlier than the cap, never later than the
   // current week (which a clock-skewed future timestamp could otherwise force).
   const windowStart = min([max([earliestWeekStart, cappedStart]), currentWeekStart])
 
   const entries: WeekWindowEntry[] = []
-  for (let weekStart = windowStart; weekStart <= currentWeekStart; weekStart = addWeeks(weekStart, 1)) {
+  for (let weekStart = windowStart; weekStart <= currentWeekStart; weekStart = addAppWeeks(weekStart, 1)) {
     const { weekEnd } = getWeekBounds(weekStart)
     entries.push({
       weekStart,

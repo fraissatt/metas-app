@@ -12,7 +12,7 @@ import {
   toggleDailyTask,
   updateDailyTask,
 } from '@/lib/actions/dailyTasks'
-import { getWeekBounds } from '@/lib/dates'
+import { getWeekBounds, parseDay } from '@/lib/dates'
 import { NOT_FOUND } from '@/lib/owned'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
@@ -276,5 +276,22 @@ describe('isolation between users', () => {
     const after = await prisma.dailyTask.findUniqueOrThrow({ where: { id: task.id } })
     expect(after).toMatchObject({ title: 'Alheia', completed: false })
     expect(await prisma.dailyTask.count({ where: { weeklyGoalId: goal.id } })).toBe(1)
+  })
+})
+
+describe('task days are Brasília days', () => {
+  it('stores a chosen day as 00:00 in Brasília and finds it by that day', async () => {
+    const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'O', startDate: parseDay('2026-10-01') } })
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'G', objectiveId: objective.id, ...getWeekBounds(parseDay('2026-10-05')) },
+    })
+    const fd = new FormData()
+    fd.set('title', 'Treino')
+    fd.append('dates', '2026-10-05')
+    await createDailyTasks(goal.id, fd)
+    const [task] = await prisma.dailyTask.findMany({ where: { weeklyGoalId: goal.id } })
+    expect(task.date.toISOString()).toBe('2026-10-05T03:00:00.000Z')
+    expect((await listDailyTasksByDate(parseDay('2026-10-05'))).map((t) => t.id)).toEqual([task.id])
+    expect(await listDailyTasksByDate(parseDay('2026-10-04'))).toEqual([])
   })
 })

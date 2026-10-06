@@ -1,5 +1,4 @@
-import { addDays, addMonths, startOfDay } from 'date-fns'
-import { getWeekBounds } from '@/lib/dates'
+import { addAppDays, addAppMonths, appToday, getWeekBounds } from '@/lib/dates'
 import { WEEKDAYS, type Focus, type Obstacle, type QuizAnswers } from './definition'
 
 export type PlanWeek = {
@@ -117,13 +116,13 @@ export const TIPS: Record<Obstacle, string> = {
 export function buildPlan(answers: QuizAnswers, today: Date): Plan {
   const template = TEMPLATES[answers.foco]
   const titles = answers.obstaculo === 'tempo' ? template.shortTasks : template.tasks
-  const startDate = startOfDay(today)
+  const startDate = appToday(today)
   const { weekStart, weekEnd } = getWeekBounds(today)
 
   const offsets = answers.dias.map((d) => WEEKDAYS.indexOf(d))
   const tasksFor = (start: Date, onlyFrom?: Date) =>
     offsets
-      .map((offset) => addDays(start, offset))
+      .map((offset) => addAppDays(start, offset))
       .filter((date) => !onlyFrom || date >= onlyFrom)
       .map((date, i) => ({ title: titles[i % titles.length], date }))
 
@@ -138,7 +137,7 @@ export function buildPlan(answers: QuizAnswers, today: Date): Plan {
     weeks.push({ weekStart, weekEnd, recurring: true, tasks: current })
   } else {
     if (current.length > 0) weeks.push({ weekStart, weekEnd, recurring: false, tasks: current })
-    const next = getWeekBounds(addDays(weekStart, 7))
+    const next = getWeekBounds(addAppDays(weekStart, 7))
     weeks.push({ ...next, recurring: true, tasks: tasksFor(next.weekStart) })
   }
 
@@ -146,7 +145,7 @@ export function buildPlan(answers: QuizAnswers, today: Date): Plan {
     objective: {
       title: template.objective,
       startDate,
-      targetDate: startOfDay(addMonths(today, answers.prazo)),
+      targetDate: appToday(addAppMonths(today, answers.prazo)),
     },
     weeklyGoal: { title: template.weeklyGoal(answers.dias.length) },
     weeks,

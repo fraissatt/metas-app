@@ -71,3 +71,10 @@ describe('readCheckbox', () => {
     expect(readCheckbox(new FormData(), 'recurring')).toBe(false)
   })
 })
+
+describe('form days are Brasília days', () => {
+  it('reads a form day as 00:00 in Brasília, whatever the server time zone', () => {
+    expect(readDate(formData({ date: '2026-10-05' }), 'date').toISOString()).toBe('2026-10-05T03:00:00.000Z')
+    expect(readOptionalDate(formData({ d: '2026-10-05' }), 'd')?.toISOString()).toBe('2026-10-05T03:00:00.000Z')
+  })
+})
