@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { format } from 'date-fns'
+import { formatDayKey } from '@/lib/dates'
 import { notFound, redirect } from 'next/navigation'
 import { getObjective } from '@/lib/actions/objectives'
 import { getWeeklyGoal, updateWeeklyGoal } from '@/lib/actions/weeklyGoals'
@@ -40,7 +40,7 @@ export default async function EditWeeklyGoalPage({
         action={action}
         defaultValues={{
           title: goal.title,
-          weekOf: format(goal.weekStart, 'yyyy-MM-dd'),
+          weekOf: formatDayKey(goal.weekStart),
           recurring: goal.recurring,
         }}
       />

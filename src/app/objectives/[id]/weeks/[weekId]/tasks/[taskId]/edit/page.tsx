@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { format } from 'date-fns'
+import { formatDayKey } from '@/lib/dates'
 import { notFound, redirect } from 'next/navigation'
 import { getDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import { getObjective } from '@/lib/actions/objectives'
@@ -42,7 +42,7 @@ export default async function EditDailyTaskPage({
       <h1 className="mb-6 text-2xl font-semibold">Editar tarefa</h1>
       <DailyTaskForm
         action={action}
-        defaultValues={{ title: task.title, date: format(task.date, 'yyyy-MM-dd') }}
+        defaultValues={{ title: task.title, date: formatDayKey(task.date) }}
       />
     </main>
   )

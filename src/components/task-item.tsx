@@ -2,14 +2,13 @@
 
 import { useState } from 'react'
 import { Menu } from '@base-ui/react/menu'
-import { format } from 'date-fns'
 import { MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DeleteConfirmDialog } from '@/components/delete-button'
 import { SubmitButton } from '@/components/submit-button'
 import { TaskToggle } from '@/components/task-toggle'
-import { formatDayMonth, getWeekDays } from '@/lib/dates'
+import { appDayOfMonth, formatDayKey, formatDayMonth, getWeekDays } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
@@ -75,12 +74,12 @@ export function TaskItem({
           <select
             name="date"
             aria-label="Dia da tarefa"
-            defaultValue={format(task.date, 'yyyy-MM-dd')}
+            defaultValue={formatDayKey(task.date)}
             className="rounded-md border border-border bg-secondary px-2 text-sm text-foreground"
           >
             {getWeekDays(weekStart).map((day, index) => (
-              <option key={day.toISOString()} value={format(day, 'yyyy-MM-dd')}>
-                {DAY_LABELS[index]} {format(day, 'dd')}
+              <option key={day.toISOString()} value={formatDayKey(day)}>
+                {DAY_LABELS[index]} {String(appDayOfMonth(day)).padStart(2, '0')}
               </option>
             ))}
           </select>

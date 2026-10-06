@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { format } from 'date-fns'
+import { formatDayKey } from '@/lib/dates'
 import { notFound, redirect } from 'next/navigation'
 import { getObjective, updateObjective } from '@/lib/actions/objectives'
 import { ObjectiveForm } from '@/components/objective-form'
@@ -33,8 +33,8 @@ export default async function EditObjectivePage({ params }: { params: Promise<{ 
         defaultValues={{
           title: objective.title,
           description: objective.description,
-          startDate: format(objective.startDate, 'yyyy-MM-dd'),
-          targetDate: objective.targetDate ? format(objective.targetDate, 'yyyy-MM-dd') : null,
+          startDate: formatDayKey(objective.startDate),
+          targetDate: objective.targetDate ? formatDayKey(objective.targetDate) : null,
         }}
       />
     </main>

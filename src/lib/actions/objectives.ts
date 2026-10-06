@@ -1,7 +1,7 @@
 'use server'
 
-import { differenceInCalendarWeeks } from 'date-fns'
 import { revalidatePath } from 'next/cache'
+import { differenceInAppWeeks } from '@/lib/dates'
 import { prisma } from '@/lib/db'
 import { findOwnedObjective } from '@/lib/owned'
 import { requireUser } from '@/lib/session'
@@ -80,9 +80,7 @@ export async function getObjectiveStats(objectiveId: string): Promise<ObjectiveS
     // completed objective so the count stops growing once the objective is done.
     weeksSinceStart: Math.max(
       0,
-      differenceInCalendarWeeks(objective.completedAt ?? new Date(), objective.startDate, {
-        weekStartsOn: 1,
-      }),
+      differenceInAppWeeks(objective.completedAt ?? new Date(), objective.startDate),
     ),
     // The strip spans only the weeks this objective actually has. A four-week-old
     // objective shows four segments, not 26 with 22 blank — which would read as

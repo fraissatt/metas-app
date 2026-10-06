@@ -1,6 +1,6 @@
 'use server'
 
-import { format } from 'date-fns'
+import { formatDayMonth } from '@/lib/dates'
 import { prisma } from '@/lib/db'
 import { buildObjectiveWeeks } from '@/lib/objectives'
 import { findOwnedObjective } from '@/lib/owned'
@@ -21,7 +21,7 @@ export async function getObjectiveProgressSeries(
   // one week used to emit two bars carrying the same `dd/MM` label. Doing it in
   // memory also drops the previous one-query-per-goal `getWeekProgress` loop.
   return buildObjectiveWeeks(weeklyGoals).map((week) => ({
-    weekLabel: format(week.weekStart, 'dd/MM'),
+    weekLabel: formatDayMonth(week.weekStart),
     percent: week.total === 0 ? 0 : Math.round((week.completed / week.total) * 100),
   }))
 }

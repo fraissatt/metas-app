@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { formatDate, formatDayMonth, getWeekBounds } from '@/lib/dates'
+import { appDayOfWeek, formatDate, formatDayMonth, getWeekBounds } from '@/lib/dates'
 import type { FunnelEventInput } from '@/lib/actions/funnel'
 import {
   STEP_ORDER,
@@ -52,7 +52,7 @@ function toggleDay(answers: Answers, day: Weekday): Answers {
   return { ...answers, dias: WEEKDAYS.filter((d) => chosen.has(d)) }
 }
 
-const weekdayOf = (date: Date): Weekday => WEEKDAYS[(date.getDay() + 6) % 7]
+const weekdayOf = (date: Date): Weekday => WEEKDAYS[(appDayOfWeek(date) + 6) % 7]
 
 const optionClass = (selected: boolean) =>
   [

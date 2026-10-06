@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { format } from 'date-fns'
 import { buildPlan, TEMPLATES } from './build-plan'
 import { getStep, type Obstacle, type QuizAnswers } from './definition'
+import { formatDayKey } from '@/lib/dates'
 
 // Thursday; the week starts on Monday 2026-09-28.
-const today = new Date(2026, 9, 1, 15)
-const ymd = (d: Date) => format(d, 'yyyy-MM-dd')
+const today = new Date('2026-10-01T15:00:00-03:00')
+const ymd = (d: Date) => formatDayKey(d)
 
 const base: QuizAnswers = {
   area: 'saude',
@@ -79,7 +80,7 @@ describe('buildPlan', () => {
   it('rotates task titles over more days than titles', () => {
     const plan = buildPlan(
       { ...base, dias: ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom'] },
-      new Date(2026, 9, 5, 9),
+      new Date('2026-10-05T09:00:00-03:00'),
     )
     const titles = plan.weeks[0].tasks.map((t) => t.title)
     expect(titles).toHaveLength(7)

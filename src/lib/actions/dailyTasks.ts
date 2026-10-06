@@ -1,6 +1,6 @@
 'use server'
 
-import { endOfDay, parseISO, startOfDay } from 'date-fns'
+import { endOfAppDay, parseDay, startOfAppDay } from '@/lib/dates'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { readDate, readTitle } from '@/lib/actions/validation'
@@ -45,11 +45,11 @@ export async function createDailyTasks(weeklyGoalId: string, formData: FormData)
   }
 
   const dates = rawDates.map((raw) => {
-    const date = parseISO(raw)
-    if (Number.isNaN(date.getTime())) {
+    try {
+      return parseDay(raw)
+    } catch {
       throw new Error('"dates" must contain valid dates')
     }
-    return date
   })
 
   await prisma.dailyTask.createMany({
@@ -89,8 +89,8 @@ export async function listDailyTasksByDate(
   date: Date,
 ): Promise<Array<DailyTask & { weeklyGoal: WeeklyGoal & { objective: Objective } }>> {
   const user = await requireUser()
-  const start = startOfDay(date)
-  const end = endOfDay(date)
+  const start = startOfAppDay(date)
+  const end = endOfAppDay(date)
 
   return prisma.dailyTask.findMany({
     where: { date: { gte: start, lte: end }, weeklyGoal: { objective: { userId: user.id } } },

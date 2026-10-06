@@ -1,4 +1,4 @@
-import { differenceInCalendarWeeks } from 'date-fns'
+import { differenceInAppWeeks } from '@/lib/dates'
 
 export type ObjectiveWeek = {
   weekStart: Date
@@ -60,7 +60,7 @@ export function buildObjectiveWeeks(goals: GoalLike[]): ObjectiveWeek[] {
 export function describeSchedule(completedAt: Date, targetDate: Date | null): string | null {
   if (!targetDate) return null
 
-  const weeks = differenceInCalendarWeeks(targetDate, completedAt, { weekStartsOn: 1 })
+  const weeks = differenceInAppWeeks(targetDate, completedAt)
   if (weeks === 0) return 'na semana prevista'
 
   const magnitude = Math.abs(weeks)

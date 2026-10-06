@@ -3,10 +3,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WeeklyBars, barLabel } from '@/components/weekly-bars'
 import type { DashboardWeek } from '@/lib/objective-dashboard'
+import { parseDay } from '@/lib/dates'
 
 function w(day: number, completed: number, total: number, extra: Partial<DashboardWeek> = {}): DashboardWeek {
   return {
-    weekStart: new Date(2026, 8, day),
+    weekStart: parseDay(`2026-09-${String(day).padStart(2, '0')}`),
     completed,
     total,
     fulfilled: total > 0 && completed === total,

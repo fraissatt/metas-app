@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { calendarWeeks, overview, recentRate, streak, timeline } from '@/lib/objective-dashboard'
 import type { ObjectiveWeek } from '@/lib/objectives'
+import { appDayOfMonth, appDayOfWeek, parseDay } from '@/lib/dates'
 
 // Thursday 2026-10-01; its week starts Monday 2026-09-28.
-const now = new Date(2026, 9, 1, 15)
+const now = new Date('2026-10-01T15:00:00-03:00')
 
 function week(y: number, m: number, d: number, completed: number, total: number, fulfilled = completed === total && total > 0): ObjectiveWeek {
   // 03:00 rather than midnight: matching must use the calendar date, not the timestamp.
@@ -15,20 +16,20 @@ describe('calendarWeeks', () => {
     const weeks = calendarWeeks([week(2026, 8, 28, 2, 4), week(2026, 8, 14, 5, 5)], now)
 
     expect(weeks).toHaveLength(8)
-    expect(weeks[7].weekStart.getDate()).toBe(28)
+    expect(appDayOfMonth(weeks[7].weekStart)).toBe(28)
     expect(weeks[7]).toMatchObject({ completed: 2, total: 4, percent: 50, hasGoal: true, current: true, fulfilled: false })
     expect(weeks[6]).toMatchObject({ hasGoal: false, total: 0, percent: 0, current: false })
     expect(weeks[5]).toMatchObject({ percent: 100, fulfilled: true, hasGoal: true })
-    expect(weeks[0].weekStart.getDate()).toBe(10) // 2026-08-10
-    expect(weeks.every((w) => w.weekStart.getDay() === 1)).toBe(true)
+    expect(appDayOfMonth(weeks[0].weekStart)).toBe(10) // 2026-08-10
+    expect(weeks.every((w) => appDayOfWeek(w.weekStart) === 1)).toBe(true)
   })
 
   it('merges two entries that fall in the same calendar week', () => {
     const a = week(2026, 8, 28, 1, 2, false)
-    const b = { ...week(2026, 8, 28, 3, 3, true), weekStart: new Date(2026, 8, 28, 20) }
+    const b = { ...week(2026, 8, 28, 3, 3, true), weekStart: new Date('2026-09-28T20:00:00-03:00') }
     const [, , , , , , , current] = calendarWeeks([a, b], now)
     expect(current).toMatchObject({ completed: 4, total: 5, percent: 80, fulfilled: false, hasGoal: true })
-    const both = calendarWeeks([week(2026, 8, 28, 2, 2), { ...week(2026, 8, 28, 3, 3), weekStart: new Date(2026, 8, 28, 20) }], now)
+    const both = calendarWeeks([week(2026, 8, 28, 2, 2), { ...week(2026, 8, 28, 3, 3), weekStart: new Date('2026-09-28T20:00:00-03:00') }], now)
     expect(both[7]).toMatchObject({ completed: 5, total: 5, fulfilled: true })
   })
 
@@ -76,31 +77,31 @@ describe('recentRate', () => {
 
 describe('timeline', () => {
   it('reports how much of the window has elapsed', () => {
-    const t = timeline(new Date(2026, 8, 1, 15), new Date(2026, 9, 31, 15), now)
+    const t = timeline(new Date('2026-09-01T15:00:00-03:00'), new Date('2026-10-31T15:00:00-03:00'), now)
     expect(t).toMatchObject({ kind: 'dated', overdue: false })
     expect(t.kind === 'dated' && t.elapsedPercent).toBe(50)
   })
 
   it('treats the whole target day as inside the deadline', () => {
-    const target = new Date(2026, 9, 1)
-    const start = new Date(2026, 8, 1)
-    expect(timeline(start, target, new Date(2026, 9, 1, 15))).toMatchObject({ overdue: false })
-    expect(timeline(start, target, new Date(2026, 9, 2, 0, 0, 1))).toMatchObject({ overdue: true })
+    const target = parseDay('2026-10-01')
+    const start = parseDay('2026-09-01')
+    expect(timeline(start, target, new Date('2026-10-01T15:00:00-03:00'))).toMatchObject({ overdue: false })
+    expect(timeline(start, target, new Date('2026-10-02T00:00:01-03:00'))).toMatchObject({ overdue: true })
   })
 
   it('clamps to 100 and flags an overdue target', () => {
-    const t = timeline(new Date(2026, 0, 1), new Date(2026, 5, 1), now)
+    const t = timeline(parseDay('2026-01-01'), parseDay('2026-06-01'), now)
     expect(t).toMatchObject({ kind: 'dated', elapsedPercent: 100, overdue: true })
   })
 
   it('never divides by zero when the target is not after the start', () => {
-    const t = timeline(new Date(2026, 9, 1), new Date(2026, 9, 1), now)
+    const t = timeline(parseDay('2026-10-01'), parseDay('2026-10-01'), now)
     expect(t.kind === 'dated' && Number.isFinite(t.elapsedPercent)).toBe(true)
   })
 
   it('counts active weeks when there is no target date', () => {
-    expect(timeline(new Date(2026, 8, 14), null, now)).toEqual({ kind: 'open', weeksActive: 3 })
-    expect(timeline(new Date(2026, 9, 1), null, now)).toEqual({ kind: 'open', weeksActive: 1 })
+    expect(timeline(parseDay('2026-09-14'), null, now)).toEqual({ kind: 'open', weeksActive: 3 })
+    expect(timeline(parseDay('2026-10-01'), null, now)).toEqual({ kind: 'open', weeksActive: 1 })
   })
 })
 

@@ -1,7 +1,6 @@
 import Link from 'next/link'
-import { isSameDay } from 'date-fns'
 import type { DailyTask, Objective, WeeklyGoal } from '@prisma/client'
-import { getWeekDays } from '@/lib/dates'
+import { getWeekDays, isSameAppDay } from '@/lib/dates'
 import { isGoalFulfilled } from '@/lib/objectives'
 import { cn } from '@/lib/utils'
 
@@ -71,7 +70,7 @@ export function WeekGoalProgressCard({
 
           <div className="flex h-6 flex-1 items-end gap-1">
             {getWeekDays(goal.weekStart).map((day, i) => {
-              const dayTasks = goal.dailyTasks.filter((t) => isSameDay(t.date, day))
+              const dayTasks = goal.dailyTasks.filter((t) => isSameAppDay(t.date, day))
               const dayCompleted = dayTasks.filter((t) => t.completed).length
               const dayTotal = dayTasks.length
               const heightPercent = dayTotal === 0 ? 8 : Math.max(8, Math.round((dayCompleted / dayTotal) * 100))
