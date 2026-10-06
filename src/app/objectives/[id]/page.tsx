@@ -8,7 +8,12 @@ import {
 } from '@/lib/actions/objectives'
 import { getObjectiveProgressSeries } from '@/lib/actions/progress'
 import { createDailyTasks, deleteDailyTask, toggleDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
-import { createWeeklyGoal, deleteWeeklyGoal, listWeeklyGoalsByObjective } from '@/lib/actions/weeklyGoals'
+import {
+  createWeeklyGoal,
+  deleteWeeklyGoal,
+  listObjectiveWeeks,
+  listWeeklyGoalsForWeek,
+} from '@/lib/actions/weeklyGoals'
 import { describeSchedule } from '@/lib/objectives'
 import { ObjectiveProgressChart } from '@/components/objective-progress-chart'
 import { ObjectiveStatsPanel } from '@/components/objective-stats'
@@ -39,7 +44,7 @@ export default async function ObjectiveDetailPage({
   const objective = await getObjective(id)
   if (!objective) notFound()
 
-  const weeklyGoals = await listWeeklyGoalsByObjective(id)
+  const { current, past } = await listObjectiveWeeks(id)
   const series = await getObjectiveProgressSeries(id)
   const stats = await getObjectiveStats(id)
   const schedule = objective.completedAt
@@ -72,7 +77,9 @@ export default async function ObjectiveDetailPage({
         <ObjectiveProgressChart data={series} />
       </div>
       <WeeklyGoalsPanel
-        goals={weeklyGoals}
+        goals={current}
+        pastWeeks={past}
+        onLoadWeek={listWeeklyGoalsForWeek.bind(null, id)}
         onCreateTasks={createDailyTasks}
         onCreateWeeklyGoal={createWeeklyGoal.bind(null, id)}
         onDeleteWeeklyGoal={deleteWeeklyGoal}
