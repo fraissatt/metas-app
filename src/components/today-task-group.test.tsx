@@ -11,6 +11,7 @@ const objective = {
   startDate: new Date(2026, 6, 1),
   targetDate: null,
   status: 'ACTIVE' as const,
+  completedAt: null,
   createdAt: new Date(2026, 6, 1),
   userId: 'test-user',
 }
@@ -22,6 +23,7 @@ const weeklyGoal = {
   weekStart: new Date(2026, 7, 17),
   weekEnd: new Date(2026, 7, 23),
   status: 'ACTIVE' as const,
+  recurring: false,
   objective,
 }
 

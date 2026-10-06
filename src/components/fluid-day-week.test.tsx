@@ -10,7 +10,9 @@ const objective = {
   startDate: new Date('2026-07-01'),
   targetDate: null,
   status: 'ACTIVE' as const,
+  completedAt: null,
   createdAt: new Date('2026-07-01'),
+  userId: 'test-user',
 }
 
 const weeklyGoal = {
@@ -91,7 +93,9 @@ describe('FluidDayWeek', () => {
           startDate: new Date('2026-07-01'),
           targetDate: null,
           status: 'ACTIVE' as const,
+          completedAt: null,
           createdAt: new Date('2026-07-01'),
+          userId: 'test-user',
         },
       },
     }

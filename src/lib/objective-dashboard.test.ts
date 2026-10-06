@@ -106,7 +106,7 @@ describe('timeline', () => {
 
 describe('overview', () => {
   it('sums fulfilled weeks and pools the 8-week rate across active objectives', () => {
-    const base = { description: null, targetDate: null, status: 'ACTIVE' as const, completedAt: null, createdAt: now, startDate: now }
+    const base = { description: null, targetDate: null, status: 'ACTIVE' as const, completedAt: null, createdAt: now, startDate: now, userId: 'test-user' }
     const result = overview(
       [
         { ...base, id: 'a', title: 'A', stats: { weeksFulfilled: 3, tasksCompleted: 0, weeksSinceStart: 1, recentWeeks: [week(2026, 8, 28, 3, 4)] } },
