@@ -4,6 +4,7 @@ import { isSameDay, startOfDay } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
+import { requireUser } from '@/lib/session'
 import { getWeekBounds } from '@/lib/dates'
 import { buildPlan } from '@/lib/quiz/build-plan'
 import { validateAnswers, type QuizAnswers } from '@/lib/quiz/definition'
@@ -24,10 +25,13 @@ export async function createPlanFromQuiz(input: { sessionId: string; answers: un
   // Tracking must never block the user: an invalid sessionId only skips the event.
   const sessionId = input.sessionId
 
+  const user = await requireUser()
+
   const objectiveId = await prisma.$transaction(async (tx) => {
     const objective = await tx.objective.create({
       data: {
         title: plan.objective.title,
+        userId: user.id,
         startDate: startOfDay(now),
         targetDate: plan.objective.targetDate,
       },

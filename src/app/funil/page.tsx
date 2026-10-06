@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getFunnelStats } from '@/lib/actions/funnel'
+import { isFunnelPublic } from '@/lib/public-routes'
+import { requireUser } from '@/lib/session'
 import { FunnelChart } from '@/components/funnel-chart'
 import { Button } from '@/components/ui/button'
 
@@ -26,6 +28,7 @@ function formatMinutesSeconds(totalSeconds: number | null): string {
 }
 
 export default async function FunnelPage() {
+  if (!isFunnelPublic()) await requireUser()
   const stats = await getFunnelStats()
 
   if (stats.starts === 0) {

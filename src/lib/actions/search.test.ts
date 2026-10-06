@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { search } from '@/lib/actions/search'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 async function objective(title: string, completed = false) {
   return prisma.objective.create({
     data: {
+      userId: TEST_USER_ID,
       title,
       startDate: new Date('2026-01-01'),
       status: completed ? 'COMPLETED' : 'ACTIVE',
@@ -105,5 +107,21 @@ describe('search', () => {
     const results = await search('leitura')
 
     expect(results.weeklyGoals.map((g) => g.title)).toEqual(['Leitura nova', 'Leitura antiga'])
+  })
+})
+
+describe('search isolation', () => {
+  it("does not return another user's objectives or goals", async () => {
+    await createTestUser('other')
+    const foreignObjective = await prisma.objective.create({
+      data: { userId: 'other', title: 'Objetivo Alheio', startDate: new Date() },
+    })
+    const foreignGoal = await prisma.weeklyGoal.create({
+      data: { title: 'Meta Alheio', objectiveId: foreignObjective.id, ...getWeekBounds(new Date()) },
+    })
+    await prisma.dailyTask.create({
+      data: { title: 'Tarefa Alheio', weeklyGoalId: foreignGoal.id, date: new Date(), completed: true, completedAt: new Date() },
+    })
+    expect(await search('Alheio')).toEqual({ objectives: [], weeklyGoals: [] })
   })
 })

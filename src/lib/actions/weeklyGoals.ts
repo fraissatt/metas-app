@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { addDays, differenceInCalendarDays } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
+import { findOwnedObjective, findOwnedWeeklyGoal } from '@/lib/owned'
+import { requireUser } from '@/lib/session'
 import { readCheckbox, readDate, readTitle } from '@/lib/actions/validation'
 import type { DailyTask, Prisma, Status, WeeklyGoal } from '@prisma/client'
 
@@ -18,29 +20,37 @@ function readWeeklyGoalFields(formData: FormData) {
 }
 
 export async function createWeeklyGoal(objectiveId: string, formData: FormData): Promise<void> {
+  const user = await requireUser()
+  await findOwnedObjective(user.id, objectiveId)
   const fields = readWeeklyGoalFields(formData)
   await prisma.weeklyGoal.create({ data: { ...fields, objectiveId } })
   revalidatePath(`/objectives/${objectiveId}`)
 }
 
 export async function listWeeklyGoalsByObjective(objectiveId: string): Promise<WeeklyGoalWithTasks[]> {
+  const user = await requireUser()
   return prisma.weeklyGoal.findMany({
-    where: { objectiveId },
+    where: { objectiveId, objective: { userId: user.id } },
     orderBy: { weekStart: 'asc' },
     include: { dailyTasks: { orderBy: { date: 'asc' } } },
   })
 }
 
 export async function getWeeklyGoal(id: string): Promise<WeeklyGoal | null> {
-  return prisma.weeklyGoal.findUnique({ where: { id } })
+  const user = await requireUser()
+  return prisma.weeklyGoal.findFirst({ where: { id, objective: { userId: user.id } } })
 }
 
 export async function updateWeeklyGoal(id: string, formData: FormData): Promise<void> {
+  const user = await requireUser()
+  await findOwnedWeeklyGoal(user.id, id)
   const goal = await prisma.weeklyGoal.update({ where: { id }, data: readWeeklyGoalFields(formData) })
   revalidatePath(`/objectives/${goal.objectiveId}`)
 }
 
 export async function deleteWeeklyGoal(id: string): Promise<void> {
+  const user = await requireUser()
+  await findOwnedWeeklyGoal(user.id, id)
   const goal = await prisma.weeklyGoal.delete({ where: { id } })
   revalidatePath(`/objectives/${goal.objectiveId}`)
 }
@@ -48,6 +58,8 @@ export async function deleteWeeklyGoal(id: string): Promise<void> {
 export async function getWeekProgress(
   weeklyGoalId: string,
 ): Promise<{ total: number; completed: number; percent: number }> {
+  const user = await requireUser()
+  await findOwnedWeeklyGoal(user.id, weeklyGoalId)
   const tasks = await prisma.dailyTask.findMany({ where: { weeklyGoalId } })
   const total = tasks.length
   const completed = tasks.filter((t) => t.completed).length
@@ -56,9 +68,10 @@ export async function getWeekProgress(
 }
 
 export async function listWeeklyGoalsForCurrentWeek() {
+  const user = await requireUser()
   const { weekStart, weekEnd } = getWeekBounds(new Date())
   return prisma.weeklyGoal.findMany({
-    where: { weekStart: { equals: weekStart }, weekEnd: { equals: weekEnd } },
+    where: { weekStart: { equals: weekStart }, weekEnd: { equals: weekEnd }, objective: { userId: user.id } },
     include: { objective: true, dailyTasks: true },
   })
 }
@@ -84,7 +97,11 @@ function goalKey(goal: { objectiveId: string; title: string }): string {
  * simply the previous calendar week, since someone away for three weeks would
  * find that one empty, and that is exactly the user this serves.
  *
- * `db` defaults to the shared client; Task 3 passes its transaction client so
+ * Only the given user's goals are considered — both when picking the source
+ * week and when checking what already exists — so one account's planning never
+ * leaks into another's recurrences.
+ *
+ * `db` defaults to the shared client; the write actions pass their transaction client so
  * the write recomputes this set atomically instead of trusting a stale render.
  *
  * Not exported: this module is `'use server'`, where every export becomes a
@@ -92,10 +109,11 @@ function goalKey(goal: { objectiveId: string; title: string }): string {
  */
 async function findMissingGoals(
   currentWeekStart: Date,
+  userId: string,
   db: Prisma.TransactionClient = prisma,
 ): Promise<{ sourceWeekStart: Date; goals: SourceGoal[] } | null> {
   const previous = await db.weeklyGoal.findFirst({
-    where: { weekStart: { lt: currentWeekStart } },
+    where: { weekStart: { lt: currentWeekStart }, objective: { userId } },
     orderBy: { weekStart: 'desc' },
     select: { weekStart: true },
   })
@@ -103,12 +121,12 @@ async function findMissingGoals(
 
   const [sourceGoals, currentGoals] = await Promise.all([
     db.weeklyGoal.findMany({
-      where: { weekStart: previous.weekStart },
+      where: { weekStart: previous.weekStart, objective: { userId } },
       orderBy: { title: 'asc' },
       include: { dailyTasks: true, objective: { select: { status: true } } },
     }),
     db.weeklyGoal.findMany({
-      where: { weekStart: currentWeekStart },
+      where: { weekStart: currentWeekStart, objective: { userId } },
       select: { objectiveId: true, title: true },
     }),
   ])
@@ -180,8 +198,9 @@ async function cloneGoalsInto(
 }
 
 export async function getMissingGoalsPreview(): Promise<MissingGoalsPreview | null> {
+  const user = await requireUser()
   const { weekStart: currentWeekStart } = getWeekBounds(new Date())
-  const missing = await findMissingGoals(currentWeekStart)
+  const missing = await findMissingGoals(currentWeekStart, user.id)
   if (!missing) return null
 
   const goals = oneOffGoals(missing.goals)
@@ -198,6 +217,7 @@ export async function getMissingGoalsPreview(): Promise<MissingGoalsPreview | nu
 }
 
 export async function repeatMissingGoals(): Promise<void> {
+  const user = await requireUser()
   const { weekStart: currentWeekStart, weekEnd: currentWeekEnd } = getWeekBounds(new Date())
   let touchedObjectiveIds: string[] = []
 
@@ -205,7 +225,7 @@ export async function repeatMissingGoals(): Promise<void> {
     // Recomputed inside the transaction rather than reusing what the page
     // rendered: two rapid clicks would otherwise both act on a stale set and
     // create the same goals twice. The second call finds nothing missing.
-    const missing = await findMissingGoals(currentWeekStart, tx)
+    const missing = await findMissingGoals(currentWeekStart, user.id, tx)
     if (!missing) return
 
     const goals = oneOffGoals(missing.goals)
@@ -225,13 +245,15 @@ export async function repeatMissingGoals(): Promise<void> {
 }
 
 export async function countPendingRecurrences(): Promise<number> {
+  const user = await requireUser()
   const { weekStart: currentWeekStart } = getWeekBounds(new Date())
-  const missing = await findMissingGoals(currentWeekStart)
+  const missing = await findMissingGoals(currentWeekStart, user.id)
 
   return missing ? pendingRecurrences(missing.goals).length : 0
 }
 
 export async function materializePendingWeek(): Promise<void> {
+  const user = await requireUser()
   const { weekStart: currentWeekStart, weekEnd: currentWeekEnd } = getWeekBounds(new Date())
   let touchedObjectiveIds: string[] = []
 
@@ -240,7 +262,7 @@ export async function materializePendingWeek(): Promise<void> {
     // rendered: this is what makes remounts, retries, and genuinely concurrent
     // calls safe. The ref guard in WeekMaterializer already handles React
     // Strict Mode's double-invocation on its own.
-    const missing = await findMissingGoals(currentWeekStart, tx)
+    const missing = await findMissingGoals(currentWeekStart, user.id, tx)
     if (!missing) return
 
     const goals = pendingRecurrences(missing.goals)

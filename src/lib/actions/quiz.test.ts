@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { TEMPLATES } from '@/lib/quiz/build-plan'
 import { createPlanFromQuiz } from '@/lib/actions/quiz'
+import { TEST_USER_ID } from '@/test/session-mock'
 
 const redirect = vi.hoisted(() => vi.fn())
 vi.mock('next/navigation', () => ({ redirect }))
@@ -34,6 +35,7 @@ describe('createPlanFromQuiz', () => {
     const objectives = await prisma.objective.findMany()
     expect(objectives).toHaveLength(1)
     expect(objectives[0].title).toBe(TEMPLATES.correr.objective)
+    expect(objectives[0].userId).toBe(TEST_USER_ID)
     expect(ymd(objectives[0].startDate)).toBe('2026-10-01')
     expect(ymd(objectives[0].targetDate!)).toBe('2027-01-01')
 
