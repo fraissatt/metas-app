@@ -7,7 +7,7 @@ import {
   reopenObjective,
 } from '@/lib/actions/objectives'
 import { getObjectiveProgressSeries } from '@/lib/actions/progress'
-import { createDailyTasks } from '@/lib/actions/dailyTasks'
+import { createDailyTasks, toggleDailyTask } from '@/lib/actions/dailyTasks'
 import { createWeeklyGoal, deleteWeeklyGoal, listWeeklyGoalsByObjective } from '@/lib/actions/weeklyGoals'
 import { describeSchedule } from '@/lib/objectives'
 import { ObjectiveProgressChart } from '@/components/objective-progress-chart'
@@ -76,6 +76,7 @@ export default async function ObjectiveDetailPage({
         onCreateTasks={createDailyTasks}
         onCreateWeeklyGoal={createWeeklyGoal.bind(null, id)}
         onDeleteWeeklyGoal={deleteWeeklyGoal}
+        onToggleTask={toggleDailyTask}
         openNewGoal={novaMeta === '1'}
       />
     </main>

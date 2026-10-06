@@ -34,6 +34,7 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
       />,
     )
 
@@ -49,6 +50,7 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
       />,
     )
 
@@ -70,6 +72,7 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={onCreateTasks}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
       />,
     )
 
@@ -88,6 +91,7 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={onDeleteWeeklyGoal}
+        onToggleTask={vi.fn()}
       />,
     )
 
@@ -105,6 +109,7 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
         openNewGoal
       />,
     )
