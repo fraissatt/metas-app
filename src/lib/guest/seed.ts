@@ -11,5 +11,5 @@ export async function seedDemoData(userId: string, now: Date = new Date()): Prom
         await tx.dailyTask.createMany({ data: tasks.map((task) => ({ ...task, weeklyGoalId: createdGoal.id })) })
       }
     }
-  })
+  }, { timeout: 15_000, maxWait: 5_000 })
 }

@@ -30,13 +30,15 @@ export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
         : await authClient.signIn.email({ email, password })
       if (result.error) {
         setError(authErrorMessage(result.error))
+        setPending(false)
         return
       }
+      // Stay pending on success: the page is navigating away, and re-enabling
+      // the button would allow a double submit.
       router.push('/')
       router.refresh()
     } catch {
       setError(authErrorMessage(null))
-    } finally {
       setPending(false)
     }
   }

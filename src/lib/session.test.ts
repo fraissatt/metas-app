@@ -57,6 +57,24 @@ describe('getCurrentUser', () => {
     const after = await prisma.user.findUniqueOrThrow({ where: { id: 'g2' } })
     expect(after.lastSeenAt.getTime()).toBe(recent.getTime())
   })
+
+  it('returns the guest when the user vanished before the lastSeenAt bump', async () => {
+    const u = await makeUser('g3', true, new Date(Date.now() - 2 * 3600_000))
+    await prisma.user.delete({ where: { id: 'g3' } })
+    getSession.mockResolvedValue({ user: { ...u } })
+    expect(await getCurrentUser()).toEqual({ id: 'g3', name: 'g3', email: 'g3@example.com', isAnonymous: true })
+  })
+
+  it('logs and swallows a failing lastSeenAt bump', async () => {
+    const u = await makeUser('g4', true, new Date(Date.now() - 2 * 3600_000))
+    getSession.mockResolvedValue({ user: { ...u } })
+    const spy = vi.spyOn(prisma.user, 'updateMany').mockRejectedValueOnce(new Error('db down'))
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await getCurrentUser()).toMatchObject({ id: 'g4', isAnonymous: true })
+    expect(log).toHaveBeenCalled()
+    spy.mockRestore()
+    log.mockRestore()
+  })
 })
 
 describe('requireUser', () => {

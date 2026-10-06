@@ -21,7 +21,12 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (isAnonymous) {
     const lastSeen = user.lastSeenAt ? new Date(user.lastSeenAt).getTime() : 0
     if (Date.now() - lastSeen > LAST_SEEN_THROTTLE_MS) {
-      await prisma.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } })
+      // Housekeeping only: a failed bump must never take the page down.
+      try {
+        await prisma.user.updateMany({ where: { id: user.id }, data: { lastSeenAt: new Date() } })
+      } catch (error) {
+        console.error('Guest lastSeenAt bump failed', error)
+      }
     }
   }
 

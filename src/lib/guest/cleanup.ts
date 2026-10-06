@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 
+// lastSeenAt is bumped at most once an hour, so the effective idle window is 23-24 h.
 export const GUEST_IDLE_MS = 24 * 3600_000
 export const MAX_GUESTS = 200
 

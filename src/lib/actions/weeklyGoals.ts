@@ -101,7 +101,7 @@ function goalKey(goal: { objectiveId: string; title: string }): string {
  * week and when checking what already exists — so one account's planning never
  * leaks into another's recurrences.
  *
- * `db` defaults to the shared client; Task 3 passes its transaction client so
+ * `db` defaults to the shared client; the write actions pass their transaction client so
  * the write recomputes this set atomically instead of trusting a stale render.
  *
  * Not exported: this module is `'use server'`, where every export becomes a

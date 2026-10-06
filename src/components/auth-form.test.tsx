@@ -28,6 +28,25 @@ describe('AuthForm', () => {
     expect(push).toHaveBeenCalledWith('/')
   })
 
+  it('stays disabled after a successful sign-in (no double submit) and re-enables after an error', async () => {
+    signInEmail.mockResolvedValueOnce({ data: {}, error: null })
+    const { unmount } = render(<AuthForm mode="entrar" />)
+    await userEvent.type(screen.getByLabelText('E-mail'), 'a@b.com')
+    await userEvent.type(screen.getByLabelText('Senha'), 'segredo123')
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }))
+    expect(push).toHaveBeenCalledWith('/')
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeDisabled()
+    unmount()
+
+    signInEmail.mockResolvedValueOnce({ data: null, error: { status: 401, code: 'INVALID_EMAIL_OR_PASSWORD' } })
+    render(<AuthForm mode="entrar" />)
+    await userEvent.type(screen.getByLabelText('E-mail'), 'a@b.com')
+    await userEvent.type(screen.getByLabelText('Senha'), 'errada123')
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar' }))
+    await screen.findByRole('alert')
+    expect(screen.getByRole('button', { name: 'Entrar' })).toBeEnabled()
+  })
+
   it('announces wrong credentials', async () => {
     signInEmail.mockResolvedValue({ data: null, error: { status: 401, code: 'INVALID_EMAIL_OR_PASSWORD' } })
     render(<AuthForm mode="entrar" />)
