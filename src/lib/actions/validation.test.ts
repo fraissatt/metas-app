@@ -50,7 +50,7 @@ describe('readOptionalDate', () => {
 
   it('parses a valid yyyy-MM-dd string when present', () => {
     const date = readOptionalDate(formData({ targetDate: '2026-06-30' }), 'targetDate')
-    expect(date?.getDate()).toBe(30)
+    expect(date && appDayOfMonth(date)).toBe(30)
   })
 
   it('throws when present but unparseable', () => {
