@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/session'
 import { AuthForm } from '@/components/auth-form'
+import { GuestButton } from '@/components/guest-button'
+import { enterAsGuest } from '@/lib/actions/guest'
 
 export const metadata: Metadata = { title: 'Entrar' }
 
@@ -18,11 +20,11 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
           Sua sessão de visitante expirou
         </p>
       )}
+      <GuestButton onEnter={enterAsGuest} />
       <AuthForm mode="entrar" />
       <p className="text-sm text-muted-foreground">
         Não tem conta? <Link href="/cadastro" className="text-accent-foreground underline-offset-4 hover:underline">Criar conta</Link>
       </p>
-      {/* Task 9 adds the guest button here */}
     </main>
   )
 }
