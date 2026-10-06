@@ -7,7 +7,8 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 **[Ver online](https://metas-app-flax.vercel.app)** · [abrir direto no quiz](https://metas-app-flax.vercel.app/quiz)
 · [ver o funil](https://metas-app-flax.vercel.app/funil)
 
-> A versão online é uma demonstração sem login: qualquer pessoa com o link vê e edita os mesmos dados.
+> Entre como visitante para ver uma conta de demonstração com dados prontos (apagada após 24 h sem uso),
+> ou crie sua conta com e-mail e senha.
 
 ![Tela Hoje, em tema escuro: tarefas do dia agrupadas por meta e o progresso da semana](docs/screenshots/hoje.jpg)
 
@@ -15,6 +16,8 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 
 ## Funcionalidades
 
+- **Contas e modo visitante:** login com e-mail e senha (Better Auth) e visitante com dados fictícios
+  gerados na hora; cada pessoa só vê os próprios dados.
 - **Quiz de onboarding:** cinco perguntas (área, foco, prazo, dias da semana e maior obstáculo), com
   perguntas que mudam conforme a resposta anterior. No fim, o app mostra um plano pronto — objetivo com
   data-meta, meta semanal recorrente e tarefas nos dias escolhidos — e cria tudo com um clique. Abre
@@ -82,6 +85,7 @@ guardar páginas em cache mostraria metas desatualizadas e quebraria as gravaç�
 ## Stack
 
 - [Next.js](https://nextjs.org) (App Router, Server Components e Server Actions) e React 19
+- [Better Auth](https://www.better-auth.com/) para contas e sessões
 - [Prisma](https://www.prisma.io/) + Postgres
 - [Tailwind CSS](https://tailwindcss.com/) 4 + [shadcn/ui](https://ui.shadcn.com/) (sobre
   [Base UI](https://base-ui.com/), não Radix)
@@ -94,6 +98,8 @@ guardar páginas em cache mostraria metas desatualizadas e quebraria as gravaç�
 
 - **Testes contra um Postgres de verdade.** A camada de dados é testada com o banco `metas_app_test`, sem
   mocks do Prisma. Os componentes têm testes com Testing Library. A suíte tem mais de 450 testes.
+- **Isolamento por usuário testado.** Toda consulta filtra pelo dono, e registros de outra pessoa se
+  comportam como inexistentes; cada módulo de dados tem testes garantindo isso.
 - **Tema vindo do servidor.** O tema fica em um cookie e a página já sai renderizada com ele; a cor da
   barra do navegador (`theme-color`) vem da mesma fonte da paleta.
 - **Cores só por tokens.** Um teste reprova qualquer cor hexadecimal fixa nos componentes (ela ignoraria o
@@ -135,7 +141,8 @@ guardar páginas em cache mostraria metas desatualizadas e quebraria as gravaç�
    ```
 
    A `DATABASE_URL` padrão já corresponde ao Docker Compose acima, então não precisa editar nada para
-   desenvolver localmente.
+   desenvolver localmente. O `.env.example` inclui `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` e
+   `FUNNEL_PUBLIC`; a secret deve ser alterada para um valor único.
 
 3. Instale as dependências:
 
@@ -172,6 +179,7 @@ o banco.
 
    ```bash
    DATABASE_URL="postgresql://metas:metas@localhost:5433/metas_app_test"
+   BETTER_AUTH_SECRET="test-secret"
    ```
 
 3. Aplique as migrations no banco de testes:
