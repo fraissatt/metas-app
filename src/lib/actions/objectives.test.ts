@@ -14,7 +14,8 @@ import {
   reopenObjective,
   updateObjective,
 } from '@/lib/actions/objectives'
-import { TEST_USER_ID } from '@/test/session-mock'
+import { NOT_FOUND } from '@/lib/owned'
+import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -308,5 +309,41 @@ describe('objective actions', () => {
     const { completed } = await listObjectivesWithStats()
 
     expect(completed.map((o) => o.id)).toEqual([newer.id, older.id])
+  })
+})
+
+describe('isolation between users', () => {
+  async function otherObjective() {
+    await createTestUser('other')
+    return prisma.objective.create({ data: { title: 'Alheio', startDate: new Date(), userId: 'other' } })
+  }
+
+  it("lists, counts and searches only the current user's objectives", async () => {
+    const foreign = await otherObjective()
+    await prisma.objective.create({ data: { title: 'Meu', startDate: new Date(), userId: TEST_USER_ID } })
+    expect((await listObjectives()).map((o) => o.title)).toEqual(['Meu'])
+    expect(await countObjectives()).toBe(1)
+    const { active, completed } = await listObjectivesWithStats()
+    expect([...active, ...completed].map((o) => o.id)).not.toContain(foreign.id)
+  })
+
+  it("returns null for another user's objective", async () => {
+    const foreign = await otherObjective()
+    expect(await getObjective(foreign.id)).toBeNull()
+  })
+
+  it("cannot update, delete, complete, reopen or read stats of another user's objective", async () => {
+    const foreign = await otherObjective()
+    const form = new FormData()
+    form.set('title', 'Hack')
+    form.set('startDate', '2026-10-01')
+    await expect(updateObjective(foreign.id, form)).rejects.toThrow(NOT_FOUND)
+    await expect(deleteObjective(foreign.id)).rejects.toThrow(NOT_FOUND)
+    await expect(completeObjective(foreign.id)).rejects.toThrow(NOT_FOUND)
+    await expect(reopenObjective(foreign.id)).rejects.toThrow(NOT_FOUND)
+    await expect(getObjectiveStats(foreign.id)).rejects.toThrow(NOT_FOUND)
+    const after = await prisma.objective.findUniqueOrThrow({ where: { id: foreign.id } })
+    expect(after.title).toBe('Alheio')
+    expect(after.status).toBe('ACTIVE')
   })
 })
