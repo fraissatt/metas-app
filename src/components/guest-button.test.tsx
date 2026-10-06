@@ -25,6 +25,21 @@ describe('GuestButton', () => {
     expect(button).toBeEnabled()
   })
 
+  it('shows the throttle message when the server refuses for too many attempts, and only that one', async () => {
+    const onEnter = vi.fn().mockRejectedValue(new Error('Muitas tentativas. Tente de novo em alguns minutos.'))
+    render(<GuestButton onEnter={onEnter} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar como visitante' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Muitas tentativas. Tente de novo em alguns minutos.')
+  })
+
+  it('never leaks other server messages', async () => {
+    const onEnter = vi.fn().mockRejectedValue(new Error('connect ECONNREFUSED 10.0.0.1:5432'))
+    render(<GuestButton onEnter={onEnter} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar como visitante' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível concluir. Tente de novo.')
+    expect(screen.queryByText(/ECONNREFUSED/)).toBeNull()
+  })
+
   it('treats a Next redirect rejection as success: no alert, stays disabled', async () => {
     const redirectError = Object.assign(new Error('NEXT_REDIRECT'), { digest: 'NEXT_REDIRECT;push;/;307;' })
     const onEnter = vi.fn().mockRejectedValue(redirectError)
