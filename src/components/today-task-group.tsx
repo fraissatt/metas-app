@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { TaskItem } from '@/components/task-item'
 import { TaskToggle } from '@/components/task-toggle'
 import type { TaskGroup } from '@/lib/tasks'
 import { isGoalFulfilled } from '@/lib/objectives'
@@ -9,9 +10,14 @@ import { cn } from '@/lib/utils'
 export function TodayTaskGroup({
   group,
   onToggleTask,
+  onUpdateTask,
+  onDeleteTask,
 }: {
   group: TaskGroup
   onToggleTask: (id: string) => Promise<void>
+  /** With both edit handlers, each task gets the "⋯" menu to edit or delete it. */
+  onUpdateTask?: (id: string, formData: FormData) => Promise<void>
+  onDeleteTask?: (id: string) => Promise<void>
 }) {
   const { weeklyGoal, tasks } = group
   const completed = tasks.filter((t) => t.completed).length
@@ -55,20 +61,32 @@ export function TodayTaskGroup({
           </span>
         </div>
         <div className="flex flex-col">
-          {tasks.map((task) => (
-            // A wrapping label makes the whole row the checkbox's hit target.
-            <label
-              key={task.id}
-              className="flex cursor-pointer items-center gap-3 border-b border-border/60 px-4 py-2 last:border-b-0 hover:bg-accent"
-            >
-              <TaskToggle taskId={task.id} completed={task.completed} action={onToggleTask} />
-              <span
-                className={`min-w-0 break-words text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+          {tasks.map((task) =>
+            onUpdateTask && onDeleteTask ? (
+              <TaskItem
+                key={task.id}
+                task={task}
+                weekStart={weeklyGoal.weekStart}
+                className="border-b border-border/60 px-4 py-2 last:border-b-0 hover:bg-accent"
+                onToggle={onToggleTask}
+                onUpdate={onUpdateTask}
+                onDelete={onDeleteTask}
+              />
+            ) : (
+              // A wrapping label makes the whole row the checkbox's hit target.
+              <label
+                key={task.id}
+                className="flex cursor-pointer items-center gap-3 border-b border-border/60 px-4 py-2 last:border-b-0 hover:bg-accent"
               >
-                {task.title}
-              </span>
-            </label>
-          ))}
+                <TaskToggle taskId={task.id} completed={task.completed} action={onToggleTask} />
+                <span
+                  className={`min-w-0 break-words text-sm ${task.completed ? 'line-through text-muted-foreground' : ''}`}
+                >
+                  {task.title}
+                </span>
+              </label>
+            ),
+          )}
         </div>
       </div>
     </div>

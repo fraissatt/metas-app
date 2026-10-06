@@ -1,14 +1,18 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getObjective } from '@/lib/actions/objectives'
-import { getWeeklyGoal } from '@/lib/actions/weeklyGoals'
-import { createDailyTask, deleteDailyTask, listDailyTasksByWeeklyGoal, toggleDailyTask } from '@/lib/actions/dailyTasks'
-import { DailyTaskForm } from '@/components/daily-task-form'
-import { TaskToggle } from '@/components/task-toggle'
-import { DeleteButton } from '@/components/delete-button'
-import { Button } from '@/components/ui/button'
+import { deleteWeeklyGoal, getWeeklyGoal } from '@/lib/actions/weeklyGoals'
+import {
+  createDailyTasks,
+  deleteDailyTask,
+  listDailyTasksByWeeklyGoal,
+  toggleDailyTask,
+  updateDailyTask,
+} from '@/lib/actions/dailyTasks'
 import { Breadcrumbs } from '@/components/breadcrumbs'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { WeeklyGoalDayChart } from '@/components/weekly-goal-day-chart'
+import { WeeklyGoalTasks } from '@/components/weekly-goal-tasks'
 
 export async function generateMetadata({
   params,
@@ -31,11 +35,18 @@ export default async function WeeklyGoalDetailPage({
   const objective = await getObjective(id)
   if (!objective) notFound()
 
-  const tasks = await listDailyTasksByWeeklyGoal(weekId)
+  const dailyTasks = await listDailyTasksByWeeklyGoal(weekId)
 
-  async function addTask(formData: FormData) {
+  async function addTasks(formData: FormData) {
     'use server'
-    await createDailyTask(weekId, formData)
+    await createDailyTasks(weekId, formData)
+  }
+
+  // This page would 404 once its goal is gone, so leave for the objective.
+  async function removeGoal() {
+    'use server'
+    await deleteWeeklyGoal(weekId)
+    redirect(`/objectives/${id}`)
   }
 
   return (
@@ -47,38 +58,35 @@ export default async function WeeklyGoalDetailPage({
           { label: goal.title },
         ]}
       />
-      <h1 className="mb-6 text-2xl font-semibold break-words">{goal.title}</h1>
-      <DailyTaskForm action={addTask} />
-      {tasks.length === 0 && (
-        <p className="mt-6 text-sm text-muted-foreground">Nenhuma tarefa ainda. Adicione a primeira acima.</p>
-      )}
-      <ul className="mt-6 flex flex-col gap-2">
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            className="flex flex-wrap items-start justify-between gap-2 rounded-md border p-3"
-          >
-            <label className="flex min-w-0 cursor-pointer items-start gap-3">
-              <TaskToggle taskId={task.id} completed={task.completed} action={toggleDailyTask} />
-              <span
-                className={`min-w-0 break-words ${task.completed ? 'line-through text-muted-foreground' : ''}`}
-              >
-                {task.title}
-              </span>
-            </label>
-            <div className="flex shrink-0 gap-2">
-              <Button
-                variant="secondary"
-                nativeButton={false}
-                render={<Link href={`/objectives/${id}/weeks/${weekId}/tasks/${task.id}/edit`} />}
-              >
-                Editar
-              </Button>
-              <DeleteButton action={deleteDailyTask.bind(null, task.id)} />
-            </div>
-          </li>
-        ))}
-      </ul>
+      <div className="mb-6 flex flex-col items-start gap-2">
+        <h1 className="text-2xl font-semibold break-words">{goal.title}</h1>
+        {goal.recurring && (
+          <span className="rounded-full bg-support-muted px-2 py-0.5 text-[11px] font-medium text-support-foreground">
+            repete toda semana
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-6">
+        <WeeklyGoalTasks
+          goal={{ ...goal, dailyTasks }}
+          onCreateTasks={addTasks}
+          onDelete={removeGoal}
+          onToggleTask={toggleDailyTask}
+          onUpdateTask={updateDailyTask}
+          onDeleteTask={deleteDailyTask}
+        />
+
+        {/* What sets this page apart from the card: the per-day view is always open. */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Por dia</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WeeklyGoalDayChart weekStart={goal.weekStart} tasks={dailyTasks} />
+          </CardContent>
+        </Card>
+      </div>
     </main>
   )
 }

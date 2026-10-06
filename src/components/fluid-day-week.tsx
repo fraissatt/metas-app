@@ -61,10 +61,14 @@ export function FluidDayWeek({
   tasks,
   goals,
   onToggleTask,
+  onUpdateTask,
+  onDeleteTask,
 }: {
   tasks: DailyTasks
   goals: WeeklyGoals
   onToggleTask: (id: string) => Promise<void>
+  onUpdateTask?: (id: string, formData: FormData) => Promise<void>
+  onDeleteTask?: (id: string) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
   const isDesktop = useIsDesktop()
@@ -97,7 +101,13 @@ export function FluidDayWeek({
         ) : (
           <div className="flex flex-col gap-3">
             {todayGroups.map((group) => (
-              <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={handleToggle} />
+              <TodayTaskGroup
+                key={group.weeklyGoal.id}
+                group={group}
+                onToggleTask={handleToggle}
+                onUpdateTask={onUpdateTask}
+                onDeleteTask={onDeleteTask}
+              />
             ))}
           </div>
         )}

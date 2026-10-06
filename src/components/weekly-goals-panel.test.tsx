@@ -34,6 +34,9 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -49,6 +52,9 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -70,9 +76,13 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={onCreateTasks}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
+    await userEvent.click(screen.getAllByRole('button', { name: '+ Nova tarefa' })[0])
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 27' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
@@ -88,6 +98,9 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={onDeleteWeeklyGoal}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -105,6 +118,9 @@ describe('WeeklyGoalsPanel', () => {
         onCreateTasks={vi.fn()}
         onCreateWeeklyGoal={vi.fn()}
         onDeleteWeeklyGoal={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
         openNewGoal
       />,
     )

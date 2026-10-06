@@ -10,12 +10,18 @@ export function WeeklyGoalsPanel({
   onCreateTasks,
   onCreateWeeklyGoal,
   onDeleteWeeklyGoal,
+  onToggleTask,
+  onUpdateTask,
+  onDeleteTask,
   openNewGoal,
 }: {
   goals: WeeklyGoalWithTasks[]
   onCreateTasks: (weeklyGoalId: string, formData: FormData) => Promise<void>
   onCreateWeeklyGoal: (formData: FormData) => Promise<void>
   onDeleteWeeklyGoal: (weeklyGoalId: string) => Promise<void>
+  onToggleTask: (taskId: string) => Promise<void>
+  onUpdateTask: (taskId: string, formData: FormData) => Promise<void>
+  onDeleteTask: (taskId: string) => Promise<void>
   openNewGoal?: boolean
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -30,6 +36,9 @@ export function WeeklyGoalsPanel({
           onToggleExpand={() => setExpandedId((current) => (current === goal.id ? null : goal.id))}
           onCreateTasks={(formData) => onCreateTasks(goal.id, formData)}
           onDelete={() => onDeleteWeeklyGoal(goal.id)}
+          onToggleTask={onToggleTask}
+          onUpdateTask={onUpdateTask}
+          onDeleteTask={onDeleteTask}
         />
       ))}
       <div id="nova-meta" className="scroll-mt-20">

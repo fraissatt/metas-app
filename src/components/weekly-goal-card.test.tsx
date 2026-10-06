@@ -6,6 +6,10 @@ import { WeeklyGoalCard } from '@/components/weekly-goal-card'
 import { getWeekBounds } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 
+async function openNewTaskForm() {
+  await userEvent.click(screen.getByRole('button', { name: '+ Nova tarefa' }))
+}
+
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
 const baseGoal: WeeklyGoalWithTasks = {
@@ -45,13 +49,16 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
     expect(screen.getByText('1/2 tarefas (50%)')).toBeInTheDocument()
   })
 
-  it('renders one day toggle per day of the week, labeled with the real day-of-month number', () => {
+  it('renders one day toggle per day of the week, labeled with the real day-of-month number', async () => {
     render(
       <WeeklyGoalCard
         goal={baseGoal}
@@ -59,15 +66,20 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
-    expect(screen.getAllByRole('checkbox')).toHaveLength(7)
+    await openNewTaskForm()
+    // The task list has its own checkboxes; count only the day toggles.
+    expect(screen.getAllByRole('checkbox', { name: /^(SEG|TER|QUA|QUI|SEX|SÁB|DOM) \d+$/ })).toHaveLength(7)
     expect(screen.getByRole('checkbox', { name: 'SEG 27' })).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'DOM 2' })).toBeInTheDocument()
   })
 
-  it("pre-checks today's toggle when the goal's week contains today", () => {
+  it("pre-checks today's toggle when the goal's week contains today", async () => {
     const { weekStart, weekEnd } = getWeekBounds(new Date())
     const goal: WeeklyGoalWithTasks = { ...baseGoal, weekStart, weekEnd, dailyTasks: [] }
     const today = new Date()
@@ -75,9 +87,10 @@ describe('WeeklyGoalCard', () => {
     const label = `${DAY_LABELS[todayIndex]} ${format(today, 'd')}`
 
     render(
-      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} />,
+      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
     )
 
+    await openNewTaskForm()
     expect(screen.getByRole('checkbox', { name: label })).toBeChecked()
   })
 
@@ -90,9 +103,13 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={onCreateTasks}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
+    await openNewTaskForm()
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
@@ -111,9 +128,13 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={onCreateTasks}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
+    await openNewTaskForm()
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
     await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
     await userEvent.click(screen.getByRole('checkbox', { name: 'QUA 29' }))
@@ -132,40 +153,121 @@ describe('WeeklyGoalCard', () => {
     const goal: WeeklyGoalWithTasks = { ...baseGoal, weekStart, weekEnd, dailyTasks: [] }
 
     render(
-      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} />,
+      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
     )
 
+    await openNewTaskForm()
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
 
     expect(screen.getByRole('button', { name: /^criar$/i })).toBeDisabled()
   })
 
-  it('toggles the expanded detail view via onToggleExpand and shows the read-only task list when expanded', () => {
+  it('starts with the new-task form collapsed behind "+ Nova tarefa"', async () => {
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={vi.fn()}
+        onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />,
+    )
+
+    expect(screen.queryByLabelText('Nova tarefa')).not.toBeInTheDocument()
+    await openNewTaskForm()
+    expect(screen.getByLabelText('Nova tarefa')).toHaveFocus()
+    expect(screen.queryByRole('button', { name: '+ Nova tarefa' })).not.toBeInTheDocument()
+  })
+
+  it('closes the form on Cancelar and keeps it open after creating a task', async () => {
+    const onCreateTasks = vi.fn().mockResolvedValue(undefined)
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={onCreateTasks}
+        onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />,
+    )
+
+    await openNewTaskForm()
+    await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
+    await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
+    expect(onCreateTasks).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText('Nova tarefa')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByLabelText('Nova tarefa')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '+ Nova tarefa' })).toBeInTheDocument()
+  })
+
+  it('shows every task with its day without expanding anything', () => {
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={vi.fn()}
+        onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />,
+    )
+
+    const list = screen.getByRole('list', { name: 'Tarefas da semana' })
+    expect(list).toHaveTextContent('28/07')
+    expect(list).toHaveTextContent('Testar toggle')
+    expect(list).toHaveTextContent('29/07')
+    expect(list).toHaveTextContent('Testar criação')
+    expect(screen.getByRole('checkbox', { name: 'Testar toggle' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Testar criação' })).not.toBeChecked()
+  })
+
+  it('marks a task done from the card', async () => {
+    const onToggleTask = vi.fn().mockResolvedValue(undefined)
+    render(
+      <WeeklyGoalCard
+        goal={baseGoal}
+        expanded={false}
+        onToggleExpand={vi.fn()}
+        onCreateTasks={vi.fn()}
+        onDelete={vi.fn()}
+        onToggleTask={onToggleTask}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Testar criação' }))
+    expect(onToggleTask).toHaveBeenCalledWith('task-2')
+  })
+
+  it('keeps the per-day chart behind "Ver detalhes"', async () => {
     const onToggleExpand = vi.fn()
-    const { rerender } = render(
+    render(
       <WeeklyGoalCard
         goal={baseGoal}
         expanded={false}
         onToggleExpand={onToggleExpand}
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
-    expect(screen.queryByText(/Testar criação/)).not.toBeInTheDocument()
-
-    rerender(
-      <WeeklyGoalCard
-        goal={baseGoal}
-        expanded
-        onToggleExpand={onToggleExpand}
-        onCreateTasks={vi.fn()}
-        onDelete={vi.fn()}
-      />,
-    )
-
-    expect(screen.getByText(/Testar criação/)).toBeInTheDocument()
-    expect(screen.getByText(/Testar toggle/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /ver detalhes/i }))
+    expect(onToggleExpand).toHaveBeenCalledOnce()
   })
 
   it('links the title to the dedicated weekly goal page', () => {
@@ -176,6 +278,9 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -188,7 +293,7 @@ describe('WeeklyGoalCard', () => {
   it('shows a single empty-state message when an expanded goal has zero tasks', () => {
     const goal: WeeklyGoalWithTasks = { ...baseGoal, dailyTasks: [] }
     render(
-      <WeeklyGoalCard goal={goal} expanded onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} />,
+      <WeeklyGoalCard goal={goal} expanded onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
     )
 
     expect(screen.getAllByText(/nesta semana/i)).toHaveLength(1)
@@ -203,6 +308,9 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -220,6 +328,9 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -235,6 +346,9 @@ describe('WeeklyGoalCard', () => {
         onToggleExpand={vi.fn()}
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
+        onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 

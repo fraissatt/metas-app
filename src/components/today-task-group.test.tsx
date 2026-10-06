@@ -77,4 +77,20 @@ describe('TodayTaskGroup', () => {
     expect(onToggleTask).toHaveBeenCalledTimes(1)
     expect(onToggleTask).toHaveBeenCalledWith('task-0')
   })
+
+  it('shows the edit menu on each task when edit handlers are given', async () => {
+    const onDeleteTask = vi.fn().mockResolvedValue(undefined)
+    render(
+      <TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={onDeleteTask} />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Ações de Tarefa 0' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Excluir…' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Excluir' }))
+    expect(onDeleteTask).toHaveBeenCalledWith('task-0')
+  })
+
+  it('has no edit menu without edit handlers', () => {
+    render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: 'Ações de Tarefa 0' })).not.toBeInTheDocument()
+  })
 })
