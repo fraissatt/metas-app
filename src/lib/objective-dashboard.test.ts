@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { calendarWeeks, overview, recentRate, streak, timeline } from '@/lib/objective-dashboard'
 import type { ObjectiveWeek } from '@/lib/objectives'
-import { parseDay } from '@/lib/dates'
+import { appDayOfMonth, appDayOfWeek, parseDay } from '@/lib/dates'
 
 // Thursday 2026-10-01; its week starts Monday 2026-09-28.
 const now = new Date('2026-10-01T15:00:00-03:00')
@@ -16,12 +16,12 @@ describe('calendarWeeks', () => {
     const weeks = calendarWeeks([week(2026, 8, 28, 2, 4), week(2026, 8, 14, 5, 5)], now)
 
     expect(weeks).toHaveLength(8)
-    expect(weeks[7].weekStart.getDate()).toBe(28)
+    expect(appDayOfMonth(weeks[7].weekStart)).toBe(28)
     expect(weeks[7]).toMatchObject({ completed: 2, total: 4, percent: 50, hasGoal: true, current: true, fulfilled: false })
     expect(weeks[6]).toMatchObject({ hasGoal: false, total: 0, percent: 0, current: false })
     expect(weeks[5]).toMatchObject({ percent: 100, fulfilled: true, hasGoal: true })
-    expect(weeks[0].weekStart.getDate()).toBe(10) // 2026-08-10
-    expect(weeks.every((w) => w.weekStart.getDay() === 1)).toBe(true)
+    expect(appDayOfMonth(weeks[0].weekStart)).toBe(10) // 2026-08-10
+    expect(weeks.every((w) => appDayOfWeek(w.weekStart) === 1)).toBe(true)
   })
 
   it('merges two entries that fall in the same calendar week', () => {

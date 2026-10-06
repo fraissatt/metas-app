@@ -4,11 +4,12 @@ import { prisma } from '@/lib/db'
 import { TEMPLATES } from '@/lib/quiz/build-plan'
 import { createPlanFromQuiz } from '@/lib/actions/quiz'
 import { TEST_USER_ID } from '@/test/session-mock'
+import { formatDayKey } from '@/lib/dates'
 
 const redirect = vi.hoisted(() => vi.fn())
 vi.mock('next/navigation', () => ({ redirect }))
 
-const ymd = (d: Date) => format(d, 'yyyy-MM-dd')
+const ymd = (d: Date) => formatDayKey(d)
 const SID = 'session-0001'
 const answers = {
   area: 'saude',
@@ -20,7 +21,7 @@ const answers = {
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
-  vi.setSystemTime(new Date(2026, 9, 1, 15))
+  vi.setSystemTime(new Date('2026-10-01T15:00:00-03:00'))
   redirect.mockClear()
 })
 
@@ -55,7 +56,7 @@ describe('createPlanFromQuiz', () => {
   })
 
   it('redirects to the objective when the plan has no task in the current week', async () => {
-    vi.setSystemTime(new Date(2026, 9, 8, 15)) // Thursday: seg and ter have passed
+    vi.setSystemTime(new Date('2026-10-08T15:00:00-03:00')) // Thursday: seg and ter have passed
     await createPlanFromQuiz({ sessionId: SID, answers: { ...answers, dias: ['seg', 'ter'] } })
 
     const [objective] = await prisma.objective.findMany()

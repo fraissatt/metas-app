@@ -8,6 +8,7 @@ import {
   endOfWeek,
   format,
   getDate,
+  getDay,
   isSameDay,
   isValid,
   parseISO,
@@ -51,6 +52,8 @@ export const isSameAppDay = (a: Date, b: Date) => isSameDay(a, b, inApp)
 export const addAppDays = (date: Date, n: number) => plain(addDays(date, n, inApp))
 export const addAppMonths = (date: Date, n: number) => plain(addMonths(date, n, inApp))
 export const addAppWeeks = (date: Date, n: number) => plain(addWeeks(date, n, inApp))
+/** 0 = Sunday … 6 = Saturday, in Brasília. */
+export const appDayOfWeek = (date: Date) => getDay(date, inApp)
 export const appDayOfMonth = (date: Date) => getDate(date, inApp)
 export const differenceInAppDays = (a: Date, b: Date) => differenceInCalendarDays(a, b, inApp)
 export const differenceInAppWeeks = (a: Date, b: Date) => differenceInCalendarWeeks(a, b, week)
@@ -80,4 +83,24 @@ export function formatDate(date: Date): string {
 
 export function formatDayMonth(date: Date): string {
   return dayMonth.format(date)
+}
+
+// Until scripts/fix-shifted-dates runs, rows written by the old UTC server
+// hold a week's Monday at 00:00Z — 3 h before 00:00 in Brasília. Week lookups
+// accept both so a deploy never hides (and then re-creates) those weeks.
+const LEGACY_OFFSET_MS = 3 * 3600_000
+
+/** Prisma filter for a stored week start, new (03:00Z) or legacy (00:00Z). */
+export function weekStartMatch(weekStart: Date): { gte: Date; lte: Date } {
+  return { gte: new Date(weekStart.getTime() - LEGACY_OFFSET_MS), lte: weekStart }
+}
+
+/** The earliest stored instant that can still belong to the week of `weekStart`. */
+export function weekLowerBound(weekStart: Date): Date {
+  return new Date(weekStart.getTime() - LEGACY_OFFSET_MS)
+}
+
+/** `yyyy-MM-dd` of the Brasília Monday a stored week start belongs to. */
+export function weekKeyOf(storedWeekStart: Date): string {
+  return formatDayKey(new Date(storedWeekStart.getTime() + LEGACY_OFFSET_MS))
 }

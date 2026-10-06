@@ -31,12 +31,12 @@ describe('shifted dates repair', () => {
     const old = await prisma.dailyTask.create({ data: { title: 'old', weeklyGoalId: goal.id, date: new Date('2026-10-06T00:00:00Z') } })
     const fresh = await prisma.dailyTask.create({ data: { title: 'new', weeklyGoalId: goal.id, date: parseDay('2026-10-07') } })
 
-    expect(await planRepair(prisma)).toEqual({ tasks: 1, goals: 1, objectives: 1 })
+    expect(await planRepair(prisma)).toMatchObject({ tasks: 1, goals: 1, objectives: 1 })
     expect((await prisma.dailyTask.findUniqueOrThrow({ where: { id: old.id } })).date.toISOString()).toBe(
       '2026-10-06T00:00:00.000Z',
     )
 
-    expect(await applyRepair(prisma)).toEqual({ tasks: 1, goals: 1, objectives: 1 })
+    expect(await applyRepair(prisma)).toMatchObject({ tasks: 1, goals: 1, objectives: 1 })
     expect((await prisma.dailyTask.findUniqueOrThrow({ where: { id: old.id } })).date.toISOString()).toBe(
       '2026-10-06T03:00:00.000Z',
     )
@@ -49,7 +49,7 @@ describe('shifted dates repair', () => {
     const o = await prisma.objective.findUniqueOrThrow({ where: { id: objective.id } })
     expect(o.startDate.toISOString()).toBe('2026-10-05T03:00:00.000Z')
     expect(o.targetDate?.toISOString()).toBe('2026-12-01T03:00:00.000Z')
-    expect(await planRepair(prisma)).toEqual({ tasks: 0, goals: 0, objectives: 0 })
+    expect(await planRepair(prisma)).toMatchObject({ tasks: 0, goals: 0, objectives: 0 })
   })
 
   it('leaves guest accounts alone', async () => {
@@ -65,6 +65,30 @@ describe('shifted dates repair', () => {
         weekEnd: new Date('2026-10-11T23:59:59.999Z'),
       },
     })
-    expect(await planRepair(prisma)).toEqual({ tasks: 0, goals: 0, objectives: 0 })
+    expect(await planRepair(prisma)).toMatchObject({ tasks: 0, goals: 0, objectives: 0 })
+  })
+
+  it('lists tasks that land before their week after the repair (old day chips) and moves them a day forward only on request', async () => {
+    const objective = await prisma.objective.create({
+      data: { userId: TEST_USER_ID, title: 'O', startDate: new Date('2026-10-05T00:00:00Z') },
+    })
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'G', objectiveId: objective.id, weekStart: new Date('2026-10-05T00:00:00Z'), weekEnd: new Date('2026-10-11T23:59:59.999Z') },
+    })
+    // The shifted chip labelled "SEG 4" stored Sunday 04/10 for the week of 05/10.
+    const chip = await prisma.dailyTask.create({ data: { title: 'Planejar', weeklyGoalId: goal.id, date: new Date('2026-10-04T00:00:00Z') } })
+    await prisma.dailyTask.create({ data: { title: 'Dentro', weeklyGoalId: goal.id, date: new Date('2026-10-06T00:00:00Z') } })
+
+    const plan = await planRepair(prisma)
+    expect(plan.outsideWeek).toEqual([
+      { taskId: chip.id, email: 'test-user@example.com', title: 'Planejar', day: '2026-10-04', weekStart: '2026-10-05' },
+    ])
+
+    await applyRepair(prisma)
+    expect((await prisma.dailyTask.findUniqueOrThrow({ where: { id: chip.id } })).date.toISOString()).toBe('2026-10-04T03:00:00.000Z')
+
+    await prisma.dailyTask.update({ where: { id: chip.id }, data: { date: new Date('2026-10-04T00:00:00Z') } })
+    await applyRepair(prisma, { moveOutsideWeek: true })
+    expect((await prisma.dailyTask.findUniqueOrThrow({ where: { id: chip.id } })).date.toISOString()).toBe('2026-10-05T03:00:00.000Z')
   })
 })

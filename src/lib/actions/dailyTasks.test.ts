@@ -12,7 +12,7 @@ import {
   toggleDailyTask,
   updateDailyTask,
 } from '@/lib/actions/dailyTasks'
-import { getWeekBounds, parseDay } from '@/lib/dates'
+import { appDayOfMonth, formatDayKey, getWeekBounds, parseDay } from '@/lib/dates'
 import { NOT_FOUND } from '@/lib/owned'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
@@ -24,7 +24,7 @@ function formData(fields: Record<string, string>) {
 
 async function makeWeeklyGoal() {
   const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
-  const bounds = getWeekBounds(new Date('2026-07-29'))
+  const bounds = getWeekBounds(parseDay('2026-07-29'))
   return prisma.weeklyGoal.create({ data: { title: 'Goal', objectiveId: objective.id, ...bounds } })
 }
 
@@ -73,10 +73,10 @@ describe('daily task actions', () => {
   it('lists tasks for a weekly goal ordered by date', async () => {
     const goal = await makeWeeklyGoal()
     const later = await prisma.dailyTask.create({
-      data: { title: 'Later', weeklyGoalId: goal.id, date: new Date('2026-07-30') },
+      data: { title: 'Later', weeklyGoalId: goal.id, date: parseDay('2026-07-30') },
     })
     const earlier = await prisma.dailyTask.create({
-      data: { title: 'Earlier', weeklyGoalId: goal.id, date: new Date('2026-07-28') },
+      data: { title: 'Earlier', weeklyGoalId: goal.id, date: parseDay('2026-07-28') },
     })
 
     const result = await listDailyTasksByWeeklyGoal(goal.id)
@@ -102,7 +102,7 @@ describe('daily task actions', () => {
   it('gets and updates a task without touching its completed state', async () => {
     const goal = await makeWeeklyGoal()
     const task = await prisma.dailyTask.create({
-      data: { title: 'Original', weeklyGoalId: goal.id, date: new Date('2026-07-29'), completed: true },
+      data: { title: 'Original', weeklyGoalId: goal.id, date: parseDay('2026-07-29'), completed: true },
     })
 
     expect((await getDailyTask(task.id))?.title).toBe('Original')
@@ -111,7 +111,7 @@ describe('daily task actions', () => {
 
     const updated = await prisma.dailyTask.findUnique({ where: { id: task.id } })
     expect(updated?.title).toBe('Renamed')
-    expect(updated?.date.getDate()).toBe(30)
+    expect(appDayOfMonth(updated!.date)).toBe(30)
     expect(updated?.completed).toBe(true)
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
     expect(revalidatePath).toHaveBeenCalledWith('/')
@@ -120,7 +120,7 @@ describe('daily task actions', () => {
   it('rejects an empty title on update', async () => {
     const goal = await makeWeeklyGoal()
     const task = await prisma.dailyTask.create({
-      data: { title: 'Original', weeklyGoalId: goal.id, date: new Date('2026-07-29') },
+      data: { title: 'Original', weeklyGoalId: goal.id, date: parseDay('2026-07-29') },
     })
 
     await expect(updateDailyTask(task.id, formData({ title: '  ', date: '2026-07-29' }))).rejects.toThrow()
@@ -130,7 +130,7 @@ describe('daily task actions', () => {
   it('toggles completion and stamps completedAt', async () => {
     const goal = await makeWeeklyGoal()
     const task = await prisma.dailyTask.create({
-      data: { title: 'Task', weeklyGoalId: goal.id, date: new Date('2026-07-29') },
+      data: { title: 'Task', weeklyGoalId: goal.id, date: parseDay('2026-07-29') },
     })
 
     await toggleDailyTask(task.id)
@@ -153,7 +153,7 @@ describe('daily task actions', () => {
   it('deletes a task', async () => {
     const goal = await makeWeeklyGoal()
     const task = await prisma.dailyTask.create({
-      data: { title: 'Task', weeklyGoalId: goal.id, date: new Date('2026-07-29') },
+      data: { title: 'Task', weeklyGoalId: goal.id, date: parseDay('2026-07-29') },
     })
 
     await deleteDailyTask(task.id)
@@ -180,14 +180,14 @@ describe('daily task actions', () => {
         const created = (await prisma.dailyTask.findMany())[0]
 
         // This is exactly what the edit page's `defaultValues` computation does.
-        const dateDefault = format(created.date, 'yyyy-MM-dd')
+        const dateDefault = formatDayKey(created.date)
         expect(dateDefault).toBe('2026-07-29')
 
         // Save without changing anything, as if the user just opened and re-submitted the form.
         await updateDailyTask(created.id, formData({ title: 'Roundtrip', date: dateDefault }))
 
         const updated = await prisma.dailyTask.findUnique({ where: { id: created.id } })
-        expect(format(updated!.date, 'yyyy-MM-dd')).toBe('2026-07-29')
+        expect(formatDayKey(updated!.date)).toBe('2026-07-29')
       } finally {
         process.env.TZ = originalTz
       }
@@ -211,8 +211,8 @@ describe('createDailyTasks (recurring)', () => {
     const tasks = await prisma.dailyTask.findMany({ orderBy: { date: 'asc' } })
     expect(tasks).toHaveLength(2)
     expect(tasks.map((t) => t.title)).toEqual(['Alongamento', 'Alongamento'])
-    expect(tasks[0].date.getDate()).toBe(28)
-    expect(tasks[1].date.getDate()).toBe(30)
+    expect(appDayOfMonth(tasks[0].date)).toBe(28)
+    expect(appDayOfMonth(tasks[1].date)).toBe(30)
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}`)
     expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}/weeks/${goal.id}`)
     expect(revalidatePath).toHaveBeenCalledWith('/')

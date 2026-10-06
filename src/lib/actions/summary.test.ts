@@ -1,26 +1,26 @@
 import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { getTodaySummary } from '@/lib/actions/summary'
-import { getWeekBounds, parseDay } from '@/lib/dates'
+import { appDayOfMonth, appDayOfWeek, getWeekBounds, parseDay } from '@/lib/dates'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 async function goal() {
-  const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date('2026-09-01') } })
+  const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: parseDay('2026-09-01') } })
   return prisma.weeklyGoal.create({
-    data: { title: 'Meta', objectiveId: objective.id, ...getWeekBounds(new Date('2026-10-01T12:00:00')) },
+    data: { title: 'Meta', objectiveId: objective.id, ...getWeekBounds(new Date('2026-10-01T12:00:00-03:00')) },
   })
 }
 
 describe('getTodaySummary', () => {
-  const now = new Date('2026-10-01T15:00:00')
+  const now = new Date('2026-10-01T15:00:00-03:00')
 
   it("counts only today's tasks and how many are done", async () => {
     const g = await goal()
     await prisma.dailyTask.createMany({
       data: [
-        { title: 'a', weeklyGoalId: g.id, date: new Date('2026-10-01T09:00:00'), completed: true },
-        { title: 'b', weeklyGoalId: g.id, date: new Date('2026-10-01T18:00:00'), completed: false },
-        { title: 'c', weeklyGoalId: g.id, date: new Date('2026-10-02T09:00:00'), completed: true },
+        { title: 'a', weeklyGoalId: g.id, date: new Date('2026-10-01T09:00:00-03:00'), completed: true },
+        { title: 'b', weeklyGoalId: g.id, date: new Date('2026-10-01T18:00:00-03:00'), completed: false },
+        { title: 'c', weeklyGoalId: g.id, date: new Date('2026-10-02T09:00:00-03:00'), completed: true },
       ],
     })
 
@@ -36,8 +36,8 @@ describe('getTodaySummary', () => {
 
   it('returns the Monday of the current week', async () => {
     const { weekStart } = await getTodaySummary(now)
-    expect(weekStart.getDay()).toBe(1)
-    expect(weekStart.getDate()).toBe(28)
+    expect(appDayOfWeek(weekStart)).toBe(1)
+    expect(appDayOfMonth(weekStart)).toBe(28)
   })
 })
 

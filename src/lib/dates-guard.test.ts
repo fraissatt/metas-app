@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 // Day/week math outside src/lib/dates.ts silently uses the machine's time
 // zone — UTC on Vercel, Brasília locally — and shifts days. Keep it in one place.
 const FORBIDDEN =
-  /\b(startOfDay|endOfDay|startOfWeek|endOfWeek|isSameDay|parseISO|differenceInCalendarDays|differenceInCalendarWeeks|setHours|isToday)\b|format\([^)]*'yyyy-MM-dd'\)/
+  /\b(startOfDay|endOfDay|startOfWeek|endOfWeek|isSameDay|parseISO|differenceInCalendarDays|differenceInCalendarWeeks|setHours|isToday)\b|\.(getDay|getDate|getMonth|getFullYear)\(\)|format\([^)]*'yyyy-MM-dd'\)/
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

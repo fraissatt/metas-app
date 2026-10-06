@@ -2,7 +2,15 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
-import { addAppDays, differenceInAppDays, formatDayKey, getWeekBounds, parseDay } from '@/lib/dates'
+import {
+  addAppDays,
+  differenceInAppDays,
+  getWeekBounds,
+  parseDay,
+  weekKeyOf,
+  weekLowerBound,
+  weekStartMatch,
+} from '@/lib/dates'
 import { findOwnedObjective, findOwnedWeeklyGoal } from '@/lib/owned'
 import { requireUser } from '@/lib/session'
 import { readCheckbox, readDate, readTitle } from '@/lib/actions/validation'
@@ -53,12 +61,12 @@ export async function listObjectiveWeeks(
 
   const [current, pastGoals] = await Promise.all([
     prisma.weeklyGoal.findMany({
-      where: { ...owned, weekStart: { gte: currentWeekStart } },
+      where: { ...owned, weekStart: { gte: weekLowerBound(currentWeekStart) } },
       orderBy: [{ weekStart: 'asc' }, { title: 'asc' }],
       include: { dailyTasks: { orderBy: { date: 'asc' } } },
     }),
     prisma.weeklyGoal.findMany({
-      where: { ...owned, weekStart: { lt: currentWeekStart } },
+      where: { ...owned, weekStart: { lt: weekLowerBound(currentWeekStart) } },
       orderBy: { weekStart: 'desc' },
       select: { weekStart: true, dailyTasks: { select: { completed: true } } },
     }),
@@ -67,7 +75,7 @@ export async function listObjectiveWeeks(
   // Several goals can share a week; the row shows the week as a whole.
   const byWeek = new Map<string, PastWeekSummary>()
   for (const goal of pastGoals) {
-    const key = formatDayKey(goal.weekStart)
+    const key = weekKeyOf(goal.weekStart)
     const week = byWeek.get(key) ?? { weekStart: key, total: 0, completed: 0 }
     week.total += goal.dailyTasks.length
     week.completed += goal.dailyTasks.filter((task) => task.completed).length
@@ -92,7 +100,7 @@ export async function listWeeklyGoalsForWeek(
   const bounds = getWeekBounds(day)
 
   return prisma.weeklyGoal.findMany({
-    where: { objectiveId, objective: { userId: user.id }, weekStart: bounds.weekStart },
+    where: { objectiveId, objective: { userId: user.id }, weekStart: weekStartMatch(bounds.weekStart) },
     orderBy: { title: 'asc' },
     include: { dailyTasks: { orderBy: { date: 'asc' } } },
   })
@@ -131,9 +139,9 @@ export async function getWeekProgress(
 
 export async function listWeeklyGoalsForCurrentWeek() {
   const user = await requireUser()
-  const { weekStart, weekEnd } = getWeekBounds(new Date())
+  const { weekStart } = getWeekBounds(new Date())
   return prisma.weeklyGoal.findMany({
-    where: { weekStart: { equals: weekStart }, weekEnd: { equals: weekEnd }, objective: { userId: user.id } },
+    where: { weekStart: weekStartMatch(weekStart), objective: { userId: user.id } },
     include: { objective: true, dailyTasks: true },
   })
 }
@@ -175,7 +183,7 @@ async function findMissingGoals(
   db: Prisma.TransactionClient = prisma,
 ): Promise<{ sourceWeekStart: Date; goals: SourceGoal[] } | null> {
   const previous = await db.weeklyGoal.findFirst({
-    where: { weekStart: { lt: currentWeekStart }, objective: { userId } },
+    where: { weekStart: { lt: weekLowerBound(currentWeekStart) }, objective: { userId } },
     orderBy: { weekStart: 'desc' },
     select: { weekStart: true },
   })
@@ -188,7 +196,7 @@ async function findMissingGoals(
       include: { dailyTasks: true, objective: { select: { status: true } } },
     }),
     db.weeklyGoal.findMany({
-      where: { weekStart: currentWeekStart, objective: { userId } },
+      where: { weekStart: weekStartMatch(currentWeekStart), objective: { userId } },
       select: { objectiveId: true, title: true },
     }),
   ])

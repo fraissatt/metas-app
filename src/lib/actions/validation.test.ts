@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readCheckbox, readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
+import { appDayOfMonth } from '@/lib/dates'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -26,7 +27,7 @@ describe('readDate', () => {
     const date = readDate(formData({ date: '2026-07-29' }), 'date')
     expect(date.getFullYear()).toBe(2026)
     expect(date.getMonth()).toBe(6)
-    expect(date.getDate()).toBe(29)
+    expect(appDayOfMonth(date)).toBe(29)
   })
 
   it('throws when the field is missing', () => {
