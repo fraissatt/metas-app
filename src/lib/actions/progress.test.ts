@@ -3,7 +3,8 @@ import { parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getObjectiveProgressSeries } from '@/lib/actions/progress'
 import { getWeekBounds } from '@/lib/dates'
-import { TEST_USER_ID } from '@/test/session-mock'
+import { NOT_FOUND } from '@/lib/owned'
+import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 describe('getObjectiveProgressSeries', () => {
   it('returns one point per week, ordered by week, with completion percent', async () => {
@@ -72,5 +73,21 @@ describe('getObjectiveProgressSeries', () => {
     expect(await getObjectiveProgressSeries(objective.id)).toEqual([
       { weekLabel: '06/07', percent: 0 },
     ])
+  })
+})
+
+describe('getObjectiveProgressSeries isolation', () => {
+  it("rejects another user's objective", async () => {
+    await createTestUser('other')
+    const foreignObjective = await prisma.objective.create({
+      data: { userId: 'other', title: 'Objetivo Alheio', startDate: new Date() },
+    })
+    const foreignGoal = await prisma.weeklyGoal.create({
+      data: { title: 'Meta Alheio', objectiveId: foreignObjective.id, ...getWeekBounds(new Date()) },
+    })
+    await prisma.dailyTask.create({
+      data: { title: 'Tarefa Alheio', weeklyGoalId: foreignGoal.id, date: new Date(), completed: true, completedAt: new Date() },
+    })
+    await expect(getObjectiveProgressSeries(foreignObjective.id)).rejects.toThrow(NOT_FOUND)
   })
 })

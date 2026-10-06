@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { getTodaySummary } from '@/lib/actions/summary'
 import { getWeekBounds } from '@/lib/dates'
-import { TEST_USER_ID } from '@/test/session-mock'
+import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 async function goal() {
   const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date('2026-09-01') } })
@@ -38,5 +38,21 @@ describe('getTodaySummary', () => {
     const { weekStart } = await getTodaySummary(now)
     expect(weekStart.getDay()).toBe(1)
     expect(weekStart.getDate()).toBe(28)
+  })
+})
+
+describe('getTodaySummary isolation', () => {
+  it("ignores another user's tasks", async () => {
+    await createTestUser('other')
+    const foreignObjective = await prisma.objective.create({
+      data: { userId: 'other', title: 'Objetivo Alheio', startDate: new Date() },
+    })
+    const foreignGoal = await prisma.weeklyGoal.create({
+      data: { title: 'Meta Alheio', objectiveId: foreignObjective.id, ...getWeekBounds(new Date()) },
+    })
+    await prisma.dailyTask.create({
+      data: { title: 'Tarefa Alheio', weeklyGoalId: foreignGoal.id, date: new Date(), completed: true, completedAt: new Date() },
+    })
+    expect(await getTodaySummary()).toMatchObject({ completed: 0, total: 0 })
   })
 })
