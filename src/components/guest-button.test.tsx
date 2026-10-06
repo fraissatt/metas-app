@@ -25,6 +25,17 @@ describe('GuestButton', () => {
     expect(button).toBeEnabled()
   })
 
+  it('treats a Next redirect rejection as success: no alert, stays disabled', async () => {
+    const redirectError = Object.assign(new Error('NEXT_REDIRECT'), { digest: 'NEXT_REDIRECT;push;/;307;' })
+    const onEnter = vi.fn().mockRejectedValue(redirectError)
+    render(<GuestButton onEnter={onEnter} />)
+    const button = screen.getByRole('button', { name: 'Entrar como visitante' })
+    await userEvent.click(button)
+    expect(onEnter).toHaveBeenCalledOnce()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(button).toBeDisabled()
+  })
+
   it('shows no error when onEnter resolves (successful redirect)', async () => {
     const onEnter = vi.fn().mockResolvedValue(undefined)
     render(<GuestButton onEnter={onEnter} />)

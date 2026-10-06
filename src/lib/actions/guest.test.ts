@@ -11,9 +11,14 @@ vi.mock('@/lib/auth', () => ({ auth: { api: { signInAnonymous } } }))
 const cleanupGuests = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/guest/cleanup', () => ({ cleanupGuests }))
 
+const seed = await vi.importActual<typeof import('@/lib/guest/seed')>('@/lib/guest/seed')
+const seedDemoData = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/guest/seed', () => ({ seedDemoData }))
+
 const { enterAsGuest } = await import('@/lib/actions/guest')
 
 beforeEach(() => {
+  seedDemoData.mockReset().mockImplementation(seed.seedDemoData)
   redirect.mockClear()
   cleanupGuests.mockReset().mockResolvedValue(0)
   signInAnonymous.mockReset().mockImplementation(async () => {
@@ -37,5 +42,13 @@ describe('enterAsGuest', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {})
     await enterAsGuest()
     expect(await prisma.objective.count({ where: { userId: 'anon-1' } })).toBe(3)
+  })
+
+  it('removes the new guest and rejects when seeding fails', async () => {
+    seedDemoData.mockRejectedValueOnce(new Error('seed boom'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    await expect(enterAsGuest()).rejects.toThrow('Não foi possível concluir. Tente de novo.')
+    expect(await prisma.user.findUnique({ where: { id: 'anon-1' } })).toBeNull()
+    expect(redirect).not.toHaveBeenCalled()
   })
 })

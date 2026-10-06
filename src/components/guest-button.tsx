@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { Button } from '@/components/ui/button'
 
 export function GuestButton({ onEnter }: { onEnter: () => Promise<void> }) {
@@ -17,11 +18,13 @@ export function GuestButton({ onEnter }: { onEnter: () => Promise<void> }) {
           setPending(true)
           setFailed(false)
           try {
-            // A redirect() inside the Server Action is applied by Next's router
-            // and the awaited promise resolves; only real failures reject.
-            // Stay pending on success: the page is navigating away.
+            // In this Next version a redirect() inside the Server Action rejects
+            // the awaited promise with a redirect error (the router navigates);
+            // a plain resolve is also treated as success. Either way stay pending
+            // because the page is navigating away. Only real failures show the error.
             await onEnter()
-          } catch {
+          } catch (error) {
+            if (isRedirectError(error)) return
             setFailed(true)
             setPending(false)
           }
