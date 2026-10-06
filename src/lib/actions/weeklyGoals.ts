@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { addDays, differenceInCalendarDays } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getWeekBounds } from '@/lib/dates'
 import { findOwnedObjective, findOwnedWeeklyGoal } from '@/lib/owned'
@@ -32,6 +32,65 @@ export async function listWeeklyGoalsByObjective(objectiveId: string): Promise<W
   return prisma.weeklyGoal.findMany({
     where: { objectiveId, objective: { userId: user.id } },
     orderBy: { weekStart: 'asc' },
+    include: { dailyTasks: { orderBy: { date: 'asc' } } },
+  })
+}
+
+export type PastWeekSummary = { weekStart: string; total: number; completed: number }
+
+/**
+ * The objective page's weeks, split by weight: the current and any future
+ * weeks come in full (that is where the user works), earlier weeks only as
+ * one summary per week. Their tasks load on demand via
+ * `listWeeklyGoalsForWeek`, so a long objective doesn't pull its whole
+ * history on every visit.
+ */
+export async function listObjectiveWeeks(
+  objectiveId: string,
+): Promise<{ current: WeeklyGoalWithTasks[]; past: PastWeekSummary[] }> {
+  const user = await requireUser()
+  const owned = { objectiveId, objective: { userId: user.id } }
+  const { weekStart: currentWeekStart } = getWeekBounds(new Date())
+
+  const [current, pastGoals] = await Promise.all([
+    prisma.weeklyGoal.findMany({
+      where: { ...owned, weekStart: { gte: currentWeekStart } },
+      orderBy: [{ weekStart: 'asc' }, { title: 'asc' }],
+      include: { dailyTasks: { orderBy: { date: 'asc' } } },
+    }),
+    prisma.weeklyGoal.findMany({
+      where: { ...owned, weekStart: { lt: currentWeekStart } },
+      orderBy: { weekStart: 'desc' },
+      select: { weekStart: true, dailyTasks: { select: { completed: true } } },
+    }),
+  ])
+
+  // Several goals can share a week; the row shows the week as a whole.
+  const byWeek = new Map<string, PastWeekSummary>()
+  for (const goal of pastGoals) {
+    const key = format(goal.weekStart, 'yyyy-MM-dd')
+    const week = byWeek.get(key) ?? { weekStart: key, total: 0, completed: 0 }
+    week.total += goal.dailyTasks.length
+    week.completed += goal.dailyTasks.filter((task) => task.completed).length
+    byWeek.set(key, week)
+  }
+
+  return { current, past: [...byWeek.values()] }
+}
+
+/** One earlier week's goals with their tasks, for a row the user opened. */
+export async function listWeeklyGoalsForWeek(
+  objectiveId: string,
+  weekStart: string,
+): Promise<WeeklyGoalWithTasks[]> {
+  const user = await requireUser()
+  const day = typeof weekStart === 'string' ? parseISO(weekStart) : new Date(NaN)
+  if (Number.isNaN(day.getTime())) return []
+  const bounds = getWeekBounds(day)
+
+  return prisma.weeklyGoal.findMany({
+    where: { objectiveId, objective: { userId: user.id }, weekStart: bounds.weekStart },
+    orderBy: { title: 'asc' },
     include: { dailyTasks: { orderBy: { date: 'asc' } } },
   })
 }

@@ -129,4 +129,60 @@ describe('WeeklyGoalsPanel', () => {
     expect(anchor).not.toBeNull()
     expect(within(anchor as HTMLElement).getByLabelText('Título')).toBeInTheDocument()
   })
+
+  describe('earlier weeks', () => {
+    const past = [
+      { weekStart: '2026-09-28', total: 5, completed: 5 },
+      { weekStart: '2026-09-21', total: 5, completed: 4 },
+      { weekStart: '2026-09-14', total: 4, completed: 2 },
+      { weekStart: '2026-09-07', total: 3, completed: 0 },
+      { weekStart: '2026-08-31', total: 2, completed: 1 },
+    ]
+    const handlers = {
+      onCreateTasks: vi.fn(),
+      onCreateWeeklyGoal: vi.fn(),
+      onDeleteWeeklyGoal: vi.fn(),
+      onToggleTask: vi.fn(),
+      onUpdateTask: vi.fn(),
+      onDeleteTask: vi.fn(),
+    }
+
+    it('shows the 3 most recent earlier weeks as rows and the rest behind "Ver mais"', async () => {
+      render(<WeeklyGoalsPanel goals={[goalA]} pastWeeks={past} onLoadWeek={vi.fn()} {...handlers} />)
+      expect(screen.getByRole('button', { name: /Semana de 28\/09.*100%/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Semana de 14\/09.*50%/ })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Semana de 07\/09/ })).not.toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Ver mais 2 semanas' }))
+      expect(screen.getByRole('button', { name: /Semana de 31\/08.*50%/ })).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Ver mais/ })).not.toBeInTheDocument()
+    })
+
+    it("loads a week's goals only when its row is opened, and collapses it again", async () => {
+      const onLoadWeek = vi.fn().mockResolvedValue([{ ...goalB, title: 'Meta antiga' }])
+      render(<WeeklyGoalsPanel goals={[goalA]} pastWeeks={past} onLoadWeek={onLoadWeek} {...handlers} />)
+      expect(onLoadWeek).not.toHaveBeenCalled()
+
+      const row = screen.getByRole('button', { name: /Semana de 21\/09/ })
+      await userEvent.click(row)
+      expect(onLoadWeek).toHaveBeenCalledWith('2026-09-21')
+      expect(await screen.findByText('Meta antiga')).toBeInTheDocument()
+      expect(row).toHaveAttribute('aria-expanded', 'true')
+
+      await userEvent.click(row)
+      expect(screen.queryByText('Meta antiga')).not.toBeInTheDocument()
+    })
+
+    it('reloads an opened week after a task changes in it', async () => {
+      const onToggleTask = vi.fn().mockResolvedValue(undefined)
+      const task = { id: 't-old', title: 'Tarefa antiga', weeklyGoalId: 'goal-b', date: new Date('2026-09-22'), completed: false, completedAt: null }
+      const onLoadWeek = vi.fn().mockResolvedValue([{ ...goalB, dailyTasks: [task] }])
+      render(<WeeklyGoalsPanel goals={[]} pastWeeks={past} onLoadWeek={onLoadWeek} {...handlers} onToggleTask={onToggleTask} />)
+
+      await userEvent.click(screen.getByRole('button', { name: /Semana de 21\/09/ }))
+      await userEvent.click(await screen.findByRole('checkbox', { name: 'Tarefa antiga' }))
+      expect(onToggleTask).toHaveBeenCalledWith('t-old')
+      await vi.waitFor(() => expect(onLoadWeek).toHaveBeenCalledTimes(2))
+    })
+  })
 })
