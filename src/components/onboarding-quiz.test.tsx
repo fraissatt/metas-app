@@ -420,7 +420,7 @@ describe('OnboardingQuiz', () => {
 
     it('tells the user the plan starts next Monday', async () => {
       vi.useFakeTimers({ toFake: ['Date'] })
-      vi.setSystemTime(new Date(2026, 9, 8, 12)) // Thursday
+      vi.setSystemTime(new Date('2026-10-08T12:00:00-03:00')) // Thursday
       const { user } = setup()
       await walkWithDays(user, ['Seg', 'Ter'])
 
@@ -431,7 +431,7 @@ describe('OnboardingQuiz', () => {
 
     it('does not show the line when the plan starts this week', async () => {
       vi.useFakeTimers({ toFake: ['Date'] })
-      vi.setSystemTime(new Date(2026, 9, 5, 12)) // Monday
+      vi.setSystemTime(new Date('2026-10-05T12:00:00-03:00')) // Monday
       const { user } = setup()
       await walkWithDays(user, ['Seg', 'Ter'])
 

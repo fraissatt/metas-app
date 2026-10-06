@@ -3,13 +3,14 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WeeklyGoalsPanel } from '@/components/weekly-goals-panel'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
+import { parseDay } from '@/lib/dates'
 
 const goalA: WeeklyGoalWithTasks = {
   id: 'goal-a',
   title: 'Meta A',
   objectiveId: 'obj-1',
-  weekStart: new Date('2026-07-27'),
-  weekEnd: new Date('2026-08-02'),
+  weekStart: parseDay('2026-07-27'),
+  weekEnd: parseDay('2026-08-02'),
   status: 'ACTIVE',
   recurring: false,
   dailyTasks: [],
@@ -19,8 +20,8 @@ const goalB: WeeklyGoalWithTasks = {
   id: 'goal-b',
   title: 'Meta B',
   objectiveId: 'obj-1',
-  weekStart: new Date('2026-07-27'),
-  weekEnd: new Date('2026-08-02'),
+  weekStart: parseDay('2026-07-27'),
+  weekEnd: parseDay('2026-08-02'),
   status: 'ACTIVE',
   recurring: false,
   dailyTasks: [],
@@ -84,7 +85,7 @@ describe('WeeklyGoalsPanel', () => {
 
     await userEvent.click(screen.getAllByRole('button', { name: '+ Nova tarefa' })[0])
     await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Alongamento')
-    await userEvent.click(screen.getByRole('checkbox', { name: 'TER 27' }))
+    await userEvent.click(screen.getByRole('checkbox', { name: 'TER 28' }))
     await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
 
     expect(onCreateTasks).toHaveBeenCalledWith('goal-a', expect.any(FormData))
@@ -175,7 +176,7 @@ describe('WeeklyGoalsPanel', () => {
 
     it('reloads an opened week after a task changes in it', async () => {
       const onToggleTask = vi.fn().mockResolvedValue(undefined)
-      const task = { id: 't-old', title: 'Tarefa antiga', weeklyGoalId: 'goal-b', date: new Date('2026-09-22'), completed: false, completedAt: null }
+      const task = { id: 't-old', title: 'Tarefa antiga', weeklyGoalId: 'goal-b', date: parseDay('2026-09-22'), completed: false, completedAt: null }
       const onLoadWeek = vi.fn().mockResolvedValue([{ ...goalB, dailyTasks: [task] }])
       render(<WeeklyGoalsPanel goals={[]} pastWeeks={past} onLoadWeek={onLoadWeek} {...handlers} onToggleTask={onToggleTask} />)
 

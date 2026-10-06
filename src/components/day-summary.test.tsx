@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { DaySummary } from '@/components/day-summary'
+import { parseDay } from '@/lib/dates'
 
-const weekStart = new Date(2026, 8, 28)
+const weekStart = parseDay('2026-09-28')
 
 describe('DaySummary', () => {
   it("shows today's progress and the week, linking to Hoje", () => {

@@ -1,9 +1,8 @@
 'use client'
 
-import { isSameDay } from 'date-fns'
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { DailyTask } from '@prisma/client'
-import { getWeekDays } from '@/lib/dates'
+import { getWeekDays, isSameAppDay } from '@/lib/dates'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
@@ -13,7 +12,7 @@ export function WeeklyGoalDayChart({ weekStart, tasks }: { weekStart: Date; task
   }
 
   const data = getWeekDays(weekStart).map((day, index) => {
-    const dayTasks = tasks.filter((t) => isSameDay(t.date, day))
+    const dayTasks = tasks.filter((t) => isSameAppDay(t.date, day))
     return {
       label: DAY_LABELS[index],
       completed: dayTasks.filter((t) => t.completed).length,

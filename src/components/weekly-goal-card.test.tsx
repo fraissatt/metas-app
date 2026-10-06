@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { format } from 'date-fns'
 import { WeeklyGoalCard } from '@/components/weekly-goal-card'
-import { getWeekBounds } from '@/lib/dates'
+import { getWeekBounds, parseDay } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 
 async function openNewTaskForm() {
@@ -16,8 +16,8 @@ const baseGoal: WeeklyGoalWithTasks = {
   id: 'goal-1',
   title: 'Cobrir fluxo de metas',
   objectiveId: 'obj-1',
-  weekStart: new Date('2026-07-27T00:00:00'), // Monday
-  weekEnd: new Date('2026-08-02T00:00:00'),
+  weekStart: new Date('2026-07-27T00:00:00-03:00'), // Monday
+  weekEnd: new Date('2026-08-02T00:00:00-03:00'),
   status: 'ACTIVE',
   recurring: false,
   dailyTasks: [
@@ -25,15 +25,15 @@ const baseGoal: WeeklyGoalWithTasks = {
       id: 'task-1',
       title: 'Testar toggle',
       weeklyGoalId: 'goal-1',
-      date: new Date('2026-07-28T00:00:00'),
+      date: new Date('2026-07-28T00:00:00-03:00'),
       completed: true,
-      completedAt: new Date('2026-07-28T00:00:00'),
+      completedAt: new Date('2026-07-28T00:00:00-03:00'),
     },
     {
       id: 'task-2',
       title: 'Testar criação',
       weeklyGoalId: 'goal-1',
-      date: new Date('2026-07-29T00:00:00'),
+      date: new Date('2026-07-29T00:00:00-03:00'),
       completed: false,
       completedAt: null,
     },
@@ -148,8 +148,8 @@ describe('WeeklyGoalCard', () => {
   })
 
   it('disables Criar when the goal\'s week does not contain today and no day is checked', async () => {
-    const weekStart = new Date('2099-01-05T00:00:00') // Monday, far from "today"
-    const weekEnd = new Date('2099-01-11T00:00:00')
+    const weekStart = new Date('2099-01-05T00:00:00-03:00') // Monday, far from "today"
+    const weekEnd = new Date('2099-01-11T00:00:00-03:00')
     const goal: WeeklyGoalWithTasks = { ...baseGoal, weekStart, weekEnd, dailyTasks: [] }
 
     render(
@@ -353,5 +353,21 @@ describe('WeeklyGoalCard', () => {
     )
 
     expect(screen.queryByText('repete toda semana')).not.toBeInTheDocument()
+  })
+
+  it('day chips of the week of 05/10 are SEG 5 … DOM 11 and SEG submits 2026-10-05', async () => {
+    const goal = { ...baseGoal, ...getWeekBounds(parseDay('2026-10-05')), dailyTasks: [] }
+    const onCreateTasks = vi.fn().mockResolvedValue(undefined)
+    render(
+      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={onCreateTasks} onDelete={vi.fn()}
+        onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
+    )
+    await openNewTaskForm()
+    expect(screen.getByRole('checkbox', { name: 'SEG 5' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'DOM 11' })).toBeInTheDocument()
+    await userEvent.type(screen.getByLabelText('Nova tarefa'), 'Teste')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'SEG 5' }))
+    await userEvent.click(screen.getByRole('button', { name: /^criar$/i }))
+    expect((onCreateTasks.mock.calls[0][0] as FormData).getAll('dates')).toContain('2026-10-05')
   })
 })

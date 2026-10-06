@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
-import { format, isSameDay } from 'date-fns'
 import type { DailyTask } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { DeleteButton } from '@/components/delete-button'
@@ -11,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { SubmitButton } from '@/components/submit-button'
 import { TaskItem } from '@/components/task-item'
-import { getWeekDays } from '@/lib/dates'
+import { appDayOfMonth, appToday, formatDayKey, getWeekDays, isSameAppDay } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
@@ -124,29 +123,29 @@ function NewTaskForm({
   onCancel: () => void
 }) {
   const days = getWeekDays(weekStart)
-  const today = new Date()
-  const [checkedCount, setCheckedCount] = useState(() => days.filter((day) => isSameDay(day, today)).length)
+  const today = appToday()
+  const [checkedCount, setCheckedCount] = useState(() => days.filter((day) => isSameAppDay(day, today)).length)
 
   return (
     <form action={onCreate} className="flex flex-col gap-2 border-t border-border pt-3">
       <Input name="title" aria-label="Nova tarefa" placeholder="Nova tarefa…" autoComplete="off" required autoFocus />
       <div className="flex gap-1.5">
         {days.map((day, index) => {
-          const iso = format(day, 'yyyy-MM-dd')
-          const label = `${DAY_LABELS[index]} ${format(day, 'd')}`
+          const iso = formatDayKey(day)
+          const label = `${DAY_LABELS[index]} ${appDayOfMonth(day)}`
           return (
             <CheckboxPrimitive.Root
               key={iso}
               name="dates"
               value={iso}
-              defaultChecked={isSameDay(day, today)}
+              defaultChecked={isSameAppDay(day, today)}
               onCheckedChange={(checked) => setCheckedCount((count) => count + (checked ? 1 : -1))}
               aria-label={label}
               className="flex flex-1 flex-col items-center justify-center rounded-md border border-border bg-secondary px-1 py-1.5 text-[11px] text-muted-foreground transition-colors data-checked:border-primary data-checked:bg-accent data-checked:text-accent-foreground"
             >
               <span aria-hidden="true">{DAY_LABELS[index]}</span>
               <span aria-hidden="true" className="font-medium">
-                {format(day, 'd')}
+                {appDayOfMonth(day)}
               </span>
             </CheckboxPrimitive.Root>
           )
