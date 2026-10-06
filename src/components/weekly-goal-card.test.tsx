@@ -50,6 +50,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -65,6 +67,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -83,7 +87,7 @@ describe('WeeklyGoalCard', () => {
     const label = `${DAY_LABELS[todayIndex]} ${format(today, 'd')}`
 
     render(
-      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} />,
+      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
     )
 
     await openNewTaskForm()
@@ -100,6 +104,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={onCreateTasks}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -123,6 +129,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={onCreateTasks}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -145,7 +153,7 @@ describe('WeeklyGoalCard', () => {
     const goal: WeeklyGoalWithTasks = { ...baseGoal, weekStart, weekEnd, dailyTasks: [] }
 
     render(
-      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} />,
+      <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
     )
 
     await openNewTaskForm()
@@ -163,6 +171,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -182,6 +192,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={onCreateTasks}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -206,6 +218,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -228,6 +242,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={onToggleTask}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -245,6 +261,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -261,6 +279,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -273,7 +293,7 @@ describe('WeeklyGoalCard', () => {
   it('shows a single empty-state message when an expanded goal has zero tasks', () => {
     const goal: WeeklyGoalWithTasks = { ...baseGoal, dailyTasks: [] }
     render(
-      <WeeklyGoalCard goal={goal} expanded onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} />,
+      <WeeklyGoalCard goal={goal} expanded onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
     )
 
     expect(screen.getAllByText(/nesta semana/i)).toHaveLength(1)
@@ -289,6 +309,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -307,6 +329,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 
@@ -323,6 +347,8 @@ describe('WeeklyGoalCard', () => {
         onCreateTasks={vi.fn()}
         onDelete={vi.fn()}
         onToggleTask={vi.fn()}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
       />,
     )
 

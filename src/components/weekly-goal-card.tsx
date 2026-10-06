@@ -12,9 +12,9 @@ import { DeleteButton } from '@/components/delete-button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { SubmitButton } from '@/components/submit-button'
-import { TaskToggle } from '@/components/task-toggle'
+import { TaskItem } from '@/components/task-item'
 import { WeeklyGoalDayChart } from '@/components/weekly-goal-day-chart'
-import { getWeekDays, formatDayMonth } from '@/lib/dates'
+import { getWeekDays } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
@@ -33,6 +33,8 @@ export function WeeklyGoalCard({
   onCreateTasks,
   onDelete,
   onToggleTask,
+  onUpdateTask,
+  onDeleteTask,
 }: {
   goal: WeeklyGoalWithTasks
   expanded: boolean
@@ -40,6 +42,8 @@ export function WeeklyGoalCard({
   onCreateTasks: (formData: FormData) => Promise<void>
   onDelete: () => Promise<void>
   onToggleTask: (taskId: string) => Promise<void>
+  onUpdateTask: (taskId: string, formData: FormData) => Promise<void>
+  onDeleteTask: (taskId: string) => Promise<void>
 }) {
   const { total, completed, percent } = computeProgress(goal.dailyTasks)
   // The tasks come first; the form only opens when the user asks for it.
@@ -82,19 +86,16 @@ export function WeeklyGoalCard({
         {goal.dailyTasks.length > 0 && (
           <ul aria-label="Tarefas da semana" className="flex flex-col border-t border-border pt-1">
             {goal.dailyTasks.map((task) => (
-              <li key={task.id} className="flex items-center gap-3 py-1">
-                <span className="w-10 shrink-0 text-xs text-muted-foreground tabular-nums">
-                  {formatDayMonth(task.date)}
-                </span>
-                {/* A wrapping label makes the title part of the checkbox's hit target, as on Hoje. */}
-                <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
-                  <TaskToggle taskId={task.id} completed={task.completed} action={onToggleTask} />
-                  <span
-                    className={`min-w-0 break-words text-sm ${task.completed ? 'text-muted-foreground line-through' : ''}`}
-                  >
-                    {task.title}
-                  </span>
-                </label>
+              <li key={task.id}>
+                <TaskItem
+                  task={task}
+                  weekStart={goal.weekStart}
+                  showDate
+                  className="py-1"
+                  onToggle={onToggleTask}
+                  onUpdate={onUpdateTask}
+                  onDelete={onDeleteTask}
+                />
               </li>
             ))}
           </ul>

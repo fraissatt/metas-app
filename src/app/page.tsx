@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { listDailyTasksByDate, toggleDailyTask } from '@/lib/actions/dailyTasks'
+import { deleteDailyTask, listDailyTasksByDate, toggleDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import { countObjectives } from '@/lib/actions/objectives'
 import { getLifetimeStats } from '@/lib/actions/stats'
 import {
@@ -46,7 +46,13 @@ export default async function Home() {
       <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
         {materializer}
         {banner}
-        <FluidDayWeek tasks={tasks} goals={goals} onToggleTask={toggleDailyTask} />
+        <FluidDayWeek
+          tasks={tasks}
+          goals={goals}
+          onToggleTask={toggleDailyTask}
+          onUpdateTask={updateDailyTask}
+          onDeleteTask={deleteDailyTask}
+        />
         {preview && (
           <div className="mt-6 max-w-md">
             <MissingGoalsCard preview={preview} onRepeat={repeatMissingGoals} />
