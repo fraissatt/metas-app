@@ -4,6 +4,8 @@ import { endOfDay, parseISO, startOfDay } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { readDate, readTitle } from '@/lib/actions/validation'
+import { findOwnedDailyTask, findOwnedWeeklyGoal } from '@/lib/owned'
+import { requireUser } from '@/lib/session'
 import type { DailyTask, Objective, WeeklyGoal } from '@prisma/client'
 
 async function revalidateWeekPath(weeklyGoalId: string): Promise<void> {
@@ -21,6 +23,8 @@ async function revalidateWeekPath(weeklyGoalId: string): Promise<void> {
 }
 
 export async function createDailyTask(weeklyGoalId: string, formData: FormData): Promise<void> {
+  const user = await requireUser()
+  await findOwnedWeeklyGoal(user.id, weeklyGoalId)
   const title = readTitle(formData)
   const date = readDate(formData, 'date')
 
@@ -32,6 +36,8 @@ export async function createDailyTask(weeklyGoalId: string, formData: FormData):
 }
 
 export async function createDailyTasks(weeklyGoalId: string, formData: FormData): Promise<void> {
+  const user = await requireUser()
+  await findOwnedWeeklyGoal(user.id, weeklyGoalId)
   const title = readTitle(formData)
   const rawDates = formData.getAll('dates').map(String)
   if (rawDates.length === 0) {
@@ -54,14 +60,21 @@ export async function createDailyTasks(weeklyGoalId: string, formData: FormData)
 }
 
 export async function listDailyTasksByWeeklyGoal(weeklyGoalId: string): Promise<DailyTask[]> {
-  return prisma.dailyTask.findMany({ where: { weeklyGoalId }, orderBy: { date: 'asc' } })
+  const user = await requireUser()
+  return prisma.dailyTask.findMany({
+    where: { weeklyGoalId, weeklyGoal: { objective: { userId: user.id } } },
+    orderBy: { date: 'asc' },
+  })
 }
 
 export async function getDailyTask(id: string): Promise<DailyTask | null> {
-  return prisma.dailyTask.findUnique({ where: { id } })
+  const user = await requireUser()
+  return prisma.dailyTask.findFirst({ where: { id, weeklyGoal: { objective: { userId: user.id } } } })
 }
 
 export async function updateDailyTask(id: string, formData: FormData): Promise<void> {
+  const user = await requireUser()
+  await findOwnedDailyTask(user.id, id)
   const title = readTitle(formData)
   const date = readDate(formData, 'date')
 
@@ -75,18 +88,20 @@ export async function updateDailyTask(id: string, formData: FormData): Promise<v
 export async function listDailyTasksByDate(
   date: Date,
 ): Promise<Array<DailyTask & { weeklyGoal: WeeklyGoal & { objective: Objective } }>> {
+  const user = await requireUser()
   const start = startOfDay(date)
   const end = endOfDay(date)
 
   return prisma.dailyTask.findMany({
-    where: { date: { gte: start, lte: end } },
+    where: { date: { gte: start, lte: end }, weeklyGoal: { objective: { userId: user.id } } },
     include: { weeklyGoal: { include: { objective: true } } },
     orderBy: { date: 'asc' },
   })
 }
 
 export async function toggleDailyTask(id: string): Promise<void> {
-  const task = await prisma.dailyTask.findUniqueOrThrow({ where: { id } })
+  const user = await requireUser()
+  const task = await findOwnedDailyTask(user.id, id)
   await prisma.dailyTask.update({
     where: { id },
     data: { completed: !task.completed, completedAt: task.completed ? null : new Date() },
@@ -98,6 +113,8 @@ export async function toggleDailyTask(id: string): Promise<void> {
 }
 
 export async function deleteDailyTask(id: string): Promise<void> {
+  const user = await requireUser()
+  await findOwnedDailyTask(user.id, id)
   const task = await prisma.dailyTask.delete({ where: { id } })
   await revalidateWeekPath(task.weeklyGoalId)
   // The Today view on `/` also renders this task, so deleting it needs to

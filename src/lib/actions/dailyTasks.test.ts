@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { format, parseISO } from 'date-fns'
+import { endOfDay, format, parseISO, startOfDay } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import {
@@ -13,6 +13,8 @@ import {
   updateDailyTask,
 } from '@/lib/actions/dailyTasks'
 import { getWeekBounds } from '@/lib/dates'
+import { NOT_FOUND } from '@/lib/owned'
+import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -21,7 +23,7 @@ function formData(fields: Record<string, string>) {
 }
 
 async function makeWeeklyGoal() {
-  const objective = await prisma.objective.create({ data: { title: 'Obj', startDate: new Date() } })
+  const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
   const bounds = getWeekBounds(new Date('2026-07-29'))
   return prisma.weeklyGoal.create({ data: { title: 'Goal', objectiveId: objective.id, ...bounds } })
 }
@@ -239,5 +241,40 @@ describe('createDailyTasks (recurring)', () => {
 
     expect((await prisma.dailyTask.findUnique({ where: { id: first.id } }))?.completed).toBe(true)
     expect((await prisma.dailyTask.findUnique({ where: { id: second.id } }))?.completed).toBe(false)
+  })
+})
+
+describe('isolation between users', () => {
+  async function foreignTask() {
+    await createTestUser('other')
+    const objective = await prisma.objective.create({ data: { title: 'O', startDate: new Date(), userId: 'other' } })
+    const goal = await prisma.weeklyGoal.create({
+      data: { title: 'G', objectiveId: objective.id, weekStart: startOfDay(new Date()), weekEnd: endOfDay(new Date()) },
+    })
+    const task = await prisma.dailyTask.create({ data: { title: 'Alheia', weeklyGoalId: goal.id, date: new Date() } })
+    return { goal, task }
+  }
+
+  it("does not list or get another user's tasks", async () => {
+    const { goal, task } = await foreignTask()
+    expect(await listDailyTasksByDate(new Date())).toEqual([])
+    expect(await listDailyTasksByWeeklyGoal(goal.id)).toEqual([])
+    expect(await getDailyTask(task.id)).toBeNull()
+  })
+
+  it("cannot toggle, update, delete or add tasks under another user's goal", async () => {
+    const { goal, task } = await foreignTask()
+    const form = new FormData()
+    form.set('title', 'Hack')
+    form.set('date', '2026-10-05')
+    form.append('dates', '2026-10-05')
+    await expect(toggleDailyTask(task.id)).rejects.toThrow(NOT_FOUND)
+    await expect(updateDailyTask(task.id, form)).rejects.toThrow(NOT_FOUND)
+    await expect(deleteDailyTask(task.id)).rejects.toThrow(NOT_FOUND)
+    await expect(createDailyTask(goal.id, form)).rejects.toThrow(NOT_FOUND)
+    await expect(createDailyTasks(goal.id, form)).rejects.toThrow(NOT_FOUND)
+    const after = await prisma.dailyTask.findUniqueOrThrow({ where: { id: task.id } })
+    expect(after).toMatchObject({ title: 'Alheia', completed: false })
+    expect(await prisma.dailyTask.count({ where: { weeklyGoalId: goal.id } })).toBe(1)
   })
 })

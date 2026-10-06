@@ -3,6 +3,8 @@
 import { differenceInCalendarWeeks } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
+import { findOwnedObjective } from '@/lib/owned'
+import { requireUser } from '@/lib/session'
 import { readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
 import { buildObjectiveWeeks, type ObjectiveStats } from '@/lib/objectives'
 import type { Objective } from '@prisma/client'
@@ -20,31 +22,39 @@ function readObjectiveFields(formData: FormData) {
 }
 
 export async function createObjective(formData: FormData): Promise<void> {
-  await prisma.objective.create({ data: readObjectiveFields(formData) })
+  const user = await requireUser()
+  await prisma.objective.create({ data: { ...readObjectiveFields(formData), userId: user.id } })
   revalidatePath('/objectives')
 }
 
 export async function listObjectives(): Promise<Objective[]> {
-  return prisma.objective.findMany({ orderBy: { createdAt: 'desc' } })
+  const user = await requireUser()
+  return prisma.objective.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' } })
 }
 
 // A count rather than `(await listObjectives()).length`: the home page only
 // needs to know whether any objective exists, and should not pull every row to
 // find out.
 export async function countObjectives(): Promise<number> {
-  return prisma.objective.count()
+  const user = await requireUser()
+  return prisma.objective.count({ where: { userId: user.id } })
 }
 
 export async function getObjective(id: string): Promise<Objective | null> {
-  return prisma.objective.findUnique({ where: { id } })
+  const user = await requireUser()
+  return prisma.objective.findFirst({ where: { id, userId: user.id } })
 }
 
 export async function updateObjective(id: string, formData: FormData): Promise<void> {
+  const user = await requireUser()
+  await findOwnedObjective(user.id, id)
   await prisma.objective.update({ where: { id }, data: readObjectiveFields(formData) })
   revalidatePath('/objectives')
 }
 
 export async function deleteObjective(id: string): Promise<void> {
+  const user = await requireUser()
+  await findOwnedObjective(user.id, id)
   await prisma.objective.delete({ where: { id } })
   revalidatePath('/objectives')
 }
@@ -52,10 +62,8 @@ export async function deleteObjective(id: string): Promise<void> {
 const RECENT_WEEKS = 26
 
 export async function getObjectiveStats(objectiveId: string): Promise<ObjectiveStats> {
-  const objective = await prisma.objective.findUniqueOrThrow({
-    where: { id: objectiveId },
-    select: { startDate: true, completedAt: true },
-  })
+  const user = await requireUser()
+  const objective = await findOwnedObjective(user.id, objectiveId)
   const goals = await prisma.weeklyGoal.findMany({
     where: { objectiveId },
     orderBy: { weekStart: 'asc' },
@@ -86,6 +94,8 @@ export async function getObjectiveStats(objectiveId: string): Promise<ObjectiveS
 // `status` and `completedAt` are always written together — COMPLETED with a
 // timestamp, ACTIVE with null — so the two can never disagree.
 export async function completeObjective(id: string): Promise<void> {
+  const user = await requireUser()
+  await findOwnedObjective(user.id, id)
   await prisma.objective.update({
     where: { id },
     data: { status: 'COMPLETED', completedAt: new Date() },
@@ -95,6 +105,8 @@ export async function completeObjective(id: string): Promise<void> {
 }
 
 export async function reopenObjective(id: string): Promise<void> {
+  const user = await requireUser()
+  await findOwnedObjective(user.id, id)
   await prisma.objective.update({
     where: { id },
     data: { status: 'ACTIVE', completedAt: null },
@@ -109,7 +121,11 @@ export async function listObjectivesWithStats(): Promise<{
   active: ObjectiveWithStats[]
   completed: ObjectiveWithStats[]
 }> {
-  const objectives = await prisma.objective.findMany({ orderBy: { createdAt: 'desc' } })
+  const user = await requireUser()
+  const objectives = await prisma.objective.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: 'desc' },
+  })
 
   // One stats query per objective, in parallel. This is N+1 by construction and
   // deliberately so: it keeps the week-fulfilment rule in `buildObjectiveWeeks`

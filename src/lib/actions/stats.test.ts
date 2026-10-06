@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
 import { getLifetimeStats } from '@/lib/actions/stats'
 import { getWeekBounds } from '@/lib/dates'
+import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 async function makeGoal() {
   const objective = await prisma.objective.create({
-    data: { title: 'Obj', startDate: new Date() },
+    data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() },
   })
   const bounds = getWeekBounds(new Date())
   return prisma.weeklyGoal.create({
@@ -73,5 +74,21 @@ describe('getLifetimeStats', () => {
     expect(stats.totalCompleted).toBe(2)
     expect(stats.weekWindow).toHaveLength(1)
     expect(stats.weekWindow[0].active).toBe(true)
+  })
+})
+
+describe('getLifetimeStats isolation', () => {
+  it("ignores another user's completed tasks", async () => {
+    await createTestUser('other')
+    const foreignObjective = await prisma.objective.create({
+      data: { userId: 'other', title: 'Objetivo Alheio', startDate: new Date() },
+    })
+    const foreignGoal = await prisma.weeklyGoal.create({
+      data: { title: 'Meta Alheio', objectiveId: foreignObjective.id, ...getWeekBounds(new Date()) },
+    })
+    await prisma.dailyTask.create({
+      data: { title: 'Tarefa Alheio', weeklyGoalId: foreignGoal.id, date: new Date(), completed: true, completedAt: new Date() },
+    })
+    expect(await getLifetimeStats()).toMatchObject({ totalCompleted: 0, firstCompletedAt: null })
   })
 })

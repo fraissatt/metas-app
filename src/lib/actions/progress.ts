@@ -3,10 +3,14 @@
 import { format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { buildObjectiveWeeks } from '@/lib/objectives'
+import { findOwnedObjective } from '@/lib/owned'
+import { requireUser } from '@/lib/session'
 
 export async function getObjectiveProgressSeries(
   objectiveId: string,
 ): Promise<Array<{ weekLabel: string; percent: number }>> {
+  const user = await requireUser()
+  await findOwnedObjective(user.id, objectiveId)
   const weeklyGoals = await prisma.weeklyGoal.findMany({
     where: { objectiveId },
     orderBy: { weekStart: 'asc' },

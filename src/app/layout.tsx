@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { setBackground } from "@/lib/actions/background";
 import { setTheme } from "@/lib/actions/theme";
 import { getBackground } from "@/lib/background";
+import { getCurrentUser } from "@/lib/session";
 import { BROWSER_CHROME, getTheme } from "@/lib/theme";
 import "./globals.css";
 
@@ -42,6 +43,7 @@ export default async function RootLayout({
 }>) {
   const theme = await getTheme();
   const background = await getBackground();
+  const user = await getCurrentUser();
 
   return (
     <html
@@ -57,7 +59,7 @@ export default async function RootLayout({
           Pular para o conteúdo
         </a>
         <BackgroundProvider initial={background} onChange={setBackground}>
-          <AppHeader theme={theme} onThemeChange={setTheme} />
+          <AppHeader theme={theme} onThemeChange={setTheme} user={user} />
           <div
             id="conteudo"
             tabIndex={-1}
@@ -65,7 +67,7 @@ export default async function RootLayout({
           >
             {children}
           </div>
-          <BottomNav />
+          {user && <BottomNav />}
         </BackgroundProvider>
       </body>
     </html>
