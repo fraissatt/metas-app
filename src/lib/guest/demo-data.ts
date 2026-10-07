@@ -1,5 +1,4 @@
-import { addDays, addWeeks, isAfter, isSameDay, setHours, startOfDay } from 'date-fns'
-import { getWeekBounds } from '@/lib/dates'
+import { addAppDays, addAppWeeks, appToday, atAppHour, differenceInAppDays, getWeekBounds, isSameAppDay } from '@/lib/dates'
 
 export type DemoTask = { title: string; date: Date; completed: boolean; completedAt: Date | null }
 export type DemoGoal = { title: string; weekStart: Date; weekEnd: Date; recurring: boolean; tasks: DemoTask[] }
@@ -28,19 +27,19 @@ const GUITAR: Plan = { goal: 'Praticar acordes', task: 'Praticar 20 min', days: 
 
 function week(weekStart: Date, plan: Plan, rate: number | 'current', now: Date): DemoGoal {
   const { weekEnd } = getWeekBounds(weekStart)
-  const today = startOfDay(now)
+  const today = appToday(now)
   const doneCount = rate === 'current' ? 0 : Math.round(rate * plan.days.length)
 
   const tasks = plan.days.map((offset, index): DemoTask => {
-    const date = addDays(weekStart, offset)
+    const date = addAppDays(weekStart, offset)
     let completed: boolean
     if (rate === 'current') {
       // Past days of this week are done; today is done only for reading, so Hoje shows one open and one checked.
-      completed = isAfter(today, date) || (isSameDay(date, today) && plan === READ)
+      completed = differenceInAppDays(today, date) > 0 || (isSameAppDay(date, today) && plan === READ)
     } else {
       completed = index < doneCount
     }
-    const completedAt = completed ? (isSameDay(date, today) ? now : setHours(date, 19)) : null
+    const completedAt = completed ? (isSameAppDay(date, today) ? now : atAppHour(date, 19)) : null
     return { title: plan.task, date, completed, completedAt }
   })
 
@@ -48,22 +47,22 @@ function week(weekStart: Date, plan: Plan, rate: number | 'current', now: Date):
 }
 
 function weeksOf(plan: Plan, firstWeek: Date, now: Date, includeCurrent: boolean): DemoGoal[] {
-  const goals = plan.rates.map((rate, i) => week(addWeeks(firstWeek, i), plan, rate, now))
-  if (includeCurrent) goals.push(week(addWeeks(firstWeek, plan.rates.length), plan, 'current', now))
+  const goals = plan.rates.map((rate, i) => week(addAppWeeks(firstWeek, i), plan, rate, now))
+  if (includeCurrent) goals.push(week(addAppWeeks(firstWeek, plan.rates.length), plan, 'current', now))
   return goals
 }
 
 export function buildDemoData(now: Date): DemoObjective[] {
   const current = getWeekBounds(now).weekStart
-  const sevenAgo = addWeeks(current, -7)
-  const tenAgo = addWeeks(current, -10)
+  const sevenAgo = addAppWeeks(current, -7)
+  const tenAgo = addAppWeeks(current, -10)
 
   return [
     {
       title: 'Correr 10 km',
       startDate: sevenAgo,
       // The race is close: this is the objective near its target date.
-      targetDate: addDays(startOfDay(now), 10),
+      targetDate: addAppDays(appToday(now), 10),
       status: 'ACTIVE',
       completedAt: null,
       goals: weeksOf(RUN, sevenAgo, now, true),
@@ -72,7 +71,7 @@ export function buildDemoData(now: Date): DemoObjective[] {
       title: 'Ler 4 livros em 4 meses',
       startDate: sevenAgo,
       // Under half of the deadline gone after 7 weeks, so the pace looks believable.
-      targetDate: addWeeks(sevenAgo, 17),
+      targetDate: addAppWeeks(sevenAgo, 17),
       status: 'ACTIVE',
       completedAt: null,
       goals: weeksOf(READ, sevenAgo, now, true),
@@ -80,9 +79,9 @@ export function buildDemoData(now: Date): DemoObjective[] {
     {
       title: 'Aprender o básico de violão',
       startDate: tenAgo,
-      targetDate: addWeeks(current, -2),
+      targetDate: addAppWeeks(current, -2),
       status: 'COMPLETED',
-      completedAt: setHours(addDays(addWeeks(current, -3), 5), 18),
+      completedAt: atAppHour(addAppDays(addAppWeeks(current, -3), 5), 18),
       goals: weeksOf(GUITAR, tenAgo, now, false),
     },
   ]

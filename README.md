@@ -111,6 +111,10 @@ guardar páginas em cache mostraria metas desatualizadas e quebraria as gravaç�
   segundo plano e validados no servidor; uma falha na medição nunca trava o quiz.
 - **Estado derivado, não armazenado.** Uma meta semanal está cumprida quando todas as suas tarefas estão
   feitas; isso é calculado na leitura, não gravado.
+- **Fuso horário fixo de Brasília.** Toda data do app é um dia no horário de Brasília (`America/Sao_Paulo`),
+  onde quer que o código rode: o servidor da Vercel fica em UTC e, sem isso, as tarefas mudavam de dia. Um
+  único módulo (`src/lib/dates.ts`) faz as contas de dia e semana, um teste impede contas fora dele, e a
+  suíte roda em UTC e em Brasília (`npm run test:tz`). Quem acessa de outro país vê o "hoje" de Brasília.
 - **Cada funcionalidade tem spec e plano.** O raciocínio por trás das decisões está em
   [`docs/superpowers/specs`](docs/superpowers/specs) e [`docs/superpowers/plans`](docs/superpowers/plans).
 
@@ -198,6 +202,12 @@ o banco.
 
    ```bash
    npm run test:watch
+   ```
+
+   Ou nos dois fusos horários, UTC (como na Vercel) e Brasília:
+
+   ```bash
+   npm run test:tz
    ```
 
 ## Outros scripts

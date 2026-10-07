@@ -1,10 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { parseISO } from 'date-fns'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { WeeklyGoalCard } from '@/components/weekly-goal-card'
-import { formatDayMonth } from '@/lib/dates'
+import { formatDayMonth, parseDay } from '@/lib/dates'
 import type { PastWeekSummary, WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 
 type Handlers = {
@@ -34,7 +33,7 @@ export function PastWeekRow({
   const [failed, setFailed] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const percent = week.total === 0 ? 0 : Math.round((week.completed / week.total) * 100)
-  const label = `Semana de ${formatDayMonth(parseISO(week.weekStart))}`
+  const label = `Semana de ${formatDayMonth(parseDay(week.weekStart))}`
 
   async function load() {
     setFailed(false)

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ObjectiveDashboardCard } from '@/components/objective-dashboard-card'
 import type { DashboardWeek } from '@/lib/objective-dashboard'
+import { parseDay } from '@/lib/dates'
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
@@ -20,7 +21,7 @@ function weeks(currentHasGoal: boolean): DashboardWeek[] {
 const base = {
   id: 'o1',
   title: 'Correr uma maratona',
-  startDate: new Date(2026, 5, 1),
+  startDate: parseDay('2026-06-01'),
   onDelete: vi.fn(),
 }
 
@@ -31,7 +32,7 @@ describe('ObjectiveDashboardCard', () => {
         {...base}
         weeks={weeks(true)}
         streak={3}
-        timeline={{ kind: 'dated', elapsedPercent: 62, targetDate: new Date(2026, 10, 15), overdue: false }}
+        timeline={{ kind: 'dated', elapsedPercent: 62, targetDate: parseDay('2026-11-15'), overdue: false }}
       />,
     )
 
@@ -68,7 +69,7 @@ describe('ObjectiveDashboardCard', () => {
         {...base}
         weeks={weeks(true)}
         streak={0}
-        timeline={{ kind: 'dated', elapsedPercent: 100, targetDate: new Date(2026, 8, 1), overdue: true }}
+        timeline={{ kind: 'dated', elapsedPercent: 100, targetDate: parseDay('2026-09-01'), overdue: true }}
       />,
     )
 

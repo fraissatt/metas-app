@@ -14,7 +14,7 @@ import {
   repeatMissingGoals,
   updateWeeklyGoal,
 } from '@/lib/actions/weeklyGoals'
-import { getWeekBounds } from '@/lib/dates'
+import { appDayOfMonth, formatDayKey, getWeekBounds, parseDay } from '@/lib/dates'
 import { NOT_FOUND } from '@/lib/owned'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
@@ -54,8 +54,8 @@ describe('weekly goal actions', () => {
 
     const goals = await prisma.weeklyGoal.findMany()
     expect(goals).toHaveLength(1)
-    expect(goals[0].weekStart.getDate()).toBe(27)
-    expect(goals[0].weekEnd.getDate()).toBe(2)
+    expect(appDayOfMonth(goals[0].weekStart)).toBe(27)
+    expect(appDayOfMonth(goals[0].weekEnd)).toBe(2)
   })
 
   it('creates a weekly goal with Monday date string (regression test for UTC off-by-one-week bug)', async () => {
@@ -65,14 +65,14 @@ describe('weekly goal actions', () => {
 
     const goals = await prisma.weeklyGoal.findMany()
     expect(goals).toHaveLength(1)
-    expect(goals[0].weekStart.getDate()).toBe(27)
-    expect(goals[0].weekEnd.getDate()).toBe(2)
+    expect(appDayOfMonth(goals[0].weekStart)).toBe(27)
+    expect(appDayOfMonth(goals[0].weekEnd)).toBe(2)
   })
 
   it('lists weekly goals for an objective ordered by week start', async () => {
     const objective = await makeObjective()
-    const later = getWeekBounds(new Date('2026-08-10'))
-    const earlier = getWeekBounds(new Date('2026-07-29'))
+    const later = getWeekBounds(parseDay('2026-08-10'))
+    const earlier = getWeekBounds(parseDay('2026-07-29'))
     const laterGoal = await prisma.weeklyGoal.create({
       data: { title: 'Later', objectiveId: objective.id, ...later },
     })
@@ -87,15 +87,15 @@ describe('weekly goal actions', () => {
 
   it("includes each goal's daily tasks ordered by date", async () => {
     const objective = await makeObjective()
-    const bounds = getWeekBounds(new Date('2026-07-29'))
+    const bounds = getWeekBounds(parseDay('2026-07-29'))
     const goal = await prisma.weeklyGoal.create({
       data: { title: 'Goal', objectiveId: objective.id, ...bounds },
     })
     const later = await prisma.dailyTask.create({
-      data: { title: 'Later', weeklyGoalId: goal.id, date: new Date('2026-07-30') },
+      data: { title: 'Later', weeklyGoalId: goal.id, date: parseDay('2026-07-30') },
     })
     const earlier = await prisma.dailyTask.create({
-      data: { title: 'Earlier', weeklyGoalId: goal.id, date: new Date('2026-07-28') },
+      data: { title: 'Earlier', weeklyGoalId: goal.id, date: parseDay('2026-07-28') },
     })
 
     const [result] = await listWeeklyGoalsByObjective(objective.id)
@@ -105,7 +105,7 @@ describe('weekly goal actions', () => {
 
   it('gets, updates, and deletes a weekly goal', async () => {
     const objective = await makeObjective()
-    const bounds = getWeekBounds(new Date('2026-07-29'))
+    const bounds = getWeekBounds(parseDay('2026-07-29'))
     const goal = await prisma.weeklyGoal.create({
       data: { title: 'Original', objectiveId: objective.id, ...bounds },
     })
@@ -121,14 +121,14 @@ describe('weekly goal actions', () => {
 
   it('computes week progress from daily tasks', async () => {
     const objective = await makeObjective()
-    const bounds = getWeekBounds(new Date('2026-07-29'))
+    const bounds = getWeekBounds(parseDay('2026-07-29'))
     const goal = await prisma.weeklyGoal.create({
       data: { title: 'Goal', objectiveId: objective.id, ...bounds },
     })
     await prisma.dailyTask.createMany({
       data: [
-        { title: 'A', weeklyGoalId: goal.id, date: new Date('2026-07-27'), completed: true },
-        { title: 'B', weeklyGoalId: goal.id, date: new Date('2026-07-28'), completed: false },
+        { title: 'A', weeklyGoalId: goal.id, date: parseDay('2026-07-27'), completed: true },
+        { title: 'B', weeklyGoalId: goal.id, date: parseDay('2026-07-28'), completed: false },
       ],
     })
 
@@ -143,7 +143,7 @@ describe('weekly goal actions', () => {
     const currentGoal = await prisma.weeklyGoal.create({
       data: { title: 'Current', objectiveId: objective.id, ...currentBounds },
     })
-    const pastBounds = getWeekBounds(new Date('2020-01-06'))
+    const pastBounds = getWeekBounds(parseDay('2020-01-06'))
     await prisma.weeklyGoal.create({
       data: { title: 'Past', objectiveId: objective.id, ...pastBounds },
     })
@@ -169,18 +169,18 @@ describe('weekly goal actions', () => {
 
         await createWeeklyGoal(objective.id, formData({ title: 'Roundtrip', weekOf: '2026-07-27' }))
         const created = (await prisma.weeklyGoal.findMany())[0]
-        expect(created.weekStart.getDate()).toBe(27)
+        expect(appDayOfMonth(created.weekStart)).toBe(27)
 
         // This is exactly what the edit page's `defaultValues` computation does.
-        const weekOfDefault = format(created.weekStart, 'yyyy-MM-dd')
+        const weekOfDefault = formatDayKey(created.weekStart)
         expect(weekOfDefault).toBe('2026-07-27')
 
         // Save without changing anything, as if the user just opened and re-submitted the form.
         await updateWeeklyGoal(created.id, formData({ title: 'Roundtrip', weekOf: weekOfDefault }))
 
         const updated = await prisma.weeklyGoal.findUnique({ where: { id: created.id } })
-        expect(format(updated!.weekStart, 'yyyy-MM-dd')).toBe('2026-07-27')
-        expect(updated!.weekEnd.getDate()).toBe(2) // Aug 2 — same week, unshifted
+        expect(formatDayKey(updated!.weekStart)).toBe('2026-07-27')
+        expect(appDayOfMonth(updated!.weekEnd)).toBe(2) // Aug 2 — same week, unshifted
       } finally {
         process.env.TZ = originalTz
       }
@@ -239,7 +239,7 @@ describe('weekly goal actions', () => {
 
     await updateWeeklyGoal(
       goal.id,
-      formData({ title: 'Academia', weekOf: format(currentWeek.weekStart, 'yyyy-MM-dd'), recurring: 'on' }),
+      formData({ title: 'Academia', weekOf: formatDayKey(currentWeek.weekStart), recurring: 'on' }),
     )
 
     const updated = await prisma.weeklyGoal.findUniqueOrThrow({ where: { id: goal.id } })
@@ -712,7 +712,7 @@ describe('weekly goal actions', () => {
 
 describe('isolation between users', () => {
   async function objectiveFor(userId: string, title = 'O') {
-    return prisma.objective.create({ data: { title, startDate: new Date(2026, 8, 1), userId } })
+    return prisma.objective.create({ data: { title, startDate: parseDay('2026-09-01'), userId } })
   }
 
   it("does not list, get, update or delete another user's weekly goals", async () => {
@@ -761,5 +761,15 @@ describe('isolation between users', () => {
 
     const preview = await getMissingGoalsPreview()
     expect(preview?.goals.map((g) => g.title)).toEqual(['Minha'])
+  })
+})
+
+describe('weeks are Brasília weeks', () => {
+  it('a goal for any day of the week of 05/10 starts at 00:00 of Monday 05/10 in Brasília', async () => {
+    const objective = await makeObjective()
+    await createWeeklyGoal(objective.id, formData({ title: 'Semana', weekOf: '2026-10-07' }))
+    const goal = await prisma.weeklyGoal.findFirstOrThrow({ where: { objectiveId: objective.id } })
+    expect(goal.weekStart.toISOString()).toBe('2026-10-05T03:00:00.000Z')
+    expect(goal.weekEnd.toISOString()).toBe('2026-10-12T02:59:59.999Z')
   })
 })

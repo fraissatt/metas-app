@@ -2,14 +2,15 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TaskItem } from '@/components/task-item'
+import { parseDay } from '@/lib/dates'
 
 const task = {
   id: 'task-1',
   title: 'Alongar 10 minutos',
-  date: new Date('2026-10-06T00:00:00'),
+  date: new Date('2026-10-06T00:00:00-03:00'),
   completed: false,
 }
-const weekStart = new Date('2026-10-05T00:00:00') // Monday
+const weekStart = new Date('2026-10-05T00:00:00-03:00') // Monday
 
 function renderItem(overrides: Partial<Parameters<typeof TaskItem>[0]> = {}) {
   const props = {
@@ -95,5 +96,15 @@ describe('TaskItem', () => {
     expect(onDelete).not.toHaveBeenCalled()
     await userEvent.click(await screen.findByRole('button', { name: 'Excluir' }))
     expect(onDelete).toHaveBeenCalledWith('task-1')
+  })
+
+  it('the day picker shows the task week in Brasília: SEG 05 … DOM 11, current day selected', async () => {
+    renderItem({ task: { ...task, date: parseDay('2026-10-06') }, weekStart: parseDay('2026-10-05') })
+    await openMenu()
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Editar' }))
+    expect(screen.getByRole('combobox', { name: 'Dia da tarefa' })).toHaveValue('2026-10-06')
+    const options = screen.getAllByRole('option').map((o) => o.textContent)
+    expect(options[0]).toBe('SEG 05')
+    expect(options[6]).toBe('DOM 11')
   })
 })

@@ -1,20 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { parseISO } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getObjectiveProgressSeries } from '@/lib/actions/progress'
-import { getWeekBounds } from '@/lib/dates'
+import { getWeekBounds, parseDay } from '@/lib/dates'
 import { NOT_FOUND } from '@/lib/owned'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
 describe('getObjectiveProgressSeries', () => {
   it('returns one point per week, ordered by week, with completion percent', async () => {
     const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
-    // Use parseISO (not `new Date(string)`) for date-only strings: `new Date('2026-07-06')`
+    // Use parseISO (not `new Date(string)`) for date-only strings: `parseDay('2026-07-06')`
     // parses as UTC midnight, which in negative-UTC-offset timezones rolls back to the
     // previous local day — the same off-by-one-week bug already regression-tested in
     // weeklyGoals.test.ts. parseISO parses the date as local time, as intended here.
-    const week1 = getWeekBounds(parseISO('2026-07-06'))
-    const week2 = getWeekBounds(parseISO('2026-07-13'))
+    const week1 = getWeekBounds(parseDay('2026-07-06'))
+    const week2 = getWeekBounds(parseDay('2026-07-13'))
 
     const goal1 = await prisma.weeklyGoal.create({
       data: { title: 'W1', objectiveId: objective.id, ...week1 },
@@ -40,7 +39,7 @@ describe('getObjectiveProgressSeries', () => {
 
   it('emits one point per week when an objective has several goals in the same week', async () => {
     const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
-    const week = getWeekBounds(parseISO('2026-07-06'))
+    const week = getWeekBounds(parseDay('2026-07-06'))
 
     const first = await prisma.weeklyGoal.create({
       data: { title: 'Primeira', objectiveId: objective.id, ...week },
@@ -65,7 +64,7 @@ describe('getObjectiveProgressSeries', () => {
 
   it('reports 0% for a week whose goal has no tasks', async () => {
     const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
-    const week = getWeekBounds(parseISO('2026-07-06'))
+    const week = getWeekBounds(parseDay('2026-07-06'))
     await prisma.weeklyGoal.create({
       data: { title: 'Vazia', objectiveId: objective.id, ...week },
     })

@@ -1,8 +1,7 @@
 'use server'
 
-import { endOfDay, startOfDay } from 'date-fns'
 import { prisma } from '@/lib/db'
-import { getWeekBounds } from '@/lib/dates'
+import { endOfAppDay, getWeekBounds, startOfAppDay } from '@/lib/dates'
 import { requireUser } from '@/lib/session'
 
 export type TodaySummary = { completed: number; total: number; weekStart: Date }
@@ -12,7 +11,7 @@ export type TodaySummary = { completed: number; total: number; weekStart: Date }
 export async function getTodaySummary(now: Date = new Date()): Promise<TodaySummary> {
   const user = await requireUser()
   const owned = { weeklyGoal: { objective: { userId: user.id } } }
-  const date = { gte: startOfDay(now), lte: endOfDay(now) }
+  const date = { gte: startOfAppDay(now), lte: endOfAppDay(now) }
   const [total, completed] = await Promise.all([
     prisma.dailyTask.count({ where: { date, ...owned } }),
     prisma.dailyTask.count({ where: { date, completed: true, ...owned } }),

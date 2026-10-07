@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { SearchDialog } from '@/components/search-dialog'
 import type { SearchResults } from '@/lib/search'
+import { parseDay } from '@/lib/dates'
 
 const push = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
@@ -10,7 +11,7 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 const results: SearchResults = {
   objectives: [{ id: 'o1', title: 'Correr uma maratona', completed: false }],
   weeklyGoals: [
-    { id: 'w1', title: 'Corrida longa', objectiveId: 'o1', objectiveTitle: 'Correr uma maratona', weekStart: new Date(2026, 8, 28) },
+    { id: 'w1', title: 'Corrida longa', objectiveId: 'o1', objectiveTitle: 'Correr uma maratona', weekStart: parseDay('2026-09-28') },
   ],
 }
 

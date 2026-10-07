@@ -2,9 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MissingGoalsCard } from '@/components/missing-goals-card'
+import { parseDay } from '@/lib/dates'
 
 const preview = {
-  sourceWeekStart: new Date(2026, 7, 10), // Monday 10/08
+  sourceWeekStart: parseDay('2026-08-10'), // Monday 10/08
   goals: [
     { id: 'goal-a', title: 'Revisar orçamento', taskCount: 4 },
     { id: 'goal-b', title: 'Praticar inglês', taskCount: 1 },

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { buildObjectiveWeeks, describeSchedule, isGoalFulfilled } from '@/lib/objectives'
+import { parseDay } from '@/lib/dates'
 
-// Local-time constructor, not ISO strings: `new Date('2026-08-17')` is UTC
+// Local-time constructor, not ISO strings: `parseDay('2026-08-17')` is UTC
 // midnight, which lands on Aug 16 in any negative-offset timezone. Month index
 // is 0-based, so 7 is August.
-const week = (monthIndex: number, day: number) => new Date(2026, monthIndex, day)
+const week = (monthIndex: number, day: number) => parseDay(`2026-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`)
 const task = (completed: boolean) => ({ completed })
 
 describe('isGoalFulfilled', () => {
