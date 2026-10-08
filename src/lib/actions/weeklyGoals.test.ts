@@ -8,7 +8,6 @@ import {
   getMissingGoalsPreview,
   getWeekProgress,
   getWeeklyGoal,
-  listWeeklyGoalsByObjective,
   listWeeklyGoalsForCurrentWeek,
   materializePendingWeek,
   repeatMissingGoals,
@@ -67,40 +66,6 @@ describe('weekly goal actions', () => {
     expect(goals).toHaveLength(1)
     expect(appDayOfMonth(goals[0].weekStart)).toBe(27)
     expect(appDayOfMonth(goals[0].weekEnd)).toBe(2)
-  })
-
-  it('lists weekly goals for an objective ordered by week start', async () => {
-    const objective = await makeObjective()
-    const later = getWeekBounds(parseDay('2026-08-10'))
-    const earlier = getWeekBounds(parseDay('2026-07-29'))
-    const laterGoal = await prisma.weeklyGoal.create({
-      data: { title: 'Later', objectiveId: objective.id, ...later },
-    })
-    const earlierGoal = await prisma.weeklyGoal.create({
-      data: { title: 'Earlier', objectiveId: objective.id, ...earlier },
-    })
-
-    const result = await listWeeklyGoalsByObjective(objective.id)
-
-    expect(result.map((g) => g.id)).toEqual([earlierGoal.id, laterGoal.id])
-  })
-
-  it("includes each goal's daily tasks ordered by date", async () => {
-    const objective = await makeObjective()
-    const bounds = getWeekBounds(parseDay('2026-07-29'))
-    const goal = await prisma.weeklyGoal.create({
-      data: { title: 'Goal', objectiveId: objective.id, ...bounds },
-    })
-    const later = await prisma.dailyTask.create({
-      data: { title: 'Later', weeklyGoalId: goal.id, date: parseDay('2026-07-30') },
-    })
-    const earlier = await prisma.dailyTask.create({
-      data: { title: 'Earlier', weeklyGoalId: goal.id, date: parseDay('2026-07-28') },
-    })
-
-    const [result] = await listWeeklyGoalsByObjective(objective.id)
-
-    expect(result.dailyTasks.map((t) => t.id)).toEqual([earlier.id, later.id])
   })
 
   it('gets, updates, and deletes a weekly goal', async () => {
@@ -721,7 +686,6 @@ describe('isolation between users', () => {
     const { weekStart, weekEnd } = getWeekBounds(new Date())
     const goal = await prisma.weeklyGoal.create({ data: { title: 'Alheia', objectiveId: foreign.id, weekStart, weekEnd } })
 
-    expect(await listWeeklyGoalsByObjective(foreign.id)).toEqual([])
     expect(await getWeeklyGoal(goal.id)).toBeNull()
     expect(await listWeeklyGoalsForCurrentWeek()).toEqual([])
     await expect(getWeekProgress(goal.id)).rejects.toThrow(NOT_FOUND)
