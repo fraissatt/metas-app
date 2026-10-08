@@ -25,11 +25,13 @@ describe('GuestButton', () => {
     expect(button).toBeEnabled()
   })
 
-  it('shows the throttle message when the server refuses for too many attempts, and only that one', async () => {
-    const onEnter = vi.fn().mockRejectedValue(new Error('Muitas tentativas. Tente de novo em alguns minutos.'))
+  it('shows the throttle message and re-enables when the server answers that guests are throttled', async () => {
+    const onEnter = vi.fn().mockResolvedValue({ throttled: true })
     render(<GuestButton onEnter={onEnter} />)
-    await userEvent.click(screen.getByRole('button', { name: 'Entrar como visitante' }))
+    const button = screen.getByRole('button', { name: 'Entrar como visitante' })
+    await userEvent.click(button)
     expect(await screen.findByRole('alert')).toHaveTextContent('Muitas tentativas. Tente de novo em alguns minutos.')
+    expect(button).toBeEnabled()
   })
 
   it('never leaks other server messages', async () => {

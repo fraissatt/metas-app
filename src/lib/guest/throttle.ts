@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/db'
 
-export const GUEST_THROTTLE_MESSAGE = 'Muitas tentativas. Tente de novo em alguns minutos.'
 export const GUEST_IP_LIMIT = 5
 export const GUEST_IP_WINDOW_MS = 10 * 60_000
 export const GUEST_GLOBAL_LIMIT = 30

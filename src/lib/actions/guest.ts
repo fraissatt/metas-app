@@ -6,11 +6,14 @@ import { prisma } from '@/lib/db'
 import { auth } from '@/lib/auth'
 import { cleanupGuests } from '@/lib/guest/cleanup'
 import { seedDemoData } from '@/lib/guest/seed'
-import { clientIp, GUEST_THROTTLE_MESSAGE, isGuestCreationThrottled } from '@/lib/guest/throttle'
+import { clientIp, isGuestCreationThrottled } from '@/lib/guest/throttle'
 
-export async function enterAsGuest(): Promise<void> {
+// Returns { throttled: true } instead of throwing: Next hides the message of an
+// error thrown from a Server Action in production, so the button could not tell
+// "too many attempts" apart from a real failure. A successful entry redirects.
+export async function enterAsGuest(): Promise<{ throttled: true } | undefined> {
   const requestHeaders = await headers()
-  if (await isGuestCreationThrottled(clientIp(requestHeaders))) throw new Error(GUEST_THROTTLE_MESSAGE)
+  if (await isGuestCreationThrottled(clientIp(requestHeaders))) return { throttled: true }
 
   try {
     await cleanupGuests()

@@ -42,7 +42,8 @@ describe('enterAsGuest', () => {
       })
     }
     requestHeaders.value = { 'x-forwarded-for': '5.5.5.5' }
-    await expect(enterAsGuest()).rejects.toThrow('Muitas tentativas. Tente de novo em alguns minutos.')
+    // A returned result, not a thrown error: Next hides Server Action error messages in production.
+    await expect(enterAsGuest()).resolves.toEqual({ throttled: true })
     expect(signInAnonymous).not.toHaveBeenCalled()
     expect(cleanupGuests).not.toHaveBeenCalled()
     expect(await prisma.user.findUnique({ where: { id: 'anon-1' } })).toBeNull()
