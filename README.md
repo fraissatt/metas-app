@@ -96,6 +96,34 @@ guardar páginas em cache mostraria metas desatualizadas e quebraria as gravaç�
 - Deploy na [Vercel](https://vercel.com/) com Postgres na [Neon](https://neon.com/); as migrations rodam a
   cada deploy de produção (script `vercel-build`)
 
+## Arquitetura
+
+Um app fullstack em TypeScript: o mesmo projeto Next.js tem o front-end e o back-end, com a fronteira entre
+eles garantida pelo próprio framework (código de servidor nunca vai para o navegador).
+
+```
+Navegador                         Servidor (Vercel, Node)                  Banco
+─────────────────────────         ──────────────────────────────           ─────────────
+Componentes de cliente     ──▶    Server Actions                    ──▶    Postgres (Neon)
+src/components ('use client')     src/lib/actions/*                         via Prisma
+                                  · checam a sessão (requireUser)           prisma/schema.prisma
+Páginas (Server Components)       · filtram toda consulta pelo dono         src/lib/db.ts
+src/app/**/page.tsx       ◀──     · validam a entrada
+```
+
+- **Páginas (`src/app`)** são Server Components: buscam os dados no servidor e entregam HTML pronto. Os
+  componentes interativos (`'use client'`) recebem as Server Actions como funções e não acessam o banco.
+- **Server Actions (`src/lib/actions`)** são a API do app. Cada uma confere o usuário logado
+  (`src/lib/session.ts`) e só enxerga os dados dele: um registro de outra pessoa se comporta como inexistente
+  (`src/lib/owned.ts`).
+- **Autenticação (`src/lib/auth.ts`)** com Better Auth: e-mail e senha, sessões no Postgres e contas de
+  visitante. O `src/proxy.ts` só redireciona quem não tem cookie; a checagem real fica no servidor.
+- **Regras puras (`src/lib/*.ts`)**, sem banco: datas no fuso de Brasília (`dates.ts`), estatísticas,
+  dashboard, montagem do plano do quiz. São testadas sem mocks.
+- **Por que uma linguagem só:** os tipos gerados do banco (`Objective`, `DailyTask`) chegam até a tela sem
+  duplicação, e um contrato quebrado entre front e back aparece na compilação. Um back-end separado (outra
+  linguagem, API REST) faria sentido com vários clientes, como um app mobile nativo, ou times separados.
+
 ## Decisões de projeto
 
 - **Testes contra um Postgres de verdade.** A camada de dados é testada com o banco `metas_app_test`, sem
