@@ -1,5 +1,7 @@
 # Metas
 
+[![CI](https://github.com/fraissatt/metas-app/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/fraissatt/metas-app/actions/workflows/ci.yml)
+
 Acompanhe **objetivos**, quebre-os em **metas semanais** e execute com **tarefas diárias** — com um
 quiz de onboarding que monta o primeiro plano, um funil de conversão medido no próprio app, gráficos de
 progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular e no desktop.
@@ -217,6 +219,18 @@ o banco.
 - `npm run lint` — roda o linter.
 - `npm run db:migrate` — aplica as migrations pendentes no banco apontado por `DATABASE_URL` (não
   interativo; use `npx prisma migrate dev` ao desenvolver novas migrations).
+
+## Como o projeto é tocado
+
+- **Toda mudança nasce de uma [issue](https://github.com/fraissatt/metas-app/issues)**, com modelos de bug e de
+  funcionalidade, etiquetas de tipo e prioridade, e acompanhada no quadro do
+  [GitHub Projects](https://github.com/users/fraissatt/projects).
+- **Branches por tarefa** com o número da issue (`feature/12-…`, `fix/15-…`), saindo de `develop`.
+- **Pull Requests** para `develop` (homologação) e depois para `master` (produção, deploy automático na
+  Vercel). Cada PR fecha sua issue com `Closes #N`.
+- **CI no GitHub Actions** em todo push e PR: lint, checagem de tipos e a suíte de testes contra um Postgres
+  de teste, rodando em UTC e no horário de Brasília.
+- **Features maiores têm spec e plano** antes do código, em [`docs/superpowers`](docs/superpowers).
 
 ## Licença
 

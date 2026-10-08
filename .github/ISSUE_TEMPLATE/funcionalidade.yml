@@ -1,0 +1,23 @@
+name: Nova funcionalidade ou melhoria
+description: Algo novo ou um ajuste no que já existe
+labels: ['tipo: melhoria']
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema resolve
+      description: O que incomoda ou falta hoje, do ponto de vista de quem usa.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: Como deveria funcionar. Mockups e opções são bem-vindos.
+    validations:
+      required: true
+  - type: textarea
+    id: pronto-quando
+    attributes:
+      label: Pronto quando
+      description: Critérios para considerar concluído.
