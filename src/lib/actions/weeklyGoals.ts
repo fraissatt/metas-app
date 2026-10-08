@@ -34,15 +34,6 @@ export async function createWeeklyGoal(objectiveId: string, formData: FormData):
   revalidatePath(`/objectives/${objectiveId}`)
 }
 
-export async function listWeeklyGoalsByObjective(objectiveId: string): Promise<WeeklyGoalWithTasks[]> {
-  const user = await requireUser()
-  return prisma.weeklyGoal.findMany({
-    where: { objectiveId, objective: { userId: user.id } },
-    orderBy: { weekStart: 'asc' },
-    include: { dailyTasks: { orderBy: { date: 'asc' } } },
-  })
-}
-
 export type PastWeekSummary = { weekStart: string; total: number; completed: number }
 
 /**
