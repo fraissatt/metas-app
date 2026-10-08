@@ -14,7 +14,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:tz": "node scripts/test-both-tz.mjs",
-    "db:fix-shifted-dates": "node scripts/fix-shifted-dates.mjs",
     "vercel-build": "if [ \"$VERCEL_ENV\" = production ]; then DATABASE_URL=\"${DATABASE_URL_UNPOOLED:-$DATABASE_URL}\" prisma migrate deploy; fi && next build"
   },
   "dependencies": {
