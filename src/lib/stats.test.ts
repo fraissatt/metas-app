@@ -2,11 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { buildWeekWindow } from '@/lib/stats'
 import { parseDay } from '@/lib/dates'
 
-// Dates use the local-time constructor `new Date(year, monthIndex, day, …)`
-// rather than ISO strings on purpose: `parseDay('2026-08-17')` parses as UTC
-// midnight, which lands on Aug 16 in any negative-offset timezone and would
-// make these week-boundary assertions pass or fail depending on where the
-// suite runs. Month index is 0-based, so 7 is August.
+// Dates are Brasília days built with parseDay, so the week-boundary assertions
+// mean the same thing under any machine time zone (npm run test:tz).
 //
 // Reference calendar: 2026-08-19 is a Wednesday, so the current week starts
 // Monday 2026-08-17. Earlier Mondays: 08-10, 08-03, 07-27, …, 06-29.

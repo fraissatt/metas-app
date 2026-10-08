@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, addWeeks, differenceInCalendarDays, format } from 'date-fns'
+import { addDays, addWeeks, differenceInCalendarDays } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
   countPendingRecurrences,
@@ -8,7 +8,6 @@ import {
   getMissingGoalsPreview,
   getWeekProgress,
   getWeeklyGoal,
-  listWeeklyGoalsByObjective,
   listWeeklyGoalsForCurrentWeek,
   materializePendingWeek,
   repeatMissingGoals,
@@ -69,40 +68,6 @@ describe('weekly goal actions', () => {
     expect(appDayOfMonth(goals[0].weekEnd)).toBe(2)
   })
 
-  it('lists weekly goals for an objective ordered by week start', async () => {
-    const objective = await makeObjective()
-    const later = getWeekBounds(parseDay('2026-08-10'))
-    const earlier = getWeekBounds(parseDay('2026-07-29'))
-    const laterGoal = await prisma.weeklyGoal.create({
-      data: { title: 'Later', objectiveId: objective.id, ...later },
-    })
-    const earlierGoal = await prisma.weeklyGoal.create({
-      data: { title: 'Earlier', objectiveId: objective.id, ...earlier },
-    })
-
-    const result = await listWeeklyGoalsByObjective(objective.id)
-
-    expect(result.map((g) => g.id)).toEqual([earlierGoal.id, laterGoal.id])
-  })
-
-  it("includes each goal's daily tasks ordered by date", async () => {
-    const objective = await makeObjective()
-    const bounds = getWeekBounds(parseDay('2026-07-29'))
-    const goal = await prisma.weeklyGoal.create({
-      data: { title: 'Goal', objectiveId: objective.id, ...bounds },
-    })
-    const later = await prisma.dailyTask.create({
-      data: { title: 'Later', weeklyGoalId: goal.id, date: parseDay('2026-07-30') },
-    })
-    const earlier = await prisma.dailyTask.create({
-      data: { title: 'Earlier', weeklyGoalId: goal.id, date: parseDay('2026-07-28') },
-    })
-
-    const [result] = await listWeeklyGoalsByObjective(objective.id)
-
-    expect(result.dailyTasks.map((t) => t.id)).toEqual([earlier.id, later.id])
-  })
-
   it('gets, updates, and deletes a weekly goal', async () => {
     const objective = await makeObjective()
     const bounds = getWeekBounds(parseDay('2026-07-29'))
@@ -154,38 +119,24 @@ describe('weekly goal actions', () => {
     expect(result[0].objective.id).toBe(objective.id)
   })
 
-  it(
-    'round-trips weekOf through create -> edit-page default value -> update without shifting ' +
-      'a week (regression test for the toISOString UTC round-trip bug)',
-    async () => {
-      // Force a positive UTC-offset zone: this is the direction that exposes a mismatch
-      // between a local-based write (`parseISO`) and a UTC-based read (`toISOString`) — the
-      // bug the `format`-based fix removes. Forced explicitly (rather than relying on the
-      // machine's own TZ) so this test is meaningful regardless of what timezone it runs in.
-      const originalTz = process.env.TZ
-      process.env.TZ = 'Europe/Berlin'
-      try {
-        const objective = await makeObjective()
+  it('round-trips weekOf through create -> edit-page default value -> update without shifting a week', async () => {
+    const objective = await makeObjective()
 
-        await createWeeklyGoal(objective.id, formData({ title: 'Roundtrip', weekOf: '2026-07-27' }))
-        const created = (await prisma.weeklyGoal.findMany())[0]
-        expect(appDayOfMonth(created.weekStart)).toBe(27)
+    await createWeeklyGoal(objective.id, formData({ title: 'Roundtrip', weekOf: '2026-07-27' }))
+    const created = (await prisma.weeklyGoal.findMany())[0]
+    expect(appDayOfMonth(created.weekStart)).toBe(27)
 
-        // This is exactly what the edit page's `defaultValues` computation does.
-        const weekOfDefault = formatDayKey(created.weekStart)
-        expect(weekOfDefault).toBe('2026-07-27')
+    // This is exactly what the edit page's `defaultValues` computation does.
+    const weekOfDefault = formatDayKey(created.weekStart)
+    expect(weekOfDefault).toBe('2026-07-27')
 
-        // Save without changing anything, as if the user just opened and re-submitted the form.
-        await updateWeeklyGoal(created.id, formData({ title: 'Roundtrip', weekOf: weekOfDefault }))
+    // Save without changing anything, as if the user just opened and re-submitted the form.
+    await updateWeeklyGoal(created.id, formData({ title: 'Roundtrip', weekOf: weekOfDefault }))
 
-        const updated = await prisma.weeklyGoal.findUnique({ where: { id: created.id } })
-        expect(formatDayKey(updated!.weekStart)).toBe('2026-07-27')
-        expect(appDayOfMonth(updated!.weekEnd)).toBe(2) // Aug 2 — same week, unshifted
-      } finally {
-        process.env.TZ = originalTz
-      }
-    },
-  )
+    const updated = await prisma.weeklyGoal.findUnique({ where: { id: created.id } })
+    expect(formatDayKey(updated!.weekStart)).toBe('2026-07-27')
+    expect(appDayOfMonth(updated!.weekEnd)).toBe(2) // Aug 2 — same week, unshifted
+  })
 
   it('persists recurring when the checkbox was submitted', async () => {
     const objective = await makeObjective()
@@ -721,7 +672,6 @@ describe('isolation between users', () => {
     const { weekStart, weekEnd } = getWeekBounds(new Date())
     const goal = await prisma.weeklyGoal.create({ data: { title: 'Alheia', objectiveId: foreign.id, weekStart, weekEnd } })
 
-    expect(await listWeeklyGoalsByObjective(foreign.id)).toEqual([])
     expect(await getWeeklyGoal(goal.id)).toBeNull()
     expect(await listWeeklyGoalsForCurrentWeek()).toEqual([])
     await expect(getWeekProgress(goal.id)).rejects.toThrow(NOT_FOUND)

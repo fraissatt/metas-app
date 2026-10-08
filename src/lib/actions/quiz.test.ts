@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { format } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { TEMPLATES } from '@/lib/quiz/build-plan'
 import { createPlanFromQuiz } from '@/lib/actions/quiz'

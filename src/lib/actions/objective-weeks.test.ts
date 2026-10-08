@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, addWeeks, format } from 'date-fns'
+import { addDays, addWeeks } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
   countPendingRecurrences,
@@ -48,6 +48,17 @@ describe('listObjectiveWeeks', () => {
     const { current } = await listObjectiveWeeks(o.id)
     expect(current.map((g) => g.title)).toEqual(['Atual', 'Próxima'])
     expect(current[0].dailyTasks).toHaveLength(2)
+  })
+
+  it("lists each goal's tasks ordered by date", async () => {
+    const o = await objective()
+    const { weekStart, weekEnd } = getWeekBounds(new Date())
+    const g = await prisma.weeklyGoal.create({ data: { title: 'Meta', objectiveId: o.id, weekStart, weekEnd } })
+    const later = await prisma.dailyTask.create({ data: { title: 'Depois', weeklyGoalId: g.id, date: addDays(weekStart, 3) } })
+    const earlier = await prisma.dailyTask.create({ data: { title: 'Antes', weeklyGoalId: g.id, date: addDays(weekStart, 1) } })
+
+    const { current } = await listObjectiveWeeks(o.id)
+    expect(current[0].dailyTasks.map((t) => t.id)).toEqual([earlier.id, later.id])
   })
 
   it('summarises each earlier week once, newest first, adding up every goal of that week', async () => {
