@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, addWeeks, format } from 'date-fns'
+import { addDays, addWeeks } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
   countPendingRecurrences,

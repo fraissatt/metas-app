@@ -8,10 +8,8 @@ import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 describe('getObjectiveProgressSeries', () => {
   it('returns one point per week, ordered by week, with completion percent', async () => {
     const objective = await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
-    // Use parseISO (not `new Date(string)`) for date-only strings: `parseDay('2026-07-06')`
-    // parses as UTC midnight, which in negative-UTC-offset timezones rolls back to the
-    // previous local day — the same off-by-one-week bug already regression-tested in
-    // weeklyGoals.test.ts. parseISO parses the date as local time, as intended here.
+    // Weeks are Brasília weeks: parseDay builds each Monday as 00:00 there, whatever
+    // time zone the suite runs in (npm run test:tz).
     const week1 = getWeekBounds(parseDay('2026-07-06'))
     const week2 = getWeekBounds(parseDay('2026-07-13'))
 
