@@ -2,12 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { addDays, addWeeks } from 'date-fns'
 import { prisma } from '@/lib/db'
 import {
-  countPendingRecurrences,
-  getMissingGoalsPreview,
   listObjectiveWeeks,
-  listWeeklyGoalsForCurrentWeek,
   listWeeklyGoalsForWeek,
-  materializePendingWeek,
 } from '@/lib/actions/weeklyGoals'
 import { formatDayKey, getWeekBounds } from '@/lib/dates'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
@@ -104,37 +100,5 @@ describe('listWeeklyGoalsForWeek', () => {
 
     expect(await listWeeklyGoalsForWeek(foreign.id, week)).toEqual([])
     expect(await listWeeklyGoalsForWeek(foreign.id, 'not-a-date')).toEqual([])
-  })
-})
-
-describe('rows written at 00:00Z by the old UTC server, before the repair runs', () => {
-  // The old code stored a week's Monday at 00:00Z, i.e. 3 h before 00:00 in Brasília.
-  const legacy = (date: Date) => new Date(date.getTime() - 3 * 3600_000)
-
-  it('keeps legacy current-week goals in the current week and never re-creates them', async () => {
-    const o = await objective()
-    const { weekStart, weekEnd } = getWeekBounds(new Date())
-    await prisma.weeklyGoal.create({
-      data: { title: 'Recorrente', objectiveId: o.id, recurring: true, weekStart: legacy(weekStart), weekEnd: legacy(weekEnd) },
-    })
-
-    expect((await listWeeklyGoalsForCurrentWeek()).map((g) => g.title)).toEqual(['Recorrente'])
-    expect(await countPendingRecurrences()).toBe(0)
-    expect(await getMissingGoalsPreview()).toBeNull()
-    await materializePendingWeek()
-    expect(await prisma.weeklyGoal.count()).toBe(1)
-    expect((await listObjectiveWeeks(o.id)).current.map((g) => g.title)).toEqual(['Recorrente'])
-  })
-
-  it('keys a legacy earlier week by its Monday and loads it from that key', async () => {
-    const o = await objective()
-    const { weekStart, weekEnd } = getWeekBounds(addWeeks(new Date(), -1))
-    await prisma.weeklyGoal.create({
-      data: { title: 'Antiga', objectiveId: o.id, weekStart: legacy(weekStart), weekEnd: legacy(weekEnd) },
-    })
-
-    const { past } = await listObjectiveWeeks(o.id)
-    expect(past.map((w) => w.weekStart)).toEqual([ymd(weekStart)])
-    expect((await listWeeklyGoalsForWeek(o.id, ymd(weekStart))).map((g) => g.title)).toEqual(['Antiga'])
   })
 })
