@@ -262,4 +262,4 @@ o banco.
 
 ## Licença
 
-[MIT](LICENSE).
+Todos os direitos reservados. O código está público apenas para consulta e avaliação; copiar, modificar ou usar exige autorização por escrito (veja [LICENSE](LICENSE)). Versões obtidas antes de 08/10/2026 foram publicadas sob a MIT e continuam sob ela.
