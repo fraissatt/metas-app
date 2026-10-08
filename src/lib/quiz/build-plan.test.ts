@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { format } from 'date-fns'
 import { buildPlan, TEMPLATES } from './build-plan'
 import { getStep, type Obstacle, type QuizAnswers } from './definition'
 import { formatDayKey } from '@/lib/dates'

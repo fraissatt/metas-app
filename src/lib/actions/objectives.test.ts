@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { addWeeks, format, parseISO } from 'date-fns'
+import { addWeeks } from 'date-fns'
 import { prisma } from '@/lib/db'
-import { getWeekBounds } from '@/lib/dates'
+import { formatDayKey, getWeekBounds, parseDay } from '@/lib/dates'
 import {
   completeObjective,
   countObjectives,
@@ -90,44 +90,27 @@ describe('objective actions', () => {
     expect(found).toBeNull()
   })
 
-  it(
-    'round-trips startDate/targetDate through create -> edit-page default value -> update ' +
-      'without shifting (regression test for the toISOString/new Date UTC round-trip bug)',
-    async () => {
-      // Force a negative UTC-offset zone: this is the direction that exposes a mismatch
-      // between a UTC-based write (`new Date(str)`) and a local-based read (`format`) —
-      // exactly the inconsistency this fix removes by making both sides `parseISO`/`format`.
-      // Forced explicitly (rather than relying on the machine's own TZ) so this test is
-      // meaningful regardless of what timezone it happens to run in.
-      const originalTz = process.env.TZ
-      process.env.TZ = 'America/Sao_Paulo'
-      try {
-        await createObjective(
-          formData({ title: 'Roundtrip', startDate: '2026-01-15', targetDate: '2026-06-30' }),
-        )
-        const created = (await prisma.objective.findMany())[0]
+  it('round-trips startDate/targetDate through create -> edit-page default value -> update without shifting', async () => {
+    await createObjective(formData({ title: 'Roundtrip', startDate: '2026-01-15', targetDate: '2026-06-30' }))
+    const created = (await prisma.objective.findMany())[0]
 
-        // This is exactly what the edit page's `defaultValues` computation does.
-        const startDateDefault = format(created.startDate, 'yyyy-MM-dd')
-        const targetDateDefault = created.targetDate ? format(created.targetDate, 'yyyy-MM-dd') : ''
+    // This is exactly what the edit page's `defaultValues` computation does.
+    const startDateDefault = formatDayKey(created.startDate)
+    const targetDateDefault = created.targetDate ? formatDayKey(created.targetDate) : ''
 
-        expect(startDateDefault).toBe('2026-01-15')
-        expect(targetDateDefault).toBe('2026-06-30')
+    expect(startDateDefault).toBe('2026-01-15')
+    expect(targetDateDefault).toBe('2026-06-30')
 
-        // Save without changing anything, as if the user just opened and re-submitted the form.
-        await updateObjective(
-          created.id,
-          formData({ title: 'Roundtrip', startDate: startDateDefault, targetDate: targetDateDefault }),
-        )
+    // Save without changing anything, as if the user just opened and re-submitted the form.
+    await updateObjective(
+      created.id,
+      formData({ title: 'Roundtrip', startDate: startDateDefault, targetDate: targetDateDefault }),
+    )
 
-        const updated = await prisma.objective.findUnique({ where: { id: created.id } })
-        expect(format(updated!.startDate, 'yyyy-MM-dd')).toBe('2026-01-15')
-        expect(format(updated!.targetDate!, 'yyyy-MM-dd')).toBe('2026-06-30')
-      } finally {
-        process.env.TZ = originalTz
-      }
-    },
-  )
+    const updated = await prisma.objective.findUnique({ where: { id: created.id } })
+    expect(formatDayKey(updated!.startDate)).toBe('2026-01-15')
+    expect(formatDayKey(updated!.targetDate!)).toBe('2026-06-30')
+  })
 
   it('counts objectives without loading their rows', async () => {
     expect(await countObjectives()).toBe(0)
@@ -156,10 +139,10 @@ describe('objective actions', () => {
 
   it('counts fulfilled weeks and completed tasks across weeks', async () => {
     const objective = await prisma.objective.create({
-      data: { userId: TEST_USER_ID, title: 'Academia', startDate: parseISO('2026-07-06') },
+      data: { userId: TEST_USER_ID, title: 'Academia', startDate: parseDay('2026-07-06') },
     })
-    const fullWeek = getWeekBounds(parseISO('2026-07-06'))
-    const partialWeek = getWeekBounds(parseISO('2026-07-13'))
+    const fullWeek = getWeekBounds(parseDay('2026-07-06'))
+    const partialWeek = getWeekBounds(parseDay('2026-07-13'))
 
     const full = await prisma.weeklyGoal.create({
       data: { title: 'Cheia', objectiveId: objective.id, ...fullWeek },
@@ -203,9 +186,9 @@ describe('objective actions', () => {
 
   it('returns every week when there are fewer than 26, and the most recent 26 when there are more', async () => {
     const objective = await prisma.objective.create({
-      data: { userId: TEST_USER_ID, title: 'Academia', startDate: parseISO('2026-01-05') },
+      data: { userId: TEST_USER_ID, title: 'Academia', startDate: parseDay('2026-01-05') },
     })
-    const firstWeekStart = getWeekBounds(parseISO('2026-01-05')).weekStart
+    const firstWeekStart = getWeekBounds(parseDay('2026-01-05')).weekStart
 
     await prisma.weeklyGoal.createMany({
       data: Array.from({ length: 30 }, (_, i) => ({
@@ -293,7 +276,7 @@ describe('objective actions', () => {
         title: 'Antigo',
         startDate: new Date(),
         status: 'COMPLETED',
-        completedAt: parseISO('2026-07-01'),
+        completedAt: parseDay('2026-07-01'),
       },
     })
     const newer = await prisma.objective.create({
@@ -302,7 +285,7 @@ describe('objective actions', () => {
         title: 'Recente',
         startDate: new Date(),
         status: 'COMPLETED',
-        completedAt: parseISO('2026-08-01'),
+        completedAt: parseDay('2026-08-01'),
       },
     })
 

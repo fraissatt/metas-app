@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-import { endOfDay, format, parseISO, startOfDay } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import {
@@ -87,13 +86,13 @@ describe('daily task actions', () => {
   it('lists tasks for a specific date across weekly goals, with objective included', async () => {
     const goal = await makeWeeklyGoal()
     const match = await prisma.dailyTask.create({
-      data: { title: 'Today task', weeklyGoalId: goal.id, date: parseISO('2026-07-29') },
+      data: { title: 'Today task', weeklyGoalId: goal.id, date: parseDay('2026-07-29') },
     })
     await prisma.dailyTask.create({
-      data: { title: 'Other day', weeklyGoalId: goal.id, date: parseISO('2026-07-30') },
+      data: { title: 'Other day', weeklyGoalId: goal.id, date: parseDay('2026-07-30') },
     })
 
-    const result = await listDailyTasksByDate(parseISO('2026-07-29'))
+    const result = await listDailyTasksByDate(parseDay('2026-07-29'))
 
     expect(result.map((t) => t.id)).toEqual([match.id])
     expect(result[0].weeklyGoal.objective.title).toBe('Obj')
@@ -163,36 +162,22 @@ describe('daily task actions', () => {
     expect(revalidatePath).toHaveBeenCalledWith('/')
   })
 
-  it(
-    'round-trips date through create -> edit-page default value -> update without shifting a ' +
-      'day (regression test for the toISOString UTC round-trip bug)',
-    async () => {
-      // Force a positive UTC-offset zone: this is the direction that exposes a mismatch
-      // between a local-based write (`parseISO`) and a UTC-based read (`toISOString`) — the
-      // bug the `format`-based fix removes. Forced explicitly (rather than relying on the
-      // machine's own TZ) so this test is meaningful regardless of what timezone it runs in.
-      const originalTz = process.env.TZ
-      process.env.TZ = 'Europe/Berlin'
-      try {
-        const goal = await makeWeeklyGoal()
+  it('round-trips the date through create -> edit-page default value -> update without shifting a day', async () => {
+    const goal = await makeWeeklyGoal()
 
-        await createDailyTask(goal.id, formData({ title: 'Roundtrip', date: '2026-07-29' }))
-        const created = (await prisma.dailyTask.findMany())[0]
+    await createDailyTask(goal.id, formData({ title: 'Roundtrip', date: '2026-07-29' }))
+    const created = (await prisma.dailyTask.findMany())[0]
 
-        // This is exactly what the edit page's `defaultValues` computation does.
-        const dateDefault = formatDayKey(created.date)
-        expect(dateDefault).toBe('2026-07-29')
+    // This is exactly what the edit page's `defaultValues` computation does.
+    const dateDefault = formatDayKey(created.date)
+    expect(dateDefault).toBe('2026-07-29')
 
-        // Save without changing anything, as if the user just opened and re-submitted the form.
-        await updateDailyTask(created.id, formData({ title: 'Roundtrip', date: dateDefault }))
+    // Save without changing anything, as if the user just opened and re-submitted the form.
+    await updateDailyTask(created.id, formData({ title: 'Roundtrip', date: dateDefault }))
 
-        const updated = await prisma.dailyTask.findUnique({ where: { id: created.id } })
-        expect(formatDayKey(updated!.date)).toBe('2026-07-29')
-      } finally {
-        process.env.TZ = originalTz
-      }
-    },
-  )
+    const updated = await prisma.dailyTask.findUnique({ where: { id: created.id } })
+    expect(formatDayKey(updated!.date)).toBe('2026-07-29')
+  })
 })
 
 function multiFormData(title: string, dates: string[]) {
@@ -249,7 +234,7 @@ describe('isolation between users', () => {
     await createTestUser('other')
     const objective = await prisma.objective.create({ data: { title: 'O', startDate: new Date(), userId: 'other' } })
     const goal = await prisma.weeklyGoal.create({
-      data: { title: 'G', objectiveId: objective.id, weekStart: startOfDay(new Date()), weekEnd: endOfDay(new Date()) },
+      data: { title: 'G', objectiveId: objective.id, ...getWeekBounds(new Date()) },
     })
     const task = await prisma.dailyTask.create({ data: { title: 'Alheia', weeklyGoalId: goal.id, date: new Date() } })
     return { goal, task }

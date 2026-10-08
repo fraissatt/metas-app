@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { readCheckbox, readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
-import { appDayOfMonth } from '@/lib/dates'
+import { formatDayKey } from '@/lib/dates'
 
 function formData(fields: Record<string, string>) {
   const fd = new FormData()
@@ -23,11 +23,9 @@ describe('readTitle', () => {
 })
 
 describe('readDate', () => {
-  it('parses a valid yyyy-MM-dd string as a local date', () => {
+  it('parses a valid yyyy-MM-dd string as that day in Brasília', () => {
     const date = readDate(formData({ date: '2026-07-29' }), 'date')
-    expect(date.getFullYear()).toBe(2026)
-    expect(date.getMonth()).toBe(6)
-    expect(appDayOfMonth(date)).toBe(29)
+    expect(formatDayKey(date)).toBe('2026-07-29')
   })
 
   it('throws when the field is missing', () => {
@@ -50,7 +48,7 @@ describe('readOptionalDate', () => {
 
   it('parses a valid yyyy-MM-dd string when present', () => {
     const date = readOptionalDate(formData({ targetDate: '2026-06-30' }), 'targetDate')
-    expect(date && appDayOfMonth(date)).toBe(30)
+    expect(date && formatDayKey(date)).toBe('2026-06-30')
   })
 
   it('throws when present but unparseable', () => {
