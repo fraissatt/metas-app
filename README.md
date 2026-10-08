@@ -1,5 +1,7 @@
 # Metas
 
+[![CI](https://github.com/fraissatt/metas-app/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/fraissatt/metas-app/actions/workflows/ci.yml)
+
 Acompanhe **objetivos**, quebre-os em **metas semanais** e execute com **tarefas diárias** — com um
 quiz de onboarding que monta o primeiro plano, um funil de conversão medido no próprio app, gráficos de
 progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular e no desktop.
@@ -93,6 +95,34 @@ guardar páginas em cache mostraria metas desatualizadas e quebraria as gravaç�
 - [Vitest](https://vitest.dev/) + Testing Library
 - Deploy na [Vercel](https://vercel.com/) com Postgres na [Neon](https://neon.com/); as migrations rodam a
   cada deploy de produção (script `vercel-build`)
+
+## Arquitetura
+
+Um app fullstack em TypeScript: o mesmo projeto Next.js tem o front-end e o back-end, com a fronteira entre
+eles garantida pelo próprio framework (código de servidor nunca vai para o navegador).
+
+```
+Navegador                         Servidor (Vercel, Node)                  Banco
+─────────────────────────         ──────────────────────────────           ─────────────
+Componentes de cliente     ──▶    Server Actions                    ──▶    Postgres (Neon)
+src/components ('use client')     src/lib/actions/*                         via Prisma
+                                  · checam a sessão (requireUser)           prisma/schema.prisma
+Páginas (Server Components)       · filtram toda consulta pelo dono         src/lib/db.ts
+src/app/**/page.tsx       ◀──     · validam a entrada
+```
+
+- **Páginas (`src/app`)** são Server Components: buscam os dados no servidor e entregam HTML pronto. Os
+  componentes interativos (`'use client'`) recebem as Server Actions como funções e não acessam o banco.
+- **Server Actions (`src/lib/actions`)** são a API do app. Cada uma confere o usuário logado
+  (`src/lib/session.ts`) e só enxerga os dados dele: um registro de outra pessoa se comporta como inexistente
+  (`src/lib/owned.ts`).
+- **Autenticação (`src/lib/auth.ts`)** com Better Auth: e-mail e senha, sessões no Postgres e contas de
+  visitante. O `src/proxy.ts` só redireciona quem não tem cookie; a checagem real fica no servidor.
+- **Regras puras (`src/lib/*.ts`)**, sem banco: datas no fuso de Brasília (`dates.ts`), estatísticas,
+  dashboard, montagem do plano do quiz. São testadas sem mocks.
+- **Por que uma linguagem só:** os tipos gerados do banco (`Objective`, `DailyTask`) chegam até a tela sem
+  duplicação, e um contrato quebrado entre front e back aparece na compilação. Um back-end separado (outra
+  linguagem, API REST) faria sentido com vários clientes, como um app mobile nativo, ou times separados.
 
 ## Decisões de projeto
 
@@ -217,6 +247,18 @@ o banco.
 - `npm run lint` — roda o linter.
 - `npm run db:migrate` — aplica as migrations pendentes no banco apontado por `DATABASE_URL` (não
   interativo; use `npx prisma migrate dev` ao desenvolver novas migrations).
+
+## Como o projeto é tocado
+
+- **Toda mudança nasce de uma [issue](https://github.com/fraissatt/metas-app/issues)**, com modelos de bug e de
+  funcionalidade, etiquetas de tipo e prioridade, e acompanhada no quadro do
+  [GitHub Projects](https://github.com/users/fraissatt/projects).
+- **Branches por tarefa** com o número da issue (`feature/12-…`, `fix/15-…`), saindo de `develop`.
+- **Pull Requests** para `develop` (homologação) e depois para `master` (produção, deploy automático na
+  Vercel). Cada PR fecha sua issue com `Closes #N`.
+- **CI no GitHub Actions** em todo push e PR: lint, checagem de tipos e a suíte de testes contra um Postgres
+  de teste, rodando em UTC e no horário de Brasília.
+- **Features maiores têm spec e plano** antes do código, em [`docs/superpowers`](docs/superpowers).
 
 ## Licença
 
