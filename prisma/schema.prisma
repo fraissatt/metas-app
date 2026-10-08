@@ -127,3 +127,14 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+// Better Auth login rate limit (rateLimit.storage = "database"): one row per
+// IP + route, so the counter is shared by every serverless instance.
+model RateLimit {
+  id          String @id @default(cuid())
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rateLimit")
+}

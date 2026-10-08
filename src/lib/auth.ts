@@ -5,6 +5,10 @@ import { anonymous } from 'better-auth/plugins'
 import { prisma } from '@/lib/db'
 import { PASSWORD_MIN_LENGTH } from '@/lib/auth-errors'
 
+// Counters live in the database (table rateLimit): on Vercel every serverless
+// instance has its own memory, so an in-memory limit is easy to sidestep.
+export const rateLimitOptions = (enabled: boolean) => ({ enabled, storage: 'database' as const })
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
   emailAndPassword: {
@@ -18,7 +22,7 @@ export const auth = betterAuth({
       lastSeenAt: { type: 'date', required: false, input: false, defaultValue: () => new Date() },
     },
   },
-  rateLimit: { enabled: process.env.NODE_ENV === 'production' },
+  rateLimit: rateLimitOptions(process.env.NODE_ENV === 'production'),
   plugins: [
     anonymous({ generateName: () => 'Visitante' }),
     // Must stay last: lets Server Actions set the session cookie.
