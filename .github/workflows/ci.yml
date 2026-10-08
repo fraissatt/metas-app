@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master]
+  pull_request:
+    branches: [develop, master]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Lint e tipos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+
+  testes:
+    name: Testes (TZ=${{ matrix.tz }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # UTC is the Vercel server; Sao_Paulo is how users see the app.
+        tz: [UTC, America/Sao_Paulo]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: metas
+          POSTGRES_PASSWORD: metas
+          POSTGRES_DB: metas_app_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U metas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TZ: ${{ matrix.tz }}
+      DATABASE_URL: postgresql://metas:metas@localhost:5432/metas_app_test
+      BETTER_AUTH_SECRET: ci-only-secret-not-used-anywhere-else-0123456789
+      BETTER_AUTH_URL: http://localhost:3000
+      FUNNEL_PUBLIC: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma migrate deploy
+      - run: npx vitest run
