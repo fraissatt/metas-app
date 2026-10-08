@@ -3,11 +3,11 @@
 import { useState } from 'react'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { Button } from '@/components/ui/button'
-import { GUEST_THROTTLE_MESSAGE } from '@/lib/guest/throttle'
 
 const GENERIC_ERROR = 'Não foi possível concluir. Tente de novo.'
+const THROTTLED = 'Muitas tentativas. Tente de novo em alguns minutos.'
 
-export function GuestButton({ onEnter }: { onEnter: () => Promise<void> }) {
+export function GuestButton({ onEnter }: { onEnter: () => Promise<{ throttled: true } | void> }) {
   const [pending, setPending] = useState(false)
   const [failed, setFailed] = useState<string | null>(null)
 
@@ -25,11 +25,15 @@ export function GuestButton({ onEnter }: { onEnter: () => Promise<void> }) {
             // the awaited promise with a redirect error (the router navigates);
             // a plain resolve is also treated as success. Either way stay pending
             // because the page is navigating away. Only real failures show the error.
-            await onEnter()
+            const result = await onEnter()
+            if (result?.throttled) {
+              setFailed(THROTTLED)
+              setPending(false)
+            }
           } catch (error) {
             if (isRedirectError(error)) return
-            // Only the throttle message is meant for users; never leak other server messages.
-            setFailed(error instanceof Error && error.message === GUEST_THROTTLE_MESSAGE ? error.message : GENERIC_ERROR)
+            // Never show server error text to users.
+            setFailed(GENERIC_ERROR)
             setPending(false)
           }
         }}
