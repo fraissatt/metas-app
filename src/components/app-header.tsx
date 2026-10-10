@@ -2,13 +2,11 @@ import Link from 'next/link'
 import { getTodaySummary } from '@/lib/actions/summary'
 import { search } from '@/lib/actions/search'
 import { leaveGuestToSignUp, signOut } from '@/lib/actions/auth'
-import { BackgroundPicker } from '@/components/background-picker'
 import { GuestBanner } from '@/components/guest-banner'
 import { DaySummary } from '@/components/day-summary'
 import { HeaderNav } from '@/components/header-nav'
 import { RefreshOnFocus } from '@/components/refresh-on-focus'
 import { SearchDialog } from '@/components/search-dialog'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { UserMenu } from '@/components/user-menu'
 import type { CurrentUser } from '@/lib/session'
 import type { Theme } from '@/lib/theme'
@@ -34,7 +32,7 @@ export async function AppHeader({
         </Link>
         {user && <HeaderNav />}
         <div className="flex-1" />
-        {/* Desktop: search, summary, background picker, theme toggle. Mobile: summary, search, then background picker and theme toggle (spec). */}
+        {/* Desktop: search, summary, user menu. Mobile: summary, search, then the user menu. */}
         {user && (
           <div className="flex items-center max-md:order-2">
             <SearchDialog onSearch={search} />
@@ -46,19 +44,14 @@ export async function AppHeader({
           </div>
         )}
         <div className="flex items-center max-md:order-3">
-          <BackgroundPicker />
+          <UserMenu
+            user={user}
+            theme={theme}
+            onThemeChange={onThemeChange}
+            onSignOut={signOut}
+            onCreateAccount={leaveGuestToSignUp}
+          />
         </div>
-        <ThemeToggle
-          theme={theme}
-          onChange={onThemeChange}
-          className="px-2 text-muted-foreground hover:text-foreground max-md:order-3"
-          labelClassName="sr-only"
-        />
-        {user && (
-          <div className="flex items-center max-md:order-3">
-            <UserMenu name={user.name} isAnonymous={user.isAnonymous} onSignOut={signOut} />
-          </div>
-        )}
       </div>
       {user?.isAnonymous && <GuestBanner onCreateAccount={leaveGuestToSignUp} />}
     </header>

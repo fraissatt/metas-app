@@ -24,6 +24,13 @@ describe('AppHeader', () => {
     expect(screen.getByRole('link', { name: 'Metas' })).toBeInTheDocument()
   })
 
+  it('logged out: still offers the appearance menu, and no separate theme or background buttons', async () => {
+    render(await AppHeader({ ...base, user: null }))
+    expect(screen.getByRole('button', { name: 'Aparência' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /tema/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /fundo/i })).toBeNull()
+  })
+
   it('logged in: shows the user menu and no guest banner', async () => {
     render(await AppHeader({ ...base, user: { id: 'u', name: 'Ana', email: 'a@b.com', isAnonymous: false } }))
     expect(screen.getByRole('button', { name: 'Conta: Ana' })).toBeInTheDocument()
