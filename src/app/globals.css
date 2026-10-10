@@ -176,3 +176,20 @@
     scroll-margin-top: 1rem;
   }
 }
+/* Translucent "glass" surface for floating menus: blurs whatever is behind it
+   (the animated backgrounds). Falls back to the solid popover colour where
+   blur is unsupported or the user asked for less transparency. */
+@utility glass-popup {
+  background-color: color-mix(in oklab, var(--popover) 66%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background-color: var(--popover);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background-color: var(--popover);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
