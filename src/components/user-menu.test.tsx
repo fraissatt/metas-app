@@ -2,8 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BackgroundProvider } from '@/components/background-provider'
+import { TourProvider } from '@/components/tour-provider'
 import { applyTheme } from '@/components/use-theme'
 import { UserMenu, type MenuUser } from '@/components/user-menu'
+
+vi.mock('next/navigation', () => ({ usePathname: () => '/' }))
 
 vi.mock('@/components/interactive-background', () => ({
   InteractiveBackground: ({ style }: { style: string }) => <div data-testid="bg" data-style={style} />,
@@ -31,13 +34,15 @@ function setup({
 } = {}) {
   render(
     <BackgroundProvider initial="aurora" onChange={onBackgroundChange}>
-      <UserMenu
-        user={user}
-        theme="dark"
-        onThemeChange={onThemeChange}
-        onSignOut={onSignOut}
-        onCreateAccount={onCreateAccount}
-      />
+      <TourProvider initialSeen canOpen={false} onSeen={vi.fn(async () => {})}>
+        <UserMenu
+          user={user}
+          theme="dark"
+          onThemeChange={onThemeChange}
+          onSignOut={onSignOut}
+          onCreateAccount={onCreateAccount}
+        />
+      </TourProvider>
     </BackgroundProvider>,
   )
   return { onSignOut, onCreateAccount, onThemeChange, onBackgroundChange }
@@ -112,6 +117,19 @@ describe('UserMenu account', () => {
     expect(screen.queryByRole('menuitem', { name: 'Criar conta' })).toBeNull()
   })
 
+  it('offers "Ver tour" to a signed-in user, which opens the tour on the first step', async () => {
+    setup()
+    await open('Conta: Ana Maria')
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Ver tour' }))
+    expect(await screen.findByRole('dialog', { name: 'Objetivos' })).toBeInTheDocument()
+  })
+
+  it('offers "Ver tour" to a guest too', async () => {
+    setup({ user: guest })
+    await open('Conta: Visitante')
+    expect(await screen.findByRole('menuitem', { name: 'Ver tour' })).toBeInTheDocument()
+  })
+
   it('swallows the redirect rejection of the Server Action', async () => {
     const unhandled = vi.fn()
     process.on('unhandledRejection', unhandled)
@@ -166,6 +184,7 @@ describe('UserMenu appearance', () => {
     await screen.findByRole('menuitemradio', { name: 'Escuro' })
     expect(screen.getByRole('menuitemradio', { name: 'Nenhum' })).toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: 'Sair' })).toBeNull()
+    expect(screen.queryByRole('menuitem', { name: 'Ver tour' })).toBeNull()
   })
 
   it('closes on Escape', async () => {
