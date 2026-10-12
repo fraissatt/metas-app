@@ -6,11 +6,11 @@ const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8')
 
 describe('landing card styles', () => {
   it('only lifts the card where a pointer can hover and motion is allowed', () => {
-    expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\)\s*{[^}]*\.landing-card:hover/s)
+    expect(css).toMatch(/@media \(hover: hover\) and \(prefers-reduced-motion: no-preference\)\s*{[^}]*\.landing-card:hover/)
   })
 
   it('turns the entrance animation off for reduced motion', () => {
-    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{\s*\.landing-card\s*{\s*animation: none/s)
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{\s*\.landing-card\s*{\s*animation: none/)
   })
 
   it('defines the six colours for both themes', () => {
