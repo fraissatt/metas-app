@@ -23,13 +23,4 @@ describe('LeaveGuestDialog', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything())
   })
 
-  it('mentions the sign-up page when leaving to create an account', () => {
-    render(
-      <LeaveGuestDialog open onOpenChange={vi.fn()} action={vi.fn()} confirmLabel="Continuar" toSignUp />,
-    )
-    expect(
-      screen.getByText('Seus dados de visitante serão perdidos e você vai para o cadastro.'),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Continuar' })).toBeInTheDocument()
-  })
 })

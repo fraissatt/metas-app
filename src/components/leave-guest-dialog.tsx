@@ -20,13 +20,11 @@ export function LeaveGuestDialog({
   onOpenChange,
   action,
   confirmLabel,
-  toSignUp = false,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   action: () => Promise<void>
   confirmLabel: string
-  toSignUp?: boolean
 }) {
   const [isPending, startTransition] = useTransition()
 
@@ -35,11 +33,7 @@ export function LeaveGuestDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Sair da conta de visitante?</DialogTitle>
-          <DialogDescription>
-            {toSignUp
-              ? 'Seus dados de visitante serão perdidos e você vai para o cadastro.'
-              : 'Seus dados de visitante serão perdidos.'}
-          </DialogDescription>
+          <DialogDescription>Seus dados de visitante serão perdidos.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>

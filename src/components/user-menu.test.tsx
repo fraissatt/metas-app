@@ -22,13 +22,11 @@ function redirectError() {
 function setup({
   user = ana,
   onSignOut = vi.fn(async () => {}),
-  onCreateAccount = vi.fn(async () => {}),
   onThemeChange = vi.fn(async () => {}),
   onBackgroundChange = vi.fn(async () => {}),
 }: {
   user?: MenuUser | null
   onSignOut?: () => Promise<void>
-  onCreateAccount?: () => Promise<void>
   onThemeChange?: (theme: 'dark' | 'light') => Promise<void>
   onBackgroundChange?: (style: 'aurora' | 'pontos' | 'nenhum') => Promise<void>
 } = {}) {
@@ -40,12 +38,11 @@ function setup({
           theme="dark"
           onThemeChange={onThemeChange}
           onSignOut={onSignOut}
-          onCreateAccount={onCreateAccount}
         />
       </TourProvider>
     </BackgroundProvider>,
   )
-  return { onSignOut, onCreateAccount, onThemeChange, onBackgroundChange }
+  return { onSignOut, onThemeChange, onBackgroundChange }
 }
 
 const open = (name: string) => userEvent.click(screen.getByRole('button', { name }))
@@ -100,14 +97,13 @@ describe('UserMenu account', () => {
     expect(onSignOut).not.toHaveBeenCalled()
   })
 
-  it('lets a guest create an account, after confirming', async () => {
-    const { onCreateAccount } = setup({ user: guest })
+  it('offers a guest "Criar conta" as a link to the sign-up page, with no confirmation', async () => {
+    setup({ user: guest })
     await open('Conta: Visitante')
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Criar conta' }))
-    expect(onCreateAccount).not.toHaveBeenCalled()
-    expect(await screen.findByRole('dialog')).toHaveTextContent('você vai para o cadastro')
-    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
-    expect(onCreateAccount).toHaveBeenCalledOnce()
+    const item = await screen.findByRole('menuitem', { name: 'Criar conta' })
+    expect(item).toHaveAttribute('href', '/cadastro')
+    await userEvent.click(item)
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('does not offer "Criar conta" to a real account', async () => {
