@@ -59,4 +59,22 @@ describe('GuestButton', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Entrar como visitante' }))
     expect(screen.queryByRole('alert')).toBeNull()
   })
+
+  it('plain variant: no demo note, still calls onEnter and shows the throttle message', async () => {
+    const onEnter = vi.fn().mockResolvedValue({ throttled: true })
+    render(<GuestButton variant="plain" onEnter={onEnter} />)
+    expect(screen.queryByText('Conta de demonstração com dados prontos')).toBeNull()
+    const button = screen.getByRole('button', { name: 'Entrar como visitante' })
+    await userEvent.click(button)
+    expect(onEnter).toHaveBeenCalledOnce()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Muitas tentativas. Tente de novo em alguns minutos.')
+    expect(button).toBeEnabled()
+  })
+
+  it('plain variant: shows the generic error when onEnter rejects', async () => {
+    const onEnter = vi.fn().mockRejectedValue(new Error('boom'))
+    render(<GuestButton variant="plain" onEnter={onEnter} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Entrar como visitante' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível concluir. Tente de novo.')
+  })
 })
