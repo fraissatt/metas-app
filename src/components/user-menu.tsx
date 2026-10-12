@@ -109,7 +109,7 @@ export function UserMenu({
               {user && (
                 <>
                   {separator}
-                  <Menu.Item className={itemClass} onClick={openTour}>
+                  <Menu.Item className={cn(itemClass, 'md:hidden')} onClick={openTour}>
                     Ver tour
                   </Menu.Item>
                   <Menu.Item

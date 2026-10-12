@@ -5,6 +5,7 @@ import { signOut } from '@/lib/actions/auth'
 import { GuestBanner } from '@/components/guest-banner'
 import { DaySummary } from '@/components/day-summary'
 import { HeaderNav } from '@/components/header-nav'
+import { HelpButton } from '@/components/help-button'
 import { RefreshOnFocus } from '@/components/refresh-on-focus'
 import { SearchDialog } from '@/components/search-dialog'
 import { UserMenu } from '@/components/user-menu'
@@ -36,6 +37,12 @@ export async function AppHeader({
         {user && (
           <div className="flex items-center max-md:order-2">
             <SearchDialog onSearch={search} />
+          </div>
+        )}
+        {/* From md up only: the header is full on phones, where "Ver tour" stays in the account menu. */}
+        {user && (
+          <div className="hidden items-center md:flex">
+            <HelpButton />
           </div>
         )}
         {summary && (

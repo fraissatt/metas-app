@@ -44,6 +44,16 @@ describe('AppHeader', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
+  it('shows the help button to people with a session, and not to visitors without one', async () => {
+    render(await AppHeader({ ...base, user: { id: 'u', name: 'Ana', email: 'a@b.com', isAnonymous: false } }))
+    expect(screen.getByRole('button', { name: 'Ver tour' })).toBeInTheDocument()
+  })
+
+  it('logged out: no help button', async () => {
+    render(await AppHeader({ ...base, user: null }))
+    expect(screen.queryByRole('button', { name: 'Ver tour' })).toBeNull()
+  })
+
   it('guest: shows the guest banner', async () => {
     render(await AppHeader({ ...base, user: { id: 'g', name: 'Visitante', email: 'g@x.com', isAnonymous: true } }))
     expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/cadastro')

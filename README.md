@@ -22,8 +22,8 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
   metas semanais, tarefas diárias, modo visitante, quiz e app instalável) e três formas de entrar. Quem já
   está logado continua indo direto para o Hoje.
 - **Tour de boas-vindas:** na primeira visita, um diálogo em cinco etapas (objetivos, metas semanais, tarefas
-  diárias, busca e aparência) apresenta o app. Ele lembra por cookie que já foi visto e pode ser reaberto em
-  "Ver tour", no menu da conta.
+  diárias, busca e aparência) apresenta o app. Ele lembra por cookie que já foi visto e pode ser reaberto no
+  botão "?" do cabeçalho (no celular, em "Ver tour", no menu da conta).
 - **Contas e modo visitante:** login com e-mail e senha (Better Auth) e visitante com dados fictícios
   gerados na hora; cada pessoa só vê os próprios dados. O visitante pode criar uma conta e levar o que
   montou; entrar numa conta que já existe descarta os dados de visitante.
