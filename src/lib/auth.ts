@@ -4,6 +4,7 @@ import { nextCookies } from 'better-auth/next-js'
 import { anonymous } from 'better-auth/plugins'
 import { prisma } from '@/lib/db'
 import { PASSWORD_MIN_LENGTH } from '@/lib/auth-errors'
+import { moveGuestDataOnSignUp } from '@/lib/guest/link'
 
 // Counters live in the database (table rateLimit): on Vercel every serverless
 // instance has its own memory, so an in-memory limit is easy to sidestep.
@@ -24,7 +25,7 @@ export const auth = betterAuth({
   },
   rateLimit: rateLimitOptions(process.env.NODE_ENV === 'production'),
   plugins: [
-    anonymous({ generateName: () => 'Visitante' }),
+    anonymous({ generateName: () => 'Visitante', onLinkAccount: moveGuestDataOnSignUp }),
     // Must stay last: lets Server Actions set the session cookie.
     nextCookies(),
   ],

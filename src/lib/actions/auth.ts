@@ -9,7 +9,3 @@ export async function signOut(destination?: unknown): Promise<void> {
   // Only the two known destinations: never redirect to caller-supplied URLs.
   redirect(destination === '/cadastro' ? '/cadastro' : '/entrar')
 }
-
-export async function leaveGuestToSignUp(): Promise<void> {
-  await signOut('/cadastro')
-}

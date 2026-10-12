@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getTodaySummary } from '@/lib/actions/summary'
 import { search } from '@/lib/actions/search'
-import { leaveGuestToSignUp, signOut } from '@/lib/actions/auth'
+import { signOut } from '@/lib/actions/auth'
 import { GuestBanner } from '@/components/guest-banner'
 import { DaySummary } from '@/components/day-summary'
 import { HeaderNav } from '@/components/header-nav'
@@ -49,11 +49,10 @@ export async function AppHeader({
             theme={theme}
             onThemeChange={onThemeChange}
             onSignOut={signOut}
-            onCreateAccount={leaveGuestToSignUp}
           />
         </div>
       </div>
-      {user?.isAnonymous && <GuestBanner onCreateAccount={leaveGuestToSignUp} />}
+      {user?.isAnonymous && <GuestBanner />}
     </header>
   )
 }

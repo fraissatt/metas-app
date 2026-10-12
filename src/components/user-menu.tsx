@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Menu } from '@base-ui/react/menu'
 import { Check, Moon, Palette, Sun } from 'lucide-react'
 import { useBackground } from '@/components/background-provider'
@@ -36,19 +37,16 @@ export function UserMenu({
   theme: initialTheme,
   onThemeChange,
   onSignOut,
-  onCreateAccount,
 }: {
   user: MenuUser | null
   theme: Theme
   onThemeChange: (theme: Theme) => Promise<void>
   onSignOut: () => Promise<void>
-  onCreateAccount: () => Promise<void>
 }) {
   const { theme, setTheme } = useTheme(initialTheme, onThemeChange)
   const { style, setStyle } = useBackground()
   const { openTour } = useTour()
   const [leaveOpen, setLeaveOpen] = useState(false)
-  const [signUpOpen, setSignUpOpen] = useState(false)
   const label = user ? (user.isAnonymous ? 'Visitante' : user.name) : null
 
   return (
@@ -75,9 +73,9 @@ export function UserMenu({
                 </div>
               )}
               {user?.isAnonymous && (
-                <Menu.Item className={itemClass} onClick={() => setSignUpOpen(true)}>
+                <Menu.LinkItem className={itemClass} closeOnClick render={<Link href="/cadastro" />}>
                   Criar conta
-                </Menu.Item>
+                </Menu.LinkItem>
               )}
               {user && separator}
               <Menu.Group>
@@ -127,16 +125,7 @@ export function UserMenu({
         </Menu.Portal>
       </Menu.Root>
       {user?.isAnonymous && (
-        <>
-          <LeaveGuestDialog open={leaveOpen} onOpenChange={setLeaveOpen} action={onSignOut} confirmLabel="Sair" />
-          <LeaveGuestDialog
-            open={signUpOpen}
-            onOpenChange={setSignUpOpen}
-            action={onCreateAccount}
-            confirmLabel="Continuar"
-            toSignUp
-          />
-        </>
+        <LeaveGuestDialog open={leaveOpen} onOpenChange={setLeaveOpen} action={onSignOut} confirmLabel="Sair" />
       )}
     </>
   )
