@@ -104,6 +104,8 @@ describe('UserMenu account', () => {
     expect(item).toHaveAttribute('href', '/cadastro')
     await userEvent.click(item)
     expect(screen.queryByRole('dialog')).toBeNull()
+    // The menu lives in the root layout, so it must close itself when the link navigates.
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
   })
 
   it('does not offer "Criar conta" to a real account', async () => {

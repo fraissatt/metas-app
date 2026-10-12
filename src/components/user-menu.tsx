@@ -73,7 +73,7 @@ export function UserMenu({
                 </div>
               )}
               {user?.isAnonymous && (
-                <Menu.LinkItem className={itemClass} render={<Link href="/cadastro" />}>
+                <Menu.LinkItem className={itemClass} closeOnClick render={<Link href="/cadastro" />}>
                   Criar conta
                 </Menu.LinkItem>
               )}
