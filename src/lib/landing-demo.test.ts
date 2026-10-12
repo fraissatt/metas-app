@@ -27,6 +27,11 @@ describe('buildLandingDemo', () => {
     }
   })
 
+  it('carries the Brasília day it was built for, so views never read the clock themselves', () => {
+    expect(formatDayKey(buildLandingDemo(WEDNESDAY).today)).toBe('2026-10-14')
+    expect(formatDayKey(buildLandingDemo(SUNDAY_NIGHT).today)).toBe('2026-10-11')
+  })
+
   it('marks the days before today as done and leaves today and later open', () => {
     const today = appToday(WEDNESDAY)
     for (const goal of buildLandingDemo(WEDNESDAY).goals) {

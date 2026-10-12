@@ -2,7 +2,8 @@ import type { DailyTask, Objective, WeeklyGoal } from '@prisma/client'
 import { addAppDays, addAppWeeks, appToday, differenceInAppDays, getWeekBounds } from '@/lib/dates'
 
 export type DemoGoal = WeeklyGoal & { objective: Objective; dailyTasks: DailyTask[] }
-export type LandingDemoData = { objective: Objective; goals: DemoGoal[] }
+/** `today` is the Brasília day the data was built for: the views read it instead of the clock, so server and client agree. */
+export type LandingDemoData = { today: Date; objective: Objective; goals: DemoGoal[] }
 
 type Plan = { id: string; title: string; task: string; days: number[] } // 0 = Monday ... 6 = Sunday
 
@@ -62,5 +63,5 @@ export function buildLandingDemo(now: Date = new Date()): LandingDemoData {
     }
   })
 
-  return { objective, goals }
+  return { today, objective, goals }
 }
