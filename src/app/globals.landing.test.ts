@@ -13,6 +13,10 @@ describe('landing card styles', () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{\s*\.landing-card\s*{\s*animation: none/)
   })
 
+  it('does not hold the entrance end state, which would override the hover transform', () => {
+    expect(css).toMatch(/animation: landing-in 500ms ease backwards/)
+  })
+
   it('defines the six colours for both themes', () => {
     for (const name of ['green', 'blue', 'amber', 'violet', 'pink', 'cyan']) {
       expect(css.match(new RegExp(`--lp-${name}:`, 'g'))?.length, name).toBe(2)

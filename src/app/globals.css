@@ -229,7 +229,7 @@
     transform 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease;
-  animation: landing-in 500ms ease both;
+  animation: landing-in 500ms ease backwards;
   animation-delay: calc(var(--i, 0) * 70ms);
 }
 .landing-card-icon {
