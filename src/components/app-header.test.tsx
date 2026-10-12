@@ -46,6 +46,6 @@ describe('AppHeader', () => {
 
   it('guest: shows the guest banner', async () => {
     render(await AppHeader({ ...base, user: { id: 'g', name: 'Visitante', email: 'g@x.com', isAnonymous: true } }))
-    expect(screen.getByRole('button', { name: 'Criar conta' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/cadastro')
   })
 })

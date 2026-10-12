@@ -25,7 +25,8 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
   diárias, busca e aparência) apresenta o app. Ele lembra por cookie que já foi visto e pode ser reaberto em
   "Ver tour", no menu da conta.
 - **Contas e modo visitante:** login com e-mail e senha (Better Auth) e visitante com dados fictícios
-  gerados na hora; cada pessoa só vê os próprios dados.
+  gerados na hora; cada pessoa só vê os próprios dados. O visitante pode criar uma conta e levar o que
+  montou; entrar numa conta que já existe descarta os dados de visitante.
 - **Quiz de onboarding:** cinco perguntas (área, foco, prazo, dias da semana e maior obstáculo), com
   perguntas que mudam conforme a resposta anterior. No fim, o app mostra um plano pronto — objetivo com
   data-meta, meta semanal recorrente e tarefas nos dias escolhidos — e cria tudo com um clique. Abre

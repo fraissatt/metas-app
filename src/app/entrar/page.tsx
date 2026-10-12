@@ -9,7 +9,8 @@ import { enterAsGuest } from '@/lib/actions/guest'
 export const metadata: Metadata = { title: 'Entrar' }
 
 export default async function EntrarPage({ searchParams }: { searchParams: Promise<{ expirado?: string }> }) {
-  if (await getCurrentUser()) redirect('/')
+  const user = await getCurrentUser()
+  if (user && !user.isAnonymous) redirect('/')
   const { expirado } = await searchParams
 
   return (
@@ -20,7 +21,13 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
           Sua sessão de visitante expirou
         </p>
       )}
-      <GuestButton onEnter={enterAsGuest} />
+      {user?.isAnonymous ? (
+        <p role="status" className="rounded-md border border-border bg-card p-3 text-sm">
+          Entrar numa conta existente descarta os dados de visitante.
+        </p>
+      ) : (
+        <GuestButton onEnter={enterAsGuest} />
+      )}
       <AuthForm mode="entrar" />
       <p className="text-sm text-muted-foreground">
         Não tem conta? <Link href="/cadastro" className="text-accent-foreground underline-offset-4 hover:underline">Criar conta</Link>
