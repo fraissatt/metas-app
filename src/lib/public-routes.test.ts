@@ -7,8 +7,13 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/cadastro', false)).toBe(true)
   })
 
+  it('opens the presentation page at the root', () => {
+    expect(isPublicPath('/', false)).toBe(true)
+    expect(isPublicPath('/', true)).toBe(true)
+  })
+
   it('protects app pages', () => {
-    for (const path of ['/', '/objectives', '/objectives/abc', '/quiz', '/week']) {
+    for (const path of ['/objectives', '/objectives/abc', '/quiz', '/week']) {
       expect(isPublicPath(path, true)).toBe(false)
     }
   })
