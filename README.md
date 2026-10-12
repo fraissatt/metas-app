@@ -21,6 +21,9 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 - **Página de apresentação:** quem abre o site sem sessão vê, na raiz, uma página com seis cards (objetivos,
   metas semanais, tarefas diárias, modo visitante, quiz e app instalável) e três formas de entrar. Quem já
   está logado continua indo direto para o Hoje.
+- **Tour de boas-vindas:** na primeira visita, um diálogo em cinco etapas (objetivos, metas semanais, tarefas
+  diárias, busca e aparência) apresenta o app. Ele lembra por cookie que já foi visto e pode ser reaberto em
+  "Ver tour", no menu da conta.
 - **Contas e modo visitante:** login com e-mail e senha (Better Auth) e visitante com dados fictícios
   gerados na hora; cada pessoa só vê os próprios dados.
 - **Quiz de onboarding:** cinco perguntas (área, foco, prazo, dias da semana e maior obstáculo), com
@@ -54,6 +57,10 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 ### Página de apresentação
 
 ![Página de apresentação com seis cards coloridos e os botões de entrada, com o primeiro card em destaque ao passar o mouse](docs/screenshots/apresentacao.jpg)
+
+### Tour de boas-vindas
+
+![Diálogo de boas-vindas na primeira etapa, sobre a tela Hoje](docs/screenshots/tour.jpg)
 
 ### Objetivos
 

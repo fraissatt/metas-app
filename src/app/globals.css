@@ -252,3 +252,25 @@
     animation: none;
   }
 }
+
+/* Welcome tour: each step fades in; reduced motion skips it. */
+@keyframes tour-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tour-step {
+  animation: tour-step-in 200ms ease backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-step {
+    animation: none;
+  }
+}

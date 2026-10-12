@@ -3,11 +3,14 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
 import { BackgroundProvider } from "@/components/background-provider";
 import { BottomNav } from "@/components/bottom-nav";
+import { TourProvider } from "@/components/tour-provider";
 import { setBackground } from "@/lib/actions/background";
 import { setTheme } from "@/lib/actions/theme";
+import { setTourSeen } from "@/lib/actions/tour";
 import { getBackground } from "@/lib/background";
 import { getCurrentUser } from "@/lib/session";
 import { BROWSER_CHROME, getTheme } from "@/lib/theme";
+import { getTourSeen } from "@/lib/tour";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -43,6 +46,7 @@ export default async function RootLayout({
 }>) {
   const theme = await getTheme();
   const background = await getBackground();
+  const tourSeen = await getTourSeen();
   const user = await getCurrentUser();
 
   return (
@@ -59,15 +63,17 @@ export default async function RootLayout({
           Pular para o conteúdo
         </a>
         <BackgroundProvider initial={background} onChange={setBackground}>
-          <AppHeader theme={theme} onThemeChange={setTheme} user={user} />
-          <div
-            id="conteudo"
-            tabIndex={-1}
-            className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0"
-          >
-            {children}
-          </div>
-          {user && <BottomNav />}
+          <TourProvider initialSeen={tourSeen} canOpen={!!user} onSeen={setTourSeen}>
+            <AppHeader theme={theme} onThemeChange={setTheme} user={user} />
+            <div
+              id="conteudo"
+              tabIndex={-1}
+              className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0"
+            >
+              {children}
+            </div>
+            {user && <BottomNav />}
+          </TourProvider>
         </BackgroundProvider>
       </body>
     </html>

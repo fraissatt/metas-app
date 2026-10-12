@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { render as rtlRender, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { BackgroundProvider } from '@/components/background-provider'
+import { TourProvider } from '@/components/tour-provider'
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/entrar', useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }))
 const getTodaySummary = vi.hoisted(() => vi.fn(async () => ({ completed: 1, total: 3, weekStart: new Date(2026, 9, 5) })))
@@ -11,7 +12,13 @@ vi.mock('@/lib/actions/auth', () => ({ signOut: vi.fn(), leaveGuestToSignUp: vi.
 
 const { AppHeader } = await import('@/components/app-header')
 const render = (ui: ReactElement) =>
-  rtlRender(<BackgroundProvider initial="nenhum" onChange={vi.fn()}>{ui}</BackgroundProvider>)
+  rtlRender(
+    <BackgroundProvider initial="nenhum" onChange={vi.fn()}>
+      <TourProvider initialSeen canOpen={false} onSeen={vi.fn(async () => {})}>
+        {ui}
+      </TourProvider>
+    </BackgroundProvider>,
+  )
 const base = { theme: 'dark' as const, onThemeChange: vi.fn() }
 
 describe('AppHeader', () => {
