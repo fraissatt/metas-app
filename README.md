@@ -18,6 +18,9 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 
 ## Funcionalidades
 
+- **Página de apresentação:** quem abre o site sem sessão vê, na raiz, uma página com seis cards (objetivos,
+  metas semanais, tarefas diárias, modo visitante, quiz e app instalável) e três formas de entrar. Quem já
+  está logado continua indo direto para o Hoje.
 - **Contas e modo visitante:** login com e-mail e senha (Better Auth) e visitante com dados fictícios
   gerados na hora; cada pessoa só vê os próprios dados.
 - **Quiz de onboarding:** cinco perguntas (área, foco, prazo, dias da semana e maior obstáculo), com
@@ -47,6 +50,10 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 - **Instalável como app (PWA)** e com layout próprio para celular, com navegação inferior.
 
 ## Capturas de tela
+
+### Página de apresentação
+
+![Página de apresentação com seis cards coloridos e os botões de entrada, com o primeiro card em destaque ao passar o mouse](docs/screenshots/apresentacao.jpg)
 
 ### Objetivos
 

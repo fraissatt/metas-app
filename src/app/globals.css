@@ -193,3 +193,62 @@
     backdrop-filter: none;
   }
 }
+
+/* Presentation page: one accent per card. Light values are darker so the icon
+   and border keep their contrast on a white card; dark values are the neon ones. */
+:root {
+  --lp-green: #15803d;
+  --lp-blue: #2563eb;
+  --lp-amber: #b45309;
+  --lp-violet: #7c3aed;
+  --lp-pink: #be185d;
+  --lp-cyan: #0e7490;
+}
+.dark {
+  --lp-green: #39ff14;
+  --lp-blue: #4f9dff;
+  --lp-amber: #ffb020;
+  --lp-violet: #b78cff;
+  --lp-pink: #ff6fae;
+  --lp-cyan: #2fd4d4;
+}
+
+@keyframes landing-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.landing-card {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+  animation: landing-in 500ms ease backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.landing-card-icon {
+  transition: transform 180ms ease;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .landing-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--card-color);
+    box-shadow: 0 8px 28px color-mix(in oklab, var(--card-color) 28%, transparent);
+  }
+  .landing-card:hover .landing-card-icon {
+    transform: scale(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-card {
+    animation: none;
+  }
+}

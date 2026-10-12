@@ -5,6 +5,7 @@ export function isFunnelPublic(env: Record<string, string | undefined> = process
 }
 
 export function isPublicPath(pathname: string, funnelPublic: boolean): boolean {
+  if (pathname === '/') return true
   if ((AUTH_PAGES as readonly string[]).includes(pathname)) return true
   return funnelPublic && pathname === '/funil'
 }

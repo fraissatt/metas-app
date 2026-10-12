@@ -3,19 +3,32 @@
 import { useState } from 'react'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 const GENERIC_ERROR = 'Não foi possível concluir. Tente de novo.'
 const THROTTLED = 'Muitas tentativas. Tente de novo em alguns minutos.'
 
-export function GuestButton({ onEnter }: { onEnter: () => Promise<{ throttled: true } | void> }) {
+export function GuestButton({
+  onEnter,
+  variant = 'card',
+}: {
+  onEnter: () => Promise<{ throttled: true } | void>
+  variant?: 'card' | 'plain'
+}) {
   const [pending, setPending] = useState(false)
   const [failed, setFailed] = useState<string | null>(null)
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
+    <div
+      className={cn(
+        'flex flex-col gap-2',
+        variant === 'card' ? 'rounded-lg border border-border bg-card p-4' : 'items-start',
+      )}
+    >
       <Button
         type="button"
-        variant="secondary"
+        variant={variant === 'card' ? 'secondary' : 'default'}
+        size={variant === 'card' ? 'default' : 'lg'}
         disabled={pending}
         onClick={async () => {
           setPending(true)
@@ -40,7 +53,7 @@ export function GuestButton({ onEnter }: { onEnter: () => Promise<{ throttled: t
       >
         Entrar como visitante
       </Button>
-      <p className="text-xs text-muted-foreground">Conta de demonstração com dados prontos</p>
+      {variant === 'card' && <p className="text-xs text-muted-foreground">Conta de demonstração com dados prontos</p>}
       {failed && <p role="alert" className="text-xs text-destructive">{failed}</p>}
     </div>
   )
