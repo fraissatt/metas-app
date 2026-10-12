@@ -15,7 +15,7 @@ afterEach(() => vi.unstubAllEnvs())
 
 describe('proxy', () => {
   it('sends a visitor without a session cookie to /entrar', () => {
-    for (const path of ['/', '/objectives', '/objectives/abc/weeks/xyz', '/quiz']) {
+    for (const path of ['/objectives', '/objectives/abc/weeks/xyz', '/quiz']) {
       const response = proxy(request(path))
       expect(response.status, path).toBe(307)
       expect(response.headers.get('location'), path).toBe(`${ORIGIN}/entrar`)
@@ -31,8 +31,12 @@ describe('proxy', () => {
   })
 
   it('ignores other cookies', () => {
-    const response = proxy(request('/', 'theme=dark; fundo=aurora'))
+    const response = proxy(request('/objectives', 'theme=dark; fundo=aurora'))
     expect(response.status).toBe(307)
+  })
+
+  it('lets the presentation page at / through without a cookie', () => {
+    expect(passesThrough(proxy(request('/')))).toBe(true)
   })
 
   it('keeps /entrar and /cadastro open without a cookie', () => {

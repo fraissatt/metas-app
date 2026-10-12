@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { deleteDailyTask, listDailyTasksByDate, toggleDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import { countObjectives } from '@/lib/actions/objectives'
+import { enterAsGuest } from '@/lib/actions/guest'
 import { getLifetimeStats } from '@/lib/actions/stats'
 import {
   countPendingRecurrences,
@@ -10,15 +11,24 @@ import {
   materializePendingWeek,
   repeatMissingGoals,
 } from '@/lib/actions/weeklyGoals'
+import { getCurrentUser } from '@/lib/session'
 import { FluidDayWeek } from '@/components/fluid-day-week'
 import { HomeEmptyState } from '@/components/home-empty-state'
+import { Landing } from '@/components/landing'
 import { LifetimeProgressBanner } from '@/components/lifetime-progress-banner'
 import { MissingGoalsCard } from '@/components/missing-goals-card'
 import { ReturnEmptyState } from '@/components/return-empty-state'
 import { WeekMaterializer } from '@/components/week-materializer'
 
 // The layout's title template skips pages in its own segment, so spell it out.
-export const metadata: Metadata = { title: { absolute: 'Hoje · Metas' } }
+// The title depends on the session: signed-out visitors see the presentation page.
+export async function generateMetadata(): Promise<Metadata> {
+  if (await getCurrentUser()) return { title: { absolute: 'Hoje · Metas' } }
+  return {
+    title: { absolute: 'Metas · Do objetivo à tarefa do dia' },
+    description: 'Objetivos, metas semanais e tarefas diárias em um só lugar. Entre como visitante e teste agora.',
+  }
+}
 
 // This page's correctness depends on the wall clock at request time (it
 // filters tasks by "today" and computes "the current week" from `new
@@ -26,6 +36,9 @@ export const metadata: Metadata = { title: { absolute: 'Hoje · Metas' } }
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
+  // Signed-out visitors (and expired cookies) get the presentation page.
+  if (!(await getCurrentUser())) return <Landing onEnterAsGuest={enterAsGuest} />
+
   const goals = await listWeeklyGoalsForCurrentWeek()
   const stats = await getLifetimeStats()
   const preview = await getMissingGoalsPreview()
