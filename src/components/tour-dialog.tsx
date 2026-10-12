@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -14,13 +14,16 @@ import { TOUR_STEPS } from '@/components/tour-steps'
 
 export function TourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [index, setIndex] = useState(0)
+  // Focus the main action when the dialog opens: Pular is first in the DOM, so
+  // the default would make Enter skip the whole tour.
+  const nextRef = useRef<HTMLButtonElement>(null)
   const step = TOUR_STEPS[index]
   const Icon = step.icon
   const isLast = index === TOUR_STEPS.length - 1
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false}>
+      <DialogContent showCloseButton={false} initialFocus={nextRef}>
         <div
           key={step.id}
           className="tour-step flex flex-col gap-3"
@@ -59,7 +62,7 @@ export function TourDialog({ open, onOpenChange }: { open: boolean; onOpenChange
               Voltar
             </Button>
           )}
-          <Button onClick={() => (isLast ? onOpenChange(false) : setIndex(index + 1))}>
+          <Button ref={nextRef} onClick={() => (isLast ? onOpenChange(false) : setIndex(index + 1))}>
             {isLast ? 'Começar' : 'Próximo'}
           </Button>
         </DialogFooter>

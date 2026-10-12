@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TourDialog } from '@/components/tour-dialog'
 import { TOUR_STEPS } from '@/components/tour-steps'
@@ -30,6 +30,14 @@ describe('TourDialog', () => {
     expect(screen.getByText('1 de 5')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Voltar' })).toBeNull()
     expect(screen.getByRole('button', { name: 'Próximo' })).toBeInTheDocument()
+  })
+
+  it('puts keyboard focus on the main action, so Enter goes to the next step instead of skipping', async () => {
+    const onOpenChange = setup()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Próximo' })).toHaveFocus())
+    await userEvent.keyboard('{Enter}')
+    expect(screen.getByRole('dialog', { name: 'Metas semanais' })).toBeInTheDocument()
+    expect(onOpenChange).not.toHaveBeenCalled()
   })
 
   it('moves forward and back, updating the indicator', async () => {
