@@ -8,7 +8,7 @@ describe('root page', () => {
     actAs(null)
     render(await Home())
     expect(screen.getByRole('heading', { level: 1, name: 'Metas' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Entrar como visitante' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: 'Entrar como visitante' }).length).toBeGreaterThan(0)
   })
 
   it('keeps showing Hoje to a signed-in user (no objective yet sends them to the quiz)', async () => {

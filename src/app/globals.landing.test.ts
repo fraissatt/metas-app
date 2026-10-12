@@ -23,3 +23,15 @@ describe('landing card styles', () => {
     }
   })
 })
+
+describe('landing flow styles', () => {
+  it('fades the demo view in, but not for reduced motion', () => {
+    expect(css).toMatch(/\.landing-view\s*{[^}]*animation: tour-step-in/)
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{[^}]*\.landing-view\s*{\s*animation: none/)
+  })
+
+  it('reveals sections on scroll only where scroll-driven animation exists, and not for reduced motion', () => {
+    expect(css).toMatch(/@supports \(animation-timeline: view\(\)\)\s*{[^}]*\.landing-reveal/)
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{[^}]*\.landing-reveal\s*{\s*animation: none/)
+  })
+})

@@ -12,32 +12,52 @@ describe('Landing', () => {
     expect(screen.getByText('Do objetivo à tarefa do dia, sem se perder no meio do caminho.')).toBeInTheDocument()
   })
 
-  it('offers the three ways in', () => {
+  it('offers the three ways in at the top and again at the end', () => {
     setup()
-    expect(screen.getByRole('button', { name: 'Entrar como visitante' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/cadastro')
+    expect(screen.getAllByRole('button', { name: 'Entrar como visitante' })).toHaveLength(2)
+    for (const link of screen.getAllByRole('link', { name: 'Criar conta' })) {
+      expect(link).toHaveAttribute('href', '/cadastro')
+    }
+    expect(screen.getAllByRole('link', { name: 'Criar conta' })).toHaveLength(2)
     expect(screen.getByRole('link', { name: 'Já tenho conta' })).toHaveAttribute('href', '/entrar')
     expect(
       screen.getByText('Conta de demonstração com dados prontos. Os dados somem após 24 h sem uso.'),
     ).toBeInTheDocument()
   })
 
-  it('lists the six cards in order, none of them interactive', () => {
+  it('has no screenshots: the live demo is the showcase', () => {
     setup()
-    const list = screen.getByRole('list', { name: 'O que o Metas oferece' })
+    expect(screen.queryAllByRole('img')).toHaveLength(0)
+    expect(screen.getByRole('region', { name: 'Demonstração interativa' })).toBeInTheDocument()
+  })
+
+  it('explains how it works in three numbered steps, in order', () => {
+    setup()
+    expect(screen.getByRole('heading', { level: 2, name: 'Como funciona' })).toBeInTheDocument()
+    const steps = screen.getByRole('list', { name: 'Como funciona' })
+    expect(steps.tagName).toBe('OL')
+    const titles = within(steps)
+      .getAllByRole('heading', { level: 3 })
+      .map((heading) => heading.textContent)
+    expect(titles).toEqual(['Objetivo', 'Meta da semana', 'Tarefa do dia'])
+  })
+
+  it('lists the three extra features as cards, none of them interactive', () => {
+    setup()
+    expect(screen.getByRole('heading', { level: 2, name: 'E também' })).toBeInTheDocument()
+    const list = screen.getByRole('list', { name: 'E também' })
     const titles = within(list)
       .getAllByRole('heading')
       .map((heading) => heading.textContent)
-    expect(titles).toEqual([
-      'Objetivos',
-      'Metas semanais',
-      'Tarefas diárias',
-      'Modo visitante',
-      'Quiz de plano',
-      'App instalável',
-    ])
+    expect(titles).toEqual(['Modo visitante', 'Quiz de plano', 'App instalável'])
     expect(within(list).queryAllByRole('link')).toHaveLength(0)
     expect(within(list).queryAllByRole('button')).toHaveLength(0)
+  })
+
+  it('orders the sections: how it works, then the extras, then the closing call', () => {
+    setup()
+    const headings = screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
+    expect(headings).toEqual(['Como funciona', 'E também', 'Pronto para começar?'])
   })
 
   it('has a footer with the source link and the rights notice', () => {
