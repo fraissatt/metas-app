@@ -1,7 +1,6 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { format } from 'date-fns'
 import { WeeklyGoalCard } from '@/components/weekly-goal-card'
 import { getWeekBounds, parseDay } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
@@ -9,6 +8,8 @@ import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
 async function openNewTaskForm() {
   await userEvent.click(screen.getByRole('button', { name: '+ Nova tarefa' }))
 }
+
+afterEach(() => vi.useRealTimers())
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
@@ -80,11 +81,13 @@ describe('WeeklyGoalCard', () => {
   })
 
   it("pre-checks today's toggle when the goal's week contains today", async () => {
+    // 02:08 UTC on Monday 12/10 is still Sunday 11/10 in Brasília (23:08): the
+    // app's calendar day, not the machine's, decides which toggle is "today".
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-12T02:08:00Z'))
     const { weekStart, weekEnd } = getWeekBounds(new Date())
     const goal: WeeklyGoalWithTasks = { ...baseGoal, weekStart, weekEnd, dailyTasks: [] }
-    const today = new Date()
-    const todayIndex = (today.getDay() + 6) % 7 // Mon=0 ... Sun=6
-    const label = `${DAY_LABELS[todayIndex]} ${format(today, 'd')}`
+    const label = `${DAY_LABELS[6]} 11`
 
     render(
       <WeeklyGoalCard goal={goal} expanded={false} onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
