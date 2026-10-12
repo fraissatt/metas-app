@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LandingFlow } from '@/components/landing-flow'
 import { buildLandingDemo } from '@/lib/landing-demo'
@@ -7,11 +7,14 @@ import { buildLandingDemo } from '@/lib/landing-demo'
 const data = buildLandingDemo(new Date('2026-10-14T15:00:00Z'))
 
 type Entry = Pick<IntersectionObserverEntry, 'isIntersecting' | 'target'>
-const observers: { callback: (entries: Entry[]) => void; targets: Element[] }[] = []
+const observers: { callback: (entries: Entry[]) => void; targets: Element[]; options?: IntersectionObserverInit }[] = []
 
 class FakeObserver {
   targets: Element[] = []
-  constructor(public callback: (entries: Entry[]) => void) {
+  constructor(
+    public callback: (entries: Entry[]) => void,
+    public options?: IntersectionObserverInit,
+  ) {
     observers.push(this)
   }
   observe(element: Element) {
@@ -79,6 +82,27 @@ describe('LandingFlow', () => {
     reach(1)
     reach(2)
     expect(screen.getByRole('checkbox', { name: 'Revisar 20 cartões no Anki' })).toBeChecked()
+  })
+
+  it('makes the demo itself the sticky element, as a direct child of the grid that holds the steps', () => {
+    // A sticky box can only travel inside its parent: if the demo sat in its own
+    // short wrapper it would never stick while the steps scroll past.
+    render(<LandingFlow data={data} />)
+    const grid = screen.getByRole('list', { name: 'Como funciona' }).parentElement
+    const sticky = screen.getByRole('region', { name: 'Demonstração interativa' }).closest('.sticky')
+    expect(sticky?.parentElement).toBe(grid)
+  })
+
+  it('reads the middle of the window on desktop, and the area under the sticky demo on phones', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('1024px') }))
+    render(<LandingFlow data={data} />)
+    expect(observers[0].options?.rootMargin).toBe('-45% 0px -45% 0px')
+
+    cleanup()
+    observers.length = 0
+    vi.stubGlobal('matchMedia', () => ({ matches: false }))
+    render(<LandingFlow data={data} />)
+    expect(observers[0].options?.rootMargin).toBe('-65% 0px -20% 0px')
   })
 
   it('still renders, on step 1, where IntersectionObserver does not exist', () => {

@@ -12,7 +12,9 @@ export function LandingFlow({ data }: { data: LandingDemoData }) {
 
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return
-    // A thin band around the middle of the window: the step crossing it is the one being read.
+    // A thin band: the step crossing it is the one being read. On desktop it is the middle of the
+    // window; on phones the demo covers the top half, so it is the area just below the demo.
+    const desktop = typeof matchMedia === 'function' && matchMedia('(min-width: 1024px)').matches
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -21,7 +23,7 @@ export function LandingFlow({ data }: { data: LandingDemoData }) {
           if (index >= 0) setActive(index as DemoStep)
         }
       },
-      { rootMargin: '-45% 0px -45% 0px' },
+      { rootMargin: desktop ? '-45% 0px -45% 0px' : '-65% 0px -20% 0px' },
     )
     items.current.forEach((item) => item && observer.observe(item))
     return () => observer.disconnect()
@@ -29,10 +31,9 @@ export function LandingFlow({ data }: { data: LandingDemoData }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
-      <div className="order-first lg:sticky lg:top-20 lg:order-last">
-        <div className="sticky top-14 z-10 max-h-[45vh] overflow-y-auto rounded-xl border border-border bg-background/90 p-3 backdrop-blur lg:static lg:max-h-[calc(100vh-7rem)]">
-          <LandingDemo data={data} step={active} />
-        </div>
+      {/* The sticky box is a direct child of the grid, so it can travel the whole height of the steps. */}
+      <div className="sticky top-14 z-10 order-first max-h-[45vh] overflow-y-auto rounded-xl border border-border bg-background/90 p-3 backdrop-blur lg:top-20 lg:order-last lg:max-h-[calc(100vh-7rem)]">
+        <LandingDemo data={data} step={active} />
       </div>
       <ol aria-label="Como funciona" className="flex flex-col">
         {STEPS.map((step, index) => (
