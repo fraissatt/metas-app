@@ -6,6 +6,7 @@ import { Check, Moon, Palette, Sun } from 'lucide-react'
 import { useBackground } from '@/components/background-provider'
 import { LeaveGuestDialog } from '@/components/leave-guest-dialog'
 import { useTheme } from '@/components/use-theme'
+import { useTour } from '@/components/tour-provider'
 import { BACKGROUND_LABELS, BACKGROUND_STYLES, type BackgroundStyle } from '@/lib/background-options'
 import { initialsOf } from '@/lib/initials'
 import { runRedirectingAction } from '@/lib/run-redirecting-action'
@@ -45,6 +46,7 @@ export function UserMenu({
 }) {
   const { theme, setTheme } = useTheme(initialTheme, onThemeChange)
   const { style, setStyle } = useBackground()
+  const { openTour } = useTour()
   const [leaveOpen, setLeaveOpen] = useState(false)
   const [signUpOpen, setSignUpOpen] = useState(false)
   const label = user ? (user.isAnonymous ? 'Visitante' : user.name) : null
@@ -109,6 +111,9 @@ export function UserMenu({
               {user && (
                 <>
                   {separator}
+                  <Menu.Item className={itemClass} onClick={openTour}>
+                    Ver tour
+                  </Menu.Item>
                   <Menu.Item
                     className={cn(itemClass, 'text-destructive data-highlighted:bg-destructive/10 data-highlighted:text-destructive')}
                     onClick={() => (user.isAnonymous ? setLeaveOpen(true) : void runRedirectingAction(onSignOut))}
