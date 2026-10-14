@@ -74,3 +74,22 @@ export function buildLandingDemo(now: Date = new Date()): LandingDemoData {
 
   return { today, objective, goals, weeks }
 }
+
+/**
+ * The goals as they look `t` of the way through the reveal: only a share of the
+ * completed tasks (the earliest ones) show as done, so the real progress cards
+ * count up by themselves as a visitor scrolls. At 1 it is the very same list.
+ */
+export function revealGoals(goals: DemoGoal[], t: number): DemoGoal[] {
+  if (t >= 1) return goals
+  return goals.map((goal) => {
+    const done = goal.dailyTasks.filter((task) => task.completed).length
+    let remaining = Math.round(done * Math.max(0, t))
+    return {
+      ...goal,
+      dailyTasks: goal.dailyTasks.map((task) =>
+        task.completed && remaining-- > 0 ? task : { ...task, completed: false, completedAt: null },
+      ),
+    }
+  })
+}
