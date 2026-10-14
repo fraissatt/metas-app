@@ -44,7 +44,7 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
   const pulse = Math.sin(Math.PI * Math.min(1, Math.max(0, t)))
 
   return (
-    <div className="flex overflow-hidden rounded-lg border border-border bg-card">
+    <div className="card-surface flex overflow-hidden rounded-lg border border-border bg-card">
       <div className="w-[3px] shrink-0 bg-primary" />
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>

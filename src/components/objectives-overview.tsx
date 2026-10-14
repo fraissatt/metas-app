@@ -1,6 +1,6 @@
 function Tile({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
+    <div className="card-surface rounded-lg border border-border bg-card p-3">
       <p className="text-xl md:text-2xl font-bold tabular-nums text-accent-foreground">{value}</p>
       <p className="text-xs text-muted-foreground">{label}</p>
     </div>
