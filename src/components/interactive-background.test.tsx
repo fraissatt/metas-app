@@ -16,6 +16,8 @@ function stubMatchMedia(matching: string[]) {
 }
 
 const colorStops: string[] = []
+// Only the plain colours: gradients are assigned to fillStyle too.
+const fills: string[] = []
 const context = {
   setTransform: vi.fn(),
   clearRect: vi.fn(),
@@ -26,7 +28,12 @@ const context = {
   createRadialGradient: vi.fn(() => ({
     addColorStop: (_offset: number, color: string) => colorStops.push(color),
   })),
-  fillStyle: '',
+  set fillStyle(value: string) {
+    if (typeof value === 'string') fills.push(value)
+  },
+  get fillStyle() {
+    return fills.at(-1) ?? ''
+  },
 }
 
 let rafQueue: Map<number, FrameRequestCallback>
@@ -70,6 +77,7 @@ function stubHidden(hidden: boolean) {
 
 beforeEach(() => {
   colorStops.length = 0
+  fills.length = 0
   Object.values(context).forEach((value) => {
     if (typeof value === 'function' && 'mockClear' in value) value.mockClear()
   })
@@ -148,13 +156,39 @@ describe('InteractiveBackground', () => {
     }))
     render(<InteractiveBackground style="aurora" />)
     flushFrame()
-    expect(colorStops.some((c) => c.startsWith('rgba(68, 85, 102'))).toBe(true)
+    // Light theme: the primary colour is the wash over the page.
+    expect(fills.some((c) => c.startsWith('rgba(68, 85, 102'))).toBe(true)
     colorStops.length = 0
     document.documentElement.classList.add('dark')
     await act(async () => {
       await Promise.resolve()
     })
     expect(colorStops.some((c) => c.startsWith('rgba(17, 34, 51'))).toBe(true)
+  })
+
+  it('light theme: a blue wash over the page with spots of light, no colour blobs', () => {
+    vi.stubGlobal('getComputedStyle', () => ({
+      getPropertyValue: (name: string) => (name === '--primary' ? '#0057ff' : name === '--support' ? '#38a3ff' : ''),
+    }))
+    render(<InteractiveBackground style="aurora" />)
+    flushFrame()
+    expect(fills).toContain('rgba(0, 87, 255, 0.16)')
+    expect(context.fillRect).toHaveBeenCalledWith(0, 0, expect.any(Number), expect.any(Number))
+    expect(colorStops.length).toBeGreaterThan(0)
+    for (const stop of colorStops) expect(stop).toMatch(/^rgba\(255, 255, 255,/)
+  })
+
+  it('dark theme: unchanged, blobs of the primary and support colours and no wash', () => {
+    document.documentElement.classList.add('dark')
+    vi.stubGlobal('getComputedStyle', () => ({
+      getPropertyValue: (name: string) => (name === '--primary' ? '#39ff14' : name === '--support' ? '#a78bfa' : ''),
+    }))
+    render(<InteractiveBackground style="aurora" />)
+    flushFrame()
+    expect(colorStops.some((c) => c.startsWith('rgba(57, 255, 20, 0.18)'))).toBe(true)
+    expect(colorStops.some((c) => c.startsWith('rgba(167, 139, 250, 0.18)'))).toBe(true)
+    expect(colorStops.some((c) => c.startsWith('rgba(255, 255, 255'))).toBe(false)
+    expect(fills.some((c) => c.startsWith('rgba(57, 255, 20, 0.16)'))).toBe(false)
   })
 
   it('sizes the aurora backing store at half scale', () => {

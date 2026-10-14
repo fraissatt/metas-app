@@ -27,11 +27,16 @@ export function TourDialog({ open, onOpenChange }: { open: boolean; onOpenChange
         <div
           key={step.id}
           className="tour-step flex flex-col gap-3"
-          style={{ '--card-color': `var(--lp-${step.color})` } as CSSProperties}
+          style={
+            {
+              '--card-color': `var(--lp-${step.color})`,
+              '--card-ink': `var(--lp-${step.color}-ink, var(--lp-${step.color}))`,
+            } as CSSProperties
+          }
         >
           <span
             className="flex size-10 items-center justify-center rounded-lg"
-            style={{ color: 'var(--card-color)', background: 'color-mix(in oklab, var(--card-color) 16%, transparent)' }}
+            style={{ color: 'var(--card-ink)', background: 'color-mix(in oklab, var(--card-color) var(--lp-tint), transparent)' }}
           >
             <Icon className="size-5" aria-hidden="true" />
           </span>

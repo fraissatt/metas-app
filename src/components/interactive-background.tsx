@@ -24,7 +24,11 @@ const AURORA_BLOBS = [
 ] as const
 const AURORA_RADIUS = 0.35
 const AURORA_ALPHA_DARK = 0.18
-const AURORA_ALPHA_LIGHT = 0.16
+// Light theme, inverted: a blue wash over the whole page, with spots of light where
+// the colour blobs are in the dark theme.
+const AURORA_WASH_LIGHT = 0.16
+const AURORA_GLOW_LIGHT = 0.85
+const AURORA_GLOW_COLOR: Rgb = [255, 255, 255]
 const AURORA_DRIFT_X = 0.08
 const AURORA_DRIFT_Y = 0.1
 const AURORA_DRIFT_SPEED = 0.00012
@@ -93,7 +97,11 @@ function drawAurora(
   pull: number,
 ) {
   const radius = Math.max(width, height) * AURORA_RADIUS
-  const alpha = palette.isDark ? AURORA_ALPHA_DARK : AURORA_ALPHA_LIGHT
+  const alpha = palette.isDark ? AURORA_ALPHA_DARK : AURORA_GLOW_LIGHT
+  if (!palette.isDark) {
+    ctx.fillStyle = rgba(palette.primary, AURORA_WASH_LIGHT)
+    ctx.fillRect(0, 0, width, height)
+  }
   AURORA_BLOBS.forEach((blob, index) => {
     const phase = time * AURORA_DRIFT_SPEED + index * 1.7
     let x = (blob.x + Math.sin(phase) * AURORA_DRIFT_X) * width
@@ -102,7 +110,11 @@ function drawAurora(
       x += (pointer.x - x) * AURORA_PULL * pull
       y += (pointer.y - y) * AURORA_PULL * pull
     }
-    const color = blob.tone === 'primary' ? palette.primary : palette.support
+    const color = !palette.isDark
+      ? AURORA_GLOW_COLOR
+      : blob.tone === 'primary'
+        ? palette.primary
+        : palette.support
     const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius)
     gradient.addColorStop(0, rgba(color, alpha))
     gradient.addColorStop(0.5, rgba(color, alpha * 0.55))
