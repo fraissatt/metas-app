@@ -83,11 +83,41 @@ describe('FloatingBar', () => {
     expect(bar()).toHaveAttribute('data-hidden', 'false')
   })
 
-  it('stays while focus is inside it', () => {
+  it('stays while keyboard focus is inside it', () => {
     setup()
+    fireEvent.keyDown(document, { key: 'Tab' })
     act(() => screen.getByRole('button', { name: 'Dentro' }).focus())
     scrollTo(300)
     expect(bar()).toHaveAttribute('data-hidden', 'false')
+  })
+
+  it('does not stay pinned by a click: a link clicked with the pointer keeps focus but the bar still hides', () => {
+    setup()
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Dentro' }))
+    act(() => screen.getByRole('button', { name: 'Dentro' }).focus())
+    scrollTo(300)
+    expect(bar()).toHaveAttribute('data-hidden', 'true')
+  })
+
+  it('stays pinned again once the keyboard is used after a click', () => {
+    setup()
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'Dentro' }))
+    act(() => screen.getByRole('button', { name: 'Dentro' }).focus())
+    fireEvent.keyDown(document, { key: 'Tab' })
+    scrollTo(300)
+    expect(bar()).toHaveAttribute('data-hidden', 'false')
+  })
+
+  it('comes back on resize when its media query stops matching', () => {
+    setup({ when: '(min-width: 768px)' })
+    scrollTo(300)
+    expect(bar()).toHaveAttribute('data-hidden', 'true')
+    matches = false
+    act(() => {
+      fireEvent(window, new Event('resize'))
+    })
+    expect(bar()).toHaveAttribute('data-hidden', 'false')
+    expect(bar()).not.toHaveAttribute('inert')
   })
 
   it('stays while one of its menus is open', () => {

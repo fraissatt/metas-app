@@ -3,11 +3,13 @@
 import { useEffect, useState, type RefObject } from 'react'
 import { nextScrollState, type ScrollState } from '@/lib/scroll-hide'
 
-// "In use": focus inside the bar, one of its menus open, or any dialog open (search).
-function isPinned(element: HTMLElement | null): boolean {
+// "In use": keyboard focus inside the bar, one of its menus open, or any dialog open (search).
+// Focus from a click or a tap does not count: browsers focus a clicked link or button, and
+// Next keeps that focus after the navigation, which would hold the bar open for good.
+function isPinned(element: HTMLElement | null, keyboard: boolean): boolean {
   if (!element) return false
   return (
-    element.contains(document.activeElement) ||
+    (keyboard && element.contains(document.activeElement)) ||
     element.querySelector('[aria-expanded="true"]') !== null ||
     document.querySelector('[role="dialog"]') !== null
   )
@@ -24,13 +26,20 @@ export function useScrollHide(ref: RefObject<HTMLElement | null>, when?: string)
     let state: ScrollState = { hidden: false, lastY: window.scrollY }
     let frame = 0
     let scheduled = false
+    let keyboard = false
+    const onKey = () => {
+      keyboard = true
+    }
+    const onPointer = () => {
+      keyboard = false
+    }
 
     const applies = () => !when || (typeof matchMedia === 'function' && matchMedia(when).matches)
 
     function update() {
       scheduled = false
       state = applies()
-        ? nextScrollState(state, window.scrollY, isPinned(ref.current))
+        ? nextScrollState(state, window.scrollY, isPinned(ref.current, keyboard))
         : { hidden: false, lastY: window.scrollY }
       setHidden((current) => (current === state.hidden ? current : state.hidden))
     }
@@ -43,9 +52,13 @@ export function useScrollHide(ref: RefObject<HTMLElement | null>, when?: string)
 
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule)
+    document.addEventListener('keydown', onKey, true)
+    document.addEventListener('pointerdown', onPointer, true)
     return () => {
       window.removeEventListener('scroll', schedule)
       window.removeEventListener('resize', schedule)
+      document.removeEventListener('keydown', onKey, true)
+      document.removeEventListener('pointerdown', onPointer, true)
       if (scheduled) cancelAnimationFrame(frame)
     }
   }, [ref, when])

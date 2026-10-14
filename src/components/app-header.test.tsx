@@ -65,7 +65,11 @@ describe('AppHeader', () => {
     expect(island).not.toBeNull()
     expect(island.className).toMatch(/md:island/)
     expect(island.className).toMatch(/md:fixed/)
-    expect(island.className).toMatch(/sticky/) // the plain bar below md
+    // Below md the plain bar must stick: a sticky element only travels inside its parent, so the
+    // stickiness belongs on the header (as tall as the page), not on the bar inside it.
+    expect(screen.getByRole('banner').className).toMatch(/(^|\s)sticky(\s|$)/)
+    expect(screen.getByRole('banner').className).toMatch(/md:static/)
+    expect(island.className).not.toMatch(/(^|\s)sticky(\s|$)/)
   })
 
   it('keeps a spacer where the fixed island used to take room, from md up', async () => {

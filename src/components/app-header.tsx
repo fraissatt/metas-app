@@ -27,12 +27,12 @@ export async function AppHeader({
 
   return (
     <>
-      <header className="relative z-40">
+      <header className="sticky top-0 z-40 md:static">
         {user && <RefreshOnFocus />}
         <FloatingBar
           edge="top"
           when="(min-width: 768px)"
-          className="sticky top-0 border-b border-border bg-background/80 backdrop-blur md:island md:fixed md:inset-x-4 md:top-3 md:mx-auto md:max-w-6xl md:rounded-full"
+          className="border-b border-border bg-background/80 backdrop-blur md:island md:fixed md:inset-x-4 md:top-3 md:mx-auto md:max-w-6xl md:rounded-full"
         >
           <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:px-6">
             <Link href="/" className="text-base font-bold text-accent-foreground">
