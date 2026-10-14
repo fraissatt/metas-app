@@ -53,6 +53,9 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
   qualquer tela.
 - **Tema claro e escuro** e **fundo interativo** (aurora ou grade de pontos, desenhado em canvas).
 - **Instalável como app (PWA)** e com layout próprio para celular, com navegação inferior.
+- **Navegação flutuante ("ilha"):** no computador, o cabeçalho é uma barra arredondada flutuante no topo; no
+  celular, a barra de baixo flutua. As duas somem ao rolar para baixo e voltam ao rolar para cima, e não
+  somem enquanto estão em uso (foco, menu ou busca abertos).
 
 ## Capturas de tela
 
