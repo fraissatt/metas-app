@@ -26,12 +26,12 @@ export function WeekGoalProgressCard({
     <div
       data-fulfilled={fulfilled}
       className={cn(
-        'flex overflow-hidden rounded-lg border transition-[border-color,box-shadow] motion-reduce:transition-none',
+        'card-surface flex overflow-hidden rounded-lg border transition-[border-color,box-shadow] motion-reduce:transition-none',
         fulfilled ? 'border-primary/60 bg-card shadow-[0_0_18px_var(--glow)]' : 'border-border bg-card',
       )}
     >
       <div className="w-[3px] shrink-0 bg-primary" />
-      <div className="flex-1 p-4">
+      <div className="card-roomy flex-1 p-4">
         <div className="mb-3 flex min-w-0 flex-col text-left">
           <Link
             href={`/objectives/${goal.objective.id}/weeks/${goal.id}`}

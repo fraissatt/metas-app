@@ -30,13 +30,13 @@ export function TodayTaskGroup({
     <div
       data-complete={dayComplete}
       className={cn(
-        'flex overflow-hidden rounded-lg border bg-card transition-[border-color,box-shadow] motion-reduce:transition-none',
+        'card-surface flex overflow-hidden rounded-lg border bg-card transition-[border-color,box-shadow] motion-reduce:transition-none',
         dayComplete ? 'border-primary/60 shadow-[0_0_18px_var(--glow)]' : 'border-border',
       )}
     >
       <div className="w-[3px] shrink-0 bg-primary" />
       <div className="flex-1">
-        <div className="flex items-center gap-3 border-b border-border bg-card px-4 py-3">
+        <div className="card-roomy-header flex items-center gap-3 border-b border-border bg-card px-4 py-3">
           <div className="flex min-w-0 flex-1 flex-col text-left">
             <Link
               href={`/objectives/${weeklyGoal.objective.id}/weeks/${weeklyGoal.id}`}
