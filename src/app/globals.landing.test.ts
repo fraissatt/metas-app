@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8')
+// Normalised: a Windows checkout has CRLF line endings, and the slices below look for LF.
+const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8').replace(/\r\n/g, '\n')
 
 describe('landing card styles', () => {
   it('only lifts the card where a pointer can hover and motion is allowed', () => {

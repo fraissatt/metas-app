@@ -17,7 +17,7 @@ const EXTRAS: Item[] = [
 
 function Actions({ onEnterAsGuest }: { onEnterAsGuest: () => Promise<{ throttled: true } | void> }) {
   return (
-    <div className="flex flex-wrap items-start gap-3">
+    <div className="flex flex-wrap items-start gap-3 max-md:justify-center">
       <GuestButton variant="plain" onEnter={onEnterAsGuest} />
       <Link href="/cadastro" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
         Criar conta
@@ -30,12 +30,12 @@ export function Landing({ onEnterAsGuest }: { onEnterAsGuest: () => Promise<{ th
   return (
     <>
       <main className="mx-auto flex max-w-5xl flex-col gap-14 px-4 py-10 md:px-8 md:py-16">
-        <section className="flex flex-col items-start gap-5">
+        <section className="flex flex-col items-start gap-5 max-md:items-center max-md:text-center">
           <h1 className="text-4xl font-bold text-accent-foreground md:text-5xl">Metas</h1>
           <p className="max-w-xl text-lg text-muted-foreground">
             Do objetivo à tarefa do dia, sem se perder no meio do caminho.
           </p>
-          <div className="flex flex-wrap items-start gap-3">
+          <div className="flex flex-wrap items-start gap-3 max-md:justify-center">
             <Actions onEnterAsGuest={onEnterAsGuest} />
             <Link
               href="/entrar"
@@ -50,12 +50,12 @@ export function Landing({ onEnterAsGuest }: { onEnterAsGuest: () => Promise<{ th
         </section>
 
         <section className="flex flex-col gap-6">
-          <h2 className="text-2xl font-semibold">Como funciona</h2>
+          <h2 className="text-2xl font-semibold max-md:text-center">Como funciona</h2>
           <LandingFlow data={buildLandingDemo()} />
         </section>
 
         <section className="landing-reveal flex flex-col gap-6">
-          <h2 className="text-2xl font-semibold">E também</h2>
+          <h2 className="text-2xl font-semibold max-md:text-center">E também</h2>
           <ul aria-label="E também" className="grid gap-3 sm:grid-cols-3">
             {EXTRAS.map((card, index) => (
               <LandingCard key={card.title} {...card} index={index} />
@@ -63,7 +63,7 @@ export function Landing({ onEnterAsGuest }: { onEnterAsGuest: () => Promise<{ th
           </ul>
         </section>
 
-        <section className="landing-reveal flex flex-col items-start gap-4 border-t border-border pt-10">
+        <section className="landing-reveal flex flex-col items-start gap-4 border-t border-border pt-10 max-md:items-center max-md:text-center">
           <h2 className="text-2xl font-semibold">Pronto para começar?</h2>
           <Actions onEnterAsGuest={onEnterAsGuest} />
         </section>
