@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createEvent, fireEvent, render, screen, within } from '@testing-library/react'
+import { createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LandingDemo } from '@/components/landing-demo'
 import { buildLandingDemo } from '@/lib/landing-demo'
@@ -63,13 +63,14 @@ describe('LandingDemo', () => {
   it('ticking a task completes the day for its goal', async () => {
     render(<LandingDemo data={data} step={2} />)
     await userEvent.click(layer('today').getByRole('checkbox', { name: ANKI }))
-    expect(layer('today').getByRole('checkbox', { name: ANKI })).toBeChecked()
-    expect(layer('today').getByText('✓ feito')).toBeInTheDocument()
+    await waitFor(() => expect(layer('today').getByRole('checkbox', { name: ANKI })).toBeChecked())
+    expect(await layer('today').findByText('✓ feito')).toBeInTheDocument()
   })
 
   it('shares the tasks between the views: a tick in Hoje moves the week and the objective', async () => {
     const { rerender } = render(<LandingDemo data={data} step={2} />)
     await userEvent.click(layer('today').getByRole('checkbox', { name: ANKI }))
+    await waitFor(() => expect(layer('today').getByRole('checkbox', { name: ANKI })).toBeChecked())
     rerender(<LandingDemo data={data} step={1} />)
     expect(layer('week').getByText('60%')).toBeInTheDocument()
     rerender(<LandingDemo data={data} step={0} />)
@@ -80,8 +81,9 @@ describe('LandingDemo', () => {
     render(<LandingDemo data={data} step={2} />)
     const checkbox = () => layer('today').getByRole('checkbox', { name: ANKI })
     await userEvent.click(checkbox())
+    await waitFor(() => expect(checkbox()).toBeChecked())
     await userEvent.click(checkbox())
-    expect(checkbox()).not.toBeChecked()
+    await waitFor(() => expect(checkbox()).not.toBeChecked())
     expect(layer('today').queryByText('✓ feito')).toBeNull()
   })
 
@@ -90,10 +92,10 @@ describe('LandingDemo', () => {
     expect(screen.getByText('Experimente: marque uma tarefa')).toBeInTheDocument()
 
     await userEvent.click(layer('today').getByRole('checkbox', { name: ANKI }))
-    expect(screen.queryByText('Experimente: marque uma tarefa')).toBeNull()
+    await waitFor(() => expect(screen.queryByText('Experimente: marque uma tarefa')).toBeNull())
 
     await userEvent.click(screen.getByRole('button', { name: 'Recomeçar' }))
-    expect(layer('today').getByRole('checkbox', { name: ANKI })).not.toBeChecked()
+    await waitFor(() => expect(layer('today').getByRole('checkbox', { name: ANKI })).not.toBeChecked())
     expect(screen.getByText('Experimente: marque uma tarefa')).toBeInTheDocument()
   })
 

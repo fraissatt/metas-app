@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { LandingFlow } from '@/components/landing-flow'
 import { buildLandingDemo } from '@/lib/landing-demo'
@@ -132,6 +132,7 @@ describe('LandingFlow', () => {
     render(<LandingFlow data={data} />)
     scrollTo(1700)
     await userEvent.click(screen.getByRole('checkbox', { name: ANKI }))
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: ANKI })).toBeChecked())
     scrollTo(1100)
     scrollTo(1700)
     expect(screen.getByRole('checkbox', { name: ANKI })).toBeChecked()
