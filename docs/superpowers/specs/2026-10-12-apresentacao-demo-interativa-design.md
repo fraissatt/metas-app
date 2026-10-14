@@ -112,3 +112,7 @@ The owner found the demo pinned to the top of the screen too heavy on phones and
 ## Revision (2026-10-14, desktop)
 
 The desktop now behaves like the phone: no sticky panel and no stacked views. Each step is a row with its text on the left and its own demo card on the right (stacked under the text below `lg`). The cards are the same on every screen size, each a group named "Demonstração: <step>", and their content (bars, rings, numbers) follows the scroll. The step highlight and the progress rail still follow the reading line (middle of the window). `LandingDemo` and the `.landing-layer` styles were removed.
+
+## Revision (2026-10-14, more motion)
+
+The week cards fill continuously with the scroll (`WeekGoalProgressCard` takes an optional `reveal`) instead of jumping one task at a time, and each card, like the current week's bar in the objective card, glows while it fills and calms at its real value. The demo data guarantees every goal at least one done task, so no goal sits still early in the week. `revealGoals` was removed.

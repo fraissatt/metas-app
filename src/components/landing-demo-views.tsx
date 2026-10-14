@@ -7,7 +7,7 @@ import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
 import { Button } from '@/components/ui/button'
 import { differenceInAppDays, formatDate, formatDayMonth, isSameAppDay } from '@/lib/dates'
-import { revealGoals, type DemoGoal, type LandingDemoData } from '@/lib/landing-demo'
+import type { DemoGoal, LandingDemoData } from '@/lib/landing-demo'
 import { groupTasksByWeeklyGoal } from '@/lib/tasks'
 
 export const HINT = 'Experimente: marque uma tarefa'
@@ -33,6 +33,8 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
   // The bars grow with the view's visibility (--w), so they rise as the view appears.
   const bar = (rate: number): CSSProperties => ({ height: `max(8%, calc(${rate} * var(--w, 1) * 100%))` })
   const count = (value: number) => Math.round(value * t)
+  // The current week's bar glows while it rises and calms once it has arrived.
+  const pulse = Math.sin(Math.PI * Math.min(1, Math.max(0, t)))
 
   return (
     <div className="flex overflow-hidden rounded-lg border border-border bg-card">
@@ -72,7 +74,7 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
               data-testid="week-bar"
               title={`Esta semana: ${Math.round(currentRate * 100)}%`}
               className="flex-1 rounded-t-sm bg-primary"
-              style={bar(currentRate)}
+              style={{ ...bar(currentRate), boxShadow: `0 0 ${Math.round(14 * pulse)}px var(--primary)` }}
             />
           </div>
           <p className="mt-1 text-xs text-muted-foreground tabular-nums">
@@ -88,11 +90,19 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
 }
 
 export function WeekView({ goals, t = 1 }: { goals: DemoGoal[]; t?: number }) {
-  // Real cards: showing only a share of the done tasks makes their rings and bars fill by themselves.
+  // The real cards, filling smoothly with `t`, each with a glow that swells while it fills and calms at its real value.
+  const glow = Math.sin(Math.PI * Math.min(1, Math.max(0, t)))
   return (
     <div className="flex flex-col gap-3">
-      {revealGoals(goals, t).map((goal) => (
-        <WeekGoalProgressCard key={goal.id} goal={goal} />
+      {goals.map((goal) => (
+        <div
+          key={goal.id}
+          data-testid="goal-glow"
+          className="rounded-lg"
+          style={{ boxShadow: `0 0 ${Math.round(22 * glow)}px color-mix(in oklab, var(--primary) ${Math.round(45 * glow)}%, transparent)` }}
+        >
+          <WeekGoalProgressCard goal={goal} reveal={t} />
+        </div>
       ))}
     </div>
   )

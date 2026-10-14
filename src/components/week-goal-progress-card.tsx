@@ -10,13 +10,16 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 
 export function WeekGoalProgressCard({
   goal,
+  reveal = 1,
 }: {
   goal: WeeklyGoal & { objective: Objective; dailyTasks: DailyTask[] }
+  /** 0 to 1: how much of the real progress shows, so the ring and bars can fill smoothly (the demo ties it to the scroll). */
+  reveal?: number
 }) {
   const total = goal.dailyTasks.length
   const completed = goal.dailyTasks.filter((t) => t.completed).length
-  const percent = total === 0 ? 0 : Math.round((completed / total) * 100)
-  const ringOffset = RING_CIRCUMFERENCE - (percent / 100) * RING_CIRCUMFERENCE
+  const percent = total === 0 ? 0 : Math.round((completed / total) * 100 * reveal)
+  const ringOffset = RING_CIRCUMFERENCE - ((total === 0 ? 0 : (completed / total) * reveal)) * RING_CIRCUMFERENCE
   const fulfilled = isGoalFulfilled(goal.dailyTasks)
 
   return (
@@ -73,7 +76,7 @@ export function WeekGoalProgressCard({
               const dayTasks = goal.dailyTasks.filter((t) => isSameAppDay(t.date, day))
               const dayCompleted = dayTasks.filter((t) => t.completed).length
               const dayTotal = dayTasks.length
-              const heightPercent = dayTotal === 0 ? 8 : Math.max(8, Math.round((dayCompleted / dayTotal) * 100))
+              const heightPercent = dayTotal === 0 ? 8 : Math.max(8, Math.round((dayCompleted / dayTotal) * 100 * reveal))
 
               return (
                 <div

@@ -175,6 +175,27 @@ describe('LandingFlow', () => {
     expect(card(0).getByText('5 de 6 semanas cumpridas · sequência de 4')).toBeInTheDocument()
   })
 
+  it('fills the week card smoothly as it enters, both goals moving and glowing on the way', () => {
+    render(<LandingFlow data={data} />)
+    scrollTo(1300) // 71% of the way: 40% and 25% become 29% and 18%
+    expect(card(1).getByText('29%')).toBeInTheDocument()
+    expect(card(1).getByText('18%')).toBeInTheDocument()
+    const glows = card(1).getAllByTestId('goal-glow')
+    expect(glows).toHaveLength(2)
+    for (const glow of glows) expect(glow.style.boxShadow).not.toMatch(/^0 0 0px|^$/)
+    scrollTo(1460)
+    for (const glow of card(1).getAllByTestId('goal-glow')) expect(glow.style.boxShadow).toMatch(/^0 0 0px/)
+  })
+
+  it('makes the current week bar of the objective glow while it rises, and not once it has arrived', () => {
+    render(<LandingFlow data={data} />)
+    scrollTo(500)
+    const bars = () => card(0).getAllByTestId('week-bar')
+    expect(bars().at(-1)?.style.boxShadow).toMatch(/\d+px/)
+    scrollTo(760)
+    expect(bars().at(-1)?.style.boxShadow).toMatch(/^0 0 0px/)
+  })
+
   it('fills the week card as it enters: the rings go from 0 to the real percentages', () => {
     render(<LandingFlow data={data} />)
     expect(card(1).getAllByText('0%')).toHaveLength(2)

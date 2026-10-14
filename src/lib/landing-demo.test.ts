@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { appToday, differenceInAppDays, formatDayKey, getWeekBounds, isSameAppDay } from '@/lib/dates'
-import { buildLandingDemo, revealGoals } from '@/lib/landing-demo'
+import { buildLandingDemo } from '@/lib/landing-demo'
 
 // Wednesday 14/10/2026 at 12:00 in Brasília.
 const WEDNESDAY = new Date('2026-10-14T15:00:00Z')
@@ -14,6 +14,17 @@ const todaysTasks = (now: Date) => {
 }
 
 describe('buildLandingDemo', () => {
+  it('gives every goal some done tasks and an open one today, on any day of the week', () => {
+    for (let day = 12; day <= 18; day++) {
+      const now = new Date(`2026-10-${day}T15:00:00Z`)
+      const today = appToday(now)
+      for (const goal of buildLandingDemo(now).goals) {
+        expect(goal.dailyTasks.some((task) => task.completed), `goal ${goal.id} on ${day}`).toBe(true)
+        expect(goal.dailyTasks.find((task) => isSameAppDay(task.date, today))?.completed).toBe(false)
+      }
+    }
+  })
+
   it('builds one active objective whose goals all belong to it and to the current week', () => {
     const { objective, goals } = buildLandingDemo(WEDNESDAY)
     const { weekStart } = getWeekBounds(appToday(WEDNESDAY))
@@ -87,35 +98,5 @@ describe('buildLandingDemo', () => {
     const today = appToday(WEDNESDAY)
     expect(differenceInAppDays(today, objective.startDate)).toBeGreaterThan(7)
     expect(objective.targetDate && differenceInAppDays(objective.targetDate, today)).toBeGreaterThan(7)
-  })
-})
-
-describe('revealGoals', () => {
-  const goals = buildLandingDemo(WEDNESDAY).goals
-  const doneIn = (list: typeof goals) => list.map((goal) => goal.dailyTasks.filter((task) => task.completed).length)
-
-  it('hides every completed task at 0 and returns the same goals at 1', () => {
-    expect(doneIn(revealGoals(goals, 0))).toEqual([0, 0])
-    expect(revealGoals(goals, 1)).toBe(goals)
-  })
-
-  it('shows a share of the completed tasks in between, never more than there are', () => {
-    // Vocabulary has 2 done and conversation 1 (Wednesday).
-    expect(doneIn(revealGoals(goals, 0.5))).toEqual([1, 1])
-    expect(doneIn(revealGoals(goals, 0.99))).toEqual([2, 1])
-  })
-
-  it('only ever reveals the earliest completed tasks first, and never completes an open one', () => {
-    const half = revealGoals(goals, 0.5)
-    const [vocabulary] = half
-    const completedDays = vocabulary.dailyTasks.filter((task) => task.completed).map((task) => formatDayKey(task.date))
-    expect(completedDays).toEqual(['2026-10-12'])
-    expect(vocabulary.dailyTasks.filter((task) => formatDayKey(task.date) >= '2026-10-14').some((task) => task.completed)).toBe(false)
-  })
-
-  it('does not change the goals it is given', () => {
-    const before = JSON.stringify(goals)
-    revealGoals(goals, 0.3)
-    expect(JSON.stringify(goals)).toBe(before)
   })
 })

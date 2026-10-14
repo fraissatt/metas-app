@@ -8,6 +8,8 @@ export type LandingDemoData = { today: Date; objective: Objective; goals: DemoGo
 
 // Completion of the six weeks before this one, oldest first: a fixed story (five weeks fulfilled, the last four in a row).
 const PAST_RATES = [1, 0.67, 1, 1, 1, 1]
+// Each goal shows at least this many done tasks, whatever the day of the week.
+const MIN_DONE = 1
 
 type Plan = { id: string; title: string; task: string; days: number[] } // 0 = Monday ... 6 = Sunday
 
@@ -18,7 +20,7 @@ const PLANS: Plan[] = [
 
 /**
  * Made-up data for the presentation demo, for the current week in Brasília:
- * the days before today are done, today and the days after are open, and every
+ * the days before today are done (see MIN_DONE), today is open, and every
  * goal has a task today so the Hoje view is never empty. Shaped like the rows
  * the real components read, so they render it unchanged.
  */
@@ -42,9 +44,16 @@ export function buildLandingDemo(now: Date = new Date()): LandingDemoData {
   const goals = PLANS.map((plan): DemoGoal => {
     const goalId = `demo-goal-${plan.id}`
     const offsets = [...new Set([...plan.days, todayOffset])].sort((a, b) => a - b)
+    // The days before today are done; early in the week there are none, so the earliest other
+    // tasks stand in, so that every goal has some progress for the cards to animate.
+    const done = new Set(offsets.filter((offset) => offset < todayOffset))
+    for (const offset of offsets) {
+      if (done.size >= MIN_DONE) break
+      if (offset !== todayOffset) done.add(offset)
+    }
     const dailyTasks = offsets.map((offset): DailyTask => {
       const date = addAppDays(weekStart, offset)
-      const completed = offset < todayOffset
+      const completed = done.has(offset)
       return {
         id: `demo-task-${plan.id}-${offset}`,
         title: plan.task,
@@ -73,23 +82,4 @@ export function buildLandingDemo(now: Date = new Date()): LandingDemoData {
   }))
 
   return { today, objective, goals, weeks }
-}
-
-/**
- * The goals as they look `t` of the way through the reveal: only a share of the
- * completed tasks (the earliest ones) show as done, so the real progress cards
- * count up by themselves as a visitor scrolls. At 1 it is the very same list.
- */
-export function revealGoals(goals: DemoGoal[], t: number): DemoGoal[] {
-  if (t >= 1) return goals
-  return goals.map((goal) => {
-    const done = goal.dailyTasks.filter((task) => task.completed).length
-    let remaining = Math.round(done * Math.max(0, t))
-    return {
-      ...goal,
-      dailyTasks: goal.dailyTasks.map((task) =>
-        task.completed && remaining-- > 0 ? task : { ...task, completed: false, completedAt: null },
-      ),
-    }
-  })
 }
