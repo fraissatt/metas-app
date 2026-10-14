@@ -53,8 +53,7 @@ export function LandingStep({
     >
       <div className="flex flex-col items-center" aria-hidden="true" style={{ opacity: 'var(--dim)' }}>
         <span
-          className="flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold"
-          style={{ color: 'var(--card-ink)', background: 'color-mix(in oklab, var(--card-color) var(--lp-tint), transparent)' }}
+          className="landing-step-badge flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold"
         >
           {index + 1}
         </span>

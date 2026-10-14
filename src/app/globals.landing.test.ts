@@ -49,7 +49,19 @@ describe('step colours per theme', () => {
 describe('step titles', () => {
   it('are lit in their own colour with a glow, in the dark theme only', () => {
     expect(css).toMatch(/\.dark \.landing-title\s*{[^}]*color: var\(--card-color\)[^}]*text-shadow/)
-    expect(css).not.toMatch(/\n\.landing-title\s*{/)
+    expect(css).not.toMatch(/\n\.landing-title\s*{[^}]*text-shadow/)
+  })
+
+  it('take the dark shade of the topic colour in the light theme', () => {
+    expect(css).toMatch(/(^|\s)\.landing-title\s*{[^}]*color: var\(--card-ink\)/)
+  })
+})
+
+describe('step number badge', () => {
+  it('is a tinted circle by default, and a lit solid seal of the topic colour in the light theme only', () => {
+    expect(css).toMatch(/(^|\s)\.landing-step-badge\s*{[^}]*color: var\(--card-ink\)[^}]*background: color-mix/)
+    expect(css).toMatch(/:root:not\(\.dark\) \.landing-step-badge\s*{[^}]*background: var\(--card-color\)[^}]*box-shadow/)
+    expect(css).not.toMatch(/\.dark \.landing-step-badge/)
   })
 })
 
