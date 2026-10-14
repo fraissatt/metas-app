@@ -1,4 +1,4 @@
-import type { CSSProperties, Ref } from 'react'
+import type { CSSProperties, ReactNode, Ref } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import type { LandingColor } from '@/components/landing-card'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,7 @@ export function LandingStep({
   active = false,
   className,
   ref,
+  children,
 }: {
   /** Zero-based position among the steps. */
   index: number
@@ -31,6 +32,8 @@ export function LandingStep({
   active?: boolean
   className?: string
   ref?: Ref<HTMLLIElement>
+  /** Extra content under the step, e.g. the phone card of the demo. */
+  children?: ReactNode
 }) {
   return (
     <li
@@ -89,6 +92,7 @@ export function LandingStep({
             </p>
           ))}
         </div>
+        {children}
       </div>
     </li>
   )

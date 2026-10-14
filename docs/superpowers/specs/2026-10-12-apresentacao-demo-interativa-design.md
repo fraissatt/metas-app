@@ -97,3 +97,14 @@ After trying the first version, the owner found the steps too empty and the view
 - **No layout** (a bare DOM or a hidden page): step 1 stays showing.
 - **Fuller steps:** shorter (about 45% to 50% of the window), each with a large number, the title with a "Tela: ..." tag, the text, a "Na prática" example taken from the demo's own data, and two points. The objective view gains bars for six earlier weeks plus this one, "5 de 6 semanas cumpridas · sequência de 4".
 - **Tests:** pure unit tests for the two helpers (including that two views are never visible at once); flow tests that mock the steps' boxes and the scroll event.
+
+## Revision (2026-10-14, later): phones get a card per step, not a pinned demo
+
+The owner found the demo pinned to the top of the screen too heavy on phones and asked to keep desktop as it is, and on phones to keep one static rectangle per topic whose content follows the scroll (bars rising, numbers counting up). Approved after a prototype.
+
+- **Desktop (from `lg`) is unchanged:** the sticky panel with the three stacked views that fade with the scroll. The panel is `hidden` below `lg`.
+- **Phones (below `lg`):** nothing is pinned. Each step shows its own card under its text (`DemoCard`, hidden from `lg` up), in the normal page flow. The cards show the same views as the panel.
+- **Content follows the scroll:** `cardProgress` gives each card a 0 to 1 progress from its position (0 while its top is at the bottom of the window, 1 once it is 70% of the window up), kept in a small external store (`createCardProgress`, steps of 0.02) so only the numbers and bars of that card re-render. The objective card counts its percentage, weeks, streak and task numbers up and its bars (including this week's) rise; the week card uses `revealGoals`, which shows only a share of the done tasks, so the real progress cards' rings, bars and counts fill by themselves; every card also fades and slides in. The Hoje card is the interactive one: its tasks can be ticked, and a hint and "Recomeçar" sit under it.
+- **One set of tasks:** the tasks live in a `DemoStateProvider` shared by the panel and the cards, so a tick in the Hoje card moves the week and objective cards (and the panel).
+- **Before the first paint** the progress is computed in a layout effect, so a card below the fold never flashes its final numbers; without scripts the cards show the final numbers (progress defaults to 1).
+- **Tests:** the pure helpers, the store, `revealGoals`, and flow tests that mock the cards' boxes and the scroll to check the counts at 0, partway and 1, and the shared state.

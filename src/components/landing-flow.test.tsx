@@ -22,6 +22,11 @@ function scrollTo(y: number) {
   })
 }
 
+// Card tops at scroll 0; a card is fully revealed once its top is 240 px from the top of an 800 px window.
+const CARD_TOP = [1000, 1700, 2300]
+
+const panel = () => within(screen.getByRole('region', { name: 'Demonstração interativa' }))
+const card = (index: number) => within(document.querySelector(`[data-card="${index}"]`) as HTMLElement)
 const list = () => screen.getByRole('list', { name: 'Como funciona' })
 const container = () => list().parentElement as HTMLElement
 const steps = () => within(list()).getAllByRole('listitem')
@@ -45,6 +50,10 @@ beforeEach(() => {
   })
   vi.stubGlobal('cancelAnimationFrame', () => {})
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+    if (this.dataset.card !== undefined) {
+      const top = CARD_TOP[Number(this.dataset.card)] - scroll
+      return { top, bottom: top + 300, height: 300, left: 0, right: 0, width: 0, x: 0, y: top } as DOMRect
+    }
     const index = this.dataset.step === undefined ? -1 : Number(this.dataset.step)
     const centre = index >= 0 ? BASE[index] - scroll : 0
     return { top: centre - 50, bottom: centre + 50, height: 100, left: 0, right: 0, width: 0, x: 0, y: centre - 50 } as DOMRect
@@ -73,7 +82,7 @@ describe('LandingFlow', () => {
     expect(inSteps.getByText('Tela: Semana')).toBeInTheDocument()
     expect(inSteps.getByText('Tela: Hoje')).toBeInTheDocument()
     expect(inSteps.getByText('Falar inglês com fluência, até 15/02/2027')).toBeInTheDocument()
-    expect(inSteps.getByText('Estudar vocabulário todos os dias')).toBeInTheDocument()
+    expect(within(steps()[1]).getAllByText('Estudar vocabulário todos os dias').length).toBeGreaterThan(0)
     expect(inSteps.getByText(`${ANKI}, hoje`)).toBeInTheDocument()
     expect(inSteps.getByText('Prazo e tempo decorrido')).toBeInTheDocument()
     expect(inSteps.getByText('Marque no dia e veja o progresso mudar')).toBeInTheDocument()
@@ -131,11 +140,11 @@ describe('LandingFlow', () => {
   it('keeps the tasks the visitor ticked while the views change', async () => {
     render(<LandingFlow data={data} />)
     scrollTo(1700)
-    await userEvent.click(screen.getByRole('checkbox', { name: ANKI }))
-    await waitFor(() => expect(screen.getByRole('checkbox', { name: ANKI })).toBeChecked())
+    await userEvent.click(panel().getByRole('checkbox', { name: ANKI }))
+    await waitFor(() => expect(panel().getByRole('checkbox', { name: ANKI })).toBeChecked())
     scrollTo(1100)
     scrollTo(1700)
-    expect(screen.getByRole('checkbox', { name: ANKI })).toBeChecked()
+    expect(panel().getByRole('checkbox', { name: ANKI })).toBeChecked()
   })
 
   it('stays on step 1 where the layout is not available', () => {
@@ -152,6 +161,46 @@ describe('LandingFlow', () => {
     unmount()
     expect(remove).toHaveBeenCalledWith('scroll', expect.any(Function))
     expect(remove).toHaveBeenCalledWith('resize', expect.any(Function))
+  })
+
+  it('on phones, shows the desktop panel only from lg up and one card per step below it', () => {
+    render(<LandingFlow data={data} />)
+    const sticky = screen.getByRole('region', { name: 'Demonstração interativa' }).closest('.sticky')
+    expect(sticky).toHaveClass('hidden', 'lg:block')
+    for (const index of [0, 1, 2]) {
+      const element = document.querySelector(`[data-card="${index}"]`)
+      expect(element).toHaveClass('lg:hidden')
+      expect(steps()[index]).toContainElement(element as HTMLElement)
+    }
+  })
+
+  it('counts the first card up with the scroll, to the real numbers', () => {
+    render(<LandingFlow data={data} />)
+    expect(card(0).getByText('0% do prazo decorrido')).toBeInTheDocument()
+    expect(card(0).getByText('0 de 9 tarefas da semana concluídas')).toBeInTheDocument()
+    scrollTo(500) // the card's top is at 500: 54% of the way
+    expect(card(0).getByText('14% do prazo decorrido')).toBeInTheDocument()
+    scrollTo(760)
+    expect(card(0).getByText('26% do prazo decorrido')).toBeInTheDocument()
+    expect(card(0).getByText('3 de 9 tarefas da semana concluídas')).toBeInTheDocument()
+    expect(card(0).getByText('5 de 6 semanas cumpridas · sequência de 4')).toBeInTheDocument()
+  })
+
+  it('fills the week card as it enters: the rings go from 0 to the real percentages', () => {
+    render(<LandingFlow data={data} />)
+    expect(card(1).getAllByText('0%')).toHaveLength(2)
+    scrollTo(1460)
+    expect(card(1).getByText('40%')).toBeInTheDocument()
+    expect(card(1).getByText('25%')).toBeInTheDocument()
+  })
+
+  it('keeps one set of tasks for the cards and the panel: a tick in the Hoje card moves the week card', async () => {
+    render(<LandingFlow data={data} />)
+    scrollTo(2060)
+    await userEvent.click(card(2).getByRole('checkbox', { name: ANKI }))
+    await waitFor(() => expect(card(2).getByRole('checkbox', { name: ANKI })).toBeChecked())
+    expect(card(1).getByText('60%')).toBeInTheDocument()
+    expect(document.querySelector('[data-view="week"]')).toHaveTextContent('60%')
   })
 
   it('makes the demo itself the sticky element, as a direct child of the grid that holds the steps', () => {
