@@ -59,6 +59,17 @@ describe('buildLandingDemo', () => {
     expect(todaysTasks(SUNDAY_NIGHT).every((task) => formatDayKey(task.date) === '2026-10-11')).toBe(true)
   })
 
+  it('has six earlier weeks, oldest first, ending right before the current one, with 5 fulfilled and a streak of 4', () => {
+    const { weeks } = buildLandingDemo(WEDNESDAY)
+    const { weekStart } = getWeekBounds(appToday(WEDNESDAY))
+    expect(weeks).toHaveLength(6)
+    expect(differenceInAppDays(weekStart, weeks[5].weekStart)).toBe(7)
+    for (let i = 1; i < weeks.length; i++) expect(weeks[i].weekStart > weeks[i - 1].weekStart).toBe(true)
+    expect(weeks.every((week) => week.rate >= 0 && week.rate <= 1)).toBe(true)
+    expect(weeks.filter((week) => week.rate === 1)).toHaveLength(5)
+    expect(weeks.map((week) => week.rate).slice(-4)).toEqual([1, 1, 1, 1])
+  })
+
   it('uses unique ids and never leaves a task outside its goal week', () => {
     const { goals } = buildLandingDemo(WEDNESDAY)
     const ids = goals.flatMap((goal) => [goal.id, ...goal.dailyTasks.map((task) => task.id)])

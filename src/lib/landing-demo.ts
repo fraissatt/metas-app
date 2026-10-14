@@ -3,7 +3,11 @@ import { addAppDays, addAppWeeks, appToday, differenceInAppDays, getWeekBounds }
 
 export type DemoGoal = WeeklyGoal & { objective: Objective; dailyTasks: DailyTask[] }
 /** `today` is the Brasília day the data was built for: the views read it instead of the clock, so server and client agree. */
-export type LandingDemoData = { today: Date; objective: Objective; goals: DemoGoal[] }
+export type DemoWeek = { weekStart: Date; rate: number }
+export type LandingDemoData = { today: Date; objective: Objective; goals: DemoGoal[]; weeks: DemoWeek[] }
+
+// Completion of the six weeks before this one, oldest first: a fixed story (five weeks fulfilled, the last four in a row).
+const PAST_RATES = [1, 0.67, 1, 1, 1, 1]
 
 type Plan = { id: string; title: string; task: string; days: number[] } // 0 = Monday ... 6 = Sunday
 
@@ -63,5 +67,10 @@ export function buildLandingDemo(now: Date = new Date()): LandingDemoData {
     }
   })
 
-  return { today, objective, goals }
+  const weeks = PAST_RATES.map((rate, index): DemoWeek => ({
+    weekStart: addAppWeeks(weekStart, index - PAST_RATES.length),
+    rate,
+  }))
+
+  return { today, objective, goals, weeks }
 }
