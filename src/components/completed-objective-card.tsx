@@ -28,7 +28,7 @@ export function CompletedObjectiveCard({
   const tasksText = tasksCompleted === 1 ? 'tarefa' : 'tarefas'
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 flex flex-col gap-3">
+    <div className="card-surface card-roomy rounded-lg border border-border bg-card p-4 flex flex-col gap-3">
       <div className="flex items-start gap-2">
         <h3 className="min-w-0 flex-1">
           <Link href={`/objectives/${id}`} className="block font-semibold line-clamp-2 break-words">

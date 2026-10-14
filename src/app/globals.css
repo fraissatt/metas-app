@@ -53,42 +53,42 @@
 
 :root {
   color-scheme: light;
-  --background: #eceef2;
-  --foreground: #14171f;
+  --background: #eaf3ff;
+  --foreground: #0f1b33;
   --card: #ffffff;
-  --card-foreground: #14171f;
+  --card-foreground: #0f1b33;
   --popover: #ffffff;
-  --popover-foreground: #14171f;
-  --primary: #1f6bff;
+  --popover-foreground: #0f1b33;
+  --primary: #0057ff;
   --primary-foreground: #ffffff;
-  --secondary: #e2e5eb;
-  --secondary-foreground: #14171f;
-  --muted: #e2e5eb;
-  --muted-foreground: #5b6170;
-  --accent: #dce7ff;
-  --accent-foreground: #1450cc;
-  --support: #f05a3c;
-  --support-foreground: #b4380a;
-  --support-muted: #f05a3c1f;
-  --glow: #1f6bff33;
+  --secondary: #dcebff;
+  --secondary-foreground: #0f1b33;
+  --muted: #dcebff;
+  --muted-foreground: #52607a;
+  --accent: #d6e8ff;
+  --accent-foreground: #0047e1;
+  --support: #38a3ff;
+  --support-foreground: #0b5fb8;
+  --support-muted: #38a3ff26;
+  --glow: #0057ff33;
   --destructive: #b91c1c;
-  --border: #d7dbe3;
-  --input: #d7dbe3;
-  --ring: #1f6bff;
-  --chart-1: #cfd4dd;
-  --chart-2: #9db8f5;
-  --chart-3: #6b97f7;
-  --chart-4: #3f7bfa;
-  --chart-5: #1f6bff;
+  --border: #cfe0f7;
+  --input: #cfe0f7;
+  --ring: #0057ff;
+  --chart-1: #cfe0f7;
+  --chart-2: #9cc3ff;
+  --chart-3: #5c97ff;
+  --chart-4: #2c72ff;
+  --chart-5: #0057ff;
   --radius: 0.625rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #14171f;
-  --sidebar-primary: #1f6bff;
+  --sidebar-foreground: #0f1b33;
+  --sidebar-primary: #0057ff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #dce7ff;
-  --sidebar-accent-foreground: #1450cc;
-  --sidebar-border: #d7dbe3;
-  --sidebar-ring: #1f6bff;
+  --sidebar-accent: #d6e8ff;
+  --sidebar-accent-foreground: #0047e1;
+  --sidebar-border: #cfe0f7;
+  --sidebar-ring: #0057ff;
 }
 
 .dark {
@@ -128,6 +128,32 @@
   --sidebar-accent-foreground: #39ff14;
   --sidebar-border: #262b36;
   --sidebar-ring: #39ff14;
+}
+
+/* Light theme only: the main cards get layered, bluish shadows and a pastel gradient from
+   white to ice, and the ones with their own padding get a little more room. In the
+   components layer so a utility on the card (the glow of a finished goal, a hover shadow)
+   still wins; the padding is plain CSS so it beats the card's own `p-4`. */
+@layer components {
+  :root:not(.dark) .card-surface {
+    background-image: linear-gradient(
+      160deg,
+      var(--card) 0%,
+      color-mix(in oklab, var(--card) 60%, var(--background)) 100%
+    );
+    box-shadow:
+      0 1px 2px rgb(10 42 102 / 0.08),
+      0 4px 8px rgb(10 42 102 / 0.07),
+      0 12px 24px rgb(0 87 255 / 0.08);
+  }
+}
+
+:root:not(.dark) .card-roomy {
+  padding: 1.25rem;
+}
+
+:root:not(.dark) .card-roomy-header {
+  padding: 0.875rem 1.25rem;
 }
 
 @layer base {
@@ -197,20 +223,57 @@
 /* Presentation page: one accent per card. Light values are darker so the icon
    and border keep their contrast on a white card; dark values are the neon ones. */
 :root {
-  --lp-green: #15803d;
-  --lp-blue: #2563eb;
-  --lp-amber: #b45309;
+  /* Light theme: the three step colours are bright for fills; the -ink twins are
+     the darker shades used for text and icons, so they stay readable. */
+  --lp-green: #22c55e;
+  --lp-blue: #3b8cff;
+  --lp-amber: #f5a623;
+  --lp-tint: 24%;
+  --lp-tint-chip: 22%;
+  --lp-green-ink: #15803d;
+  --lp-blue-ink: #1d4ed8;
+  --lp-amber-ink: #b45309;
   --lp-violet: #7c3aed;
   --lp-pink: #be185d;
   --lp-cyan: #0e7490;
 }
 .dark {
+  --lp-tint: 16%;
+  --lp-tint-chip: 14%;
   --lp-green: #39ff14;
   --lp-blue: #4f9dff;
   --lp-amber: #ffb020;
+  --lp-green-ink: var(--lp-green);
+  --lp-blue-ink: var(--lp-blue);
+  --lp-amber-ink: var(--lp-amber);
   --lp-violet: #b78cff;
   --lp-pink: #ff6fae;
   --lp-cyan: #2fd4d4;
+}
+
+/* Step number and title. Light theme: the number is a seal of the topic colour with a glow
+   and the title takes the dark shade of that colour. Dark theme: the number stays a tinted
+   circle and the title is lit in its own neon colour, staying so even when the rest of the
+   step dims, so it does not get lost against the Aurora background. */
+.landing-step-badge {
+  color: var(--card-ink);
+  background: color-mix(in oklab, var(--card-color) var(--lp-tint), transparent);
+}
+
+:root:not(.dark) .landing-step-badge {
+  color: #fff;
+  background: var(--card-color);
+  box-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 70%, transparent);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+.landing-title {
+  color: var(--card-ink);
+}
+
+.dark .landing-title {
+  color: var(--card-color);
+  text-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 80%, transparent);
 }
 
 @keyframes landing-in {

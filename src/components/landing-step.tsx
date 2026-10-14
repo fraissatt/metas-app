@@ -41,18 +41,19 @@ export function LandingStep({
       data-step={index}
       aria-current={active ? 'step' : undefined}
       className={cn('flex gap-4', className)}
-      // --vN (set by the parent from the scroll) fades the step in as the demo reaches its view.
+      // --vN (set by the parent from the scroll) fades the step in as the demo reaches its view (--dim),
+      // everything but the title, which stays lit.
       style={
         {
           '--card-color': `var(--lp-${color})`,
-          opacity: `calc(0.4 + 0.6 * var(--v${index}, ${active ? 1 : 0}))`,
+          '--card-ink': `var(--lp-${color}-ink, var(--lp-${color}))`,
+          '--dim': `calc(0.4 + 0.6 * var(--v${index}, ${active ? 1 : 0}))`,
         } as CSSProperties
       }
     >
-      <div className="flex flex-col items-center" aria-hidden="true">
+      <div className="flex flex-col items-center" aria-hidden="true" style={{ opacity: 'var(--dim)' }}>
         <span
-          className="flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold"
-          style={{ color: 'var(--card-color)', background: 'color-mix(in oklab, var(--card-color) 16%, transparent)' }}
+          className="landing-step-badge flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold"
         >
           {index + 1}
         </span>
@@ -74,32 +75,34 @@ export function LandingStep({
       >
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="flex items-center gap-2 text-xl font-semibold">
-              <Icon className="size-5" style={{ color: 'var(--card-color)' }} aria-hidden="true" />
+            <h3 className="landing-title flex items-center gap-2 text-xl font-semibold">
+              <Icon className="size-5" style={{ color: 'var(--card-ink)' }} aria-hidden="true" />
               {title}
             </h3>
             <span
               className="rounded-full px-2 py-0.5 text-xs font-medium"
-              style={{ color: 'var(--card-color)', background: 'color-mix(in oklab, var(--card-color) 14%, transparent)' }}
+              style={{ color: 'var(--card-ink)', background: 'color-mix(in oklab, var(--card-color) var(--lp-tint-chip), transparent)' }}
             >
               {screen}
             </span>
           </div>
-          <p className="max-w-md text-base text-muted-foreground">{text}</p>
-          <div className="max-w-md rounded-lg border border-border bg-card/60 p-3">
-            <p className="text-xs font-medium text-muted-foreground">Na prática</p>
-            <p className="mt-0.5 text-sm font-medium">{practice}</p>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {points.map((point) => (
-              <p key={point} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="size-1.5 shrink-0 rounded-full" style={{ background: 'var(--card-color)' }} aria-hidden="true" />
-                {point}
-              </p>
-            ))}
+          <div className="flex flex-col gap-3" style={{ opacity: 'var(--dim)' }}>
+            <p className="max-w-md text-base text-muted-foreground">{text}</p>
+            <div className="max-w-md rounded-lg border border-border bg-card/60 p-3">
+              <p className="text-xs font-medium text-muted-foreground">Na prática</p>
+              <p className="mt-0.5 text-sm font-medium">{practice}</p>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {points.map((point) => (
+                <p key={point} className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="size-1.5 shrink-0 rounded-full" style={{ background: 'var(--card-color)' }} aria-hidden="true" />
+                  {point}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
-        {children}
+        <div style={{ opacity: 'var(--dim)' }}>{children}</div>
       </div>
     </li>
   )
