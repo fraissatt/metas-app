@@ -275,20 +275,8 @@
   }
 }
 
-/* Presentation demo: the three views are stacked and each one's visibility (--w, 0 to 1)
-   follows the scroll, so they cross-fade as the reader moves between steps; only the
-   active one takes clicks. Sections reveal as they scroll into view where the browser
-   supports it. Under reduced motion the script switches views at once (weights 0 or 1)
-   and the reveal is off. */
-.landing-layer {
-  opacity: var(--w);
-  transform: translateY(calc((1 - var(--w)) * 14px)) scale(calc(0.97 + 0.03 * var(--w)));
-  pointer-events: none;
-}
-
-.landing-layer[data-active] {
-  pointer-events: auto;
-}
+/* Presentation page: sections reveal as they scroll into view where the browser
+   supports it, and the reveal is off under reduced motion. */
 
 @keyframes landing-reveal {
   from {

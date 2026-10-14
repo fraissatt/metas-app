@@ -19,10 +19,6 @@ export function useDemoState(): DemoState {
   return state
 }
 
-export function useHasDemoState(): boolean {
-  return useContext(DemoStateContext) !== null
-}
-
 function toggleTask(goals: DemoGoal[], taskId: string): DemoGoal[] {
   return goals.map((goal) => ({
     ...goal,
@@ -34,7 +30,7 @@ function toggleTask(goals: DemoGoal[], taskId: string): DemoGoal[] {
   }))
 }
 
-/** The demo's tasks, in memory and shared by every view that shows them (panel and cards alike). */
+/** The demo's tasks, in memory and shared by every view that shows them (the three cards). */
 export function DemoStateProvider({ data, children }: { data: LandingDemoData; children: ReactNode }) {
   const [goals, setGoals] = useState<DemoGoal[]>(data.goals)
   const [ticked, setTicked] = useState(false)

@@ -28,7 +28,7 @@ describe('Landing', () => {
   it('has no screenshots: the live demo is the showcase', () => {
     setup()
     expect(screen.queryAllByRole('img')).toHaveLength(0)
-    expect(screen.getByRole('region', { name: 'Demonstração interativa' })).toBeInTheDocument()
+    expect(screen.getAllByRole('group', { name: /^Demonstração: / })).toHaveLength(3)
   })
 
   it('explains how it works in three numbered steps, in order', () => {

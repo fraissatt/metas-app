@@ -108,3 +108,7 @@ The owner found the demo pinned to the top of the screen too heavy on phones and
 - **One set of tasks:** the tasks live in a `DemoStateProvider` shared by the panel and the cards, so a tick in the Hoje card moves the week and objective cards (and the panel).
 - **Before the first paint** the progress is computed in a layout effect, so a card below the fold never flashes its final numbers; without scripts the cards show the final numbers (progress defaults to 1).
 - **Tests:** the pure helpers, the store, `revealGoals`, and flow tests that mock the cards' boxes and the scroll to check the counts at 0, partway and 1, and the shared state.
+
+## Revision (2026-10-14, desktop)
+
+The desktop now behaves like the phone: no sticky panel and no stacked views. Each step is a row with its text on the left and its own demo card on the right (stacked under the text below `lg`). The cards are the same on every screen size, each a group named "Demonstração: <step>", and their content (bars, rings, numbers) follows the scroll. The step highlight and the progress rail still follow the reading line (middle of the window). `LandingDemo` and the `.landing-layer` styles were removed.

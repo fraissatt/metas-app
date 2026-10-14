@@ -2,7 +2,6 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { CardProgressProvider } from '@/components/landing-card-progress'
-import { LandingDemo, type DemoStep } from '@/components/landing-demo'
 import { DemoStateProvider } from '@/components/landing-demo-state'
 import { DemoCard } from '@/components/landing-demo-views'
 import { LandingStep } from '@/components/landing-step'
@@ -12,10 +11,10 @@ import type { LandingDemoData } from '@/lib/landing-demo'
 import { cardProgress, createCardProgress, type CardProgressStore } from '@/lib/card-progress'
 import { scrollProgress, viewWeights } from '@/lib/scroll-progress'
 
-// Where the reader's eye is: the middle of the window on desktop; on phones the
-// sticky demo covers the top half, so it is lower, just under the demo.
-const DESKTOP_REFERENCE = 0.5
-const PHONE_REFERENCE = 0.72
+type Step = 0 | 1 | 2
+
+// Where the reader's eye is: the middle of the window.
+const REFERENCE = 0.5
 
 function practiceLines(data: LandingDemoData): string[] {
   const { objective, goals } = data
@@ -28,7 +27,7 @@ function practiceLines(data: LandingDemoData): string[] {
   ]
 }
 
-// The phone cards: how far each has entered the window, for the numbers and bars inside it.
+// The demo cards: how far each has entered the window, for the numbers and bars inside it.
 function updateCards(node: HTMLElement, store: CardProgressStore) {
   node.querySelectorAll<HTMLElement>('[data-card]').forEach((card) => {
     store.set(Number(card.dataset.card), cardProgress(card.getBoundingClientRect().top, window.innerHeight))
@@ -38,7 +37,7 @@ function updateCards(node: HTMLElement, store: CardProgressStore) {
 const INITIAL_WEIGHTS = { '--p': 0, '--v0': 1, '--v1': 0, '--v2': 0 } as CSSProperties
 
 export function LandingFlow({ data }: { data: LandingDemoData }) {
-  const [active, setActive] = useState<DemoStep>(0)
+  const [active, setActive] = useState<Step>(0)
   const grid = useRef<HTMLDivElement>(null)
   const items = useRef<(HTMLLIElement | null)[]>([])
   const practice = practiceLines(data)
@@ -65,16 +64,15 @@ export function LandingFlow({ data }: { data: LandingDemoData }) {
       // No layout (a bare DOM, or hidden): leave the first step showing.
       if (centers.some((center, i) => Number.isNaN(center) || (i > 0 && center <= centers[i - 1]))) return
 
-      const desktop = typeof matchMedia === 'function' && matchMedia('(min-width: 1024px)').matches
       const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
-      const progress = scrollProgress(centers, window.innerHeight * (desktop ? DESKTOP_REFERENCE : PHONE_REFERENCE))
+      const progress = scrollProgress(centers, window.innerHeight * REFERENCE)
 
       // Written straight to the DOM: this runs every frame while scrolling, and a re-render each time is not needed.
       node.style.setProperty('--p', String(Math.round(progress * 1000) / 1000))
       viewWeights(progress, STEPS.length, reduced).forEach((weight, index) => {
         node.style.setProperty(`--v${index}`, String(weight))
       })
-      const next = Math.min(STEPS.length - 1, Math.max(0, Math.round(progress))) as DemoStep
+      const next = Math.min(STEPS.length - 1, Math.max(0, Math.round(progress))) as Step
       setActive((current) => (current === next ? current : next))
     }
 
@@ -97,11 +95,7 @@ export function LandingFlow({ data }: { data: LandingDemoData }) {
   return (
     <DemoStateProvider data={data}>
       <CardProgressProvider value={store}>
-        <div ref={grid} style={INITIAL_WEIGHTS} className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
-          {/* The sticky box is a direct child of the grid, so it can travel the whole height of the steps. */}
-          <div className="sticky top-20 z-10 hidden max-h-[calc(100vh-7rem)] overflow-y-auto rounded-xl border border-border bg-background/90 p-3 backdrop-blur lg:order-last lg:block">
-            <LandingDemo data={data} step={active} />
-          </div>
+        <div ref={grid} style={INITIAL_WEIGHTS}>
           <ol aria-label="Como funciona" className="flex flex-col">
             {STEPS.map((step, index) => (
               <LandingStep
@@ -114,9 +108,8 @@ export function LandingFlow({ data }: { data: LandingDemoData }) {
                 practice={practice[index]}
                 active={active === index}
                 last={index === STEPS.length - 1}
-                className="lg:min-h-[50vh]"
               >
-                <DemoCard index={index as 0 | 1 | 2} data={data} />
+                <DemoCard index={index as Step} data={data} label={`Demonstração: ${step.title}`} />
               </LandingStep>
             ))}
           </ol>

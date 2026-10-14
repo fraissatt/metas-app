@@ -120,10 +120,10 @@ export function TodayView({
 }
 
 /**
- * The phone version of one step's demo: a card that stays in the page flow, and
- * whose content (bars, rings, numbers) follows the scroll through `t`.
+ * One step's demo: a card that stays in the page flow beside (desktop) or under
+ * (phones) its step, and whose content (bars, rings, numbers) follows the scroll through `t`.
  */
-export function DemoCard({ index, data }: { index: 0 | 1 | 2; data: LandingDemoData }) {
+export function DemoCard({ index, data, label }: { index: 0 | 1 | 2; data: LandingDemoData; label: string }) {
   const { goals, ticked, toggle, reset } = useDemoState()
   const t = useCardProgress(index)
   const entrance = Math.min(1, t * 2.5)
@@ -131,7 +131,8 @@ export function DemoCard({ index, data }: { index: 0 | 1 | 2; data: LandingDemoD
   return (
     <div
       data-card={index}
-      className="lg:hidden"
+      role="group"
+      aria-label={label}
       style={{ '--w': t, opacity: entrance, transform: `translateY(${(1 - entrance) * 16}px)` } as CSSProperties}
     >
       <DemoGuard className="flex flex-col gap-2 [&_a]:cursor-default">

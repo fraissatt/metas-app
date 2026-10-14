@@ -25,12 +25,6 @@ describe('landing card styles', () => {
 })
 
 describe('landing flow styles', () => {
-  it('blends the stacked demo views with the scroll-driven visibility, and only the active one takes clicks', () => {
-    expect(css).toMatch(/\.landing-layer\s*{[^}]*opacity: var\(--w\)/)
-    expect(css).toMatch(/\.landing-layer\s*{[^}]*pointer-events: none/)
-    expect(css).toMatch(/\.landing-layer\[data-active\]\s*{\s*pointer-events: auto/)
-  })
-
   it('reveals sections on scroll only where scroll-driven animation exists, and not for reduced motion', () => {
     expect(css).toMatch(/@supports \(animation-timeline: view\(\)\)\s*{[^}]*\.landing-reveal/)
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{[^}]*\.landing-reveal\s*{\s*animation: none/)

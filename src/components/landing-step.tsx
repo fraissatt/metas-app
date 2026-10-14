@@ -32,7 +32,7 @@ export function LandingStep({
   active?: boolean
   className?: string
   ref?: Ref<HTMLLIElement>
-  /** Extra content under the step, e.g. the phone card of the demo. */
+  /** The step's demo card: under the text on phones, beside it from lg up. */
   children?: ReactNode
 }) {
   return (
@@ -66,31 +66,38 @@ export function LandingStep({
           </span>
         )}
       </div>
-      <div className={cn('flex flex-col gap-3', last ? 'pb-0' : 'pb-10')}>
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="flex items-center gap-2 text-xl font-semibold">
-            <Icon className="size-5" style={{ color: 'var(--card-color)' }} aria-hidden="true" />
-            {title}
-          </h3>
-          <span
-            className="rounded-full px-2 py-0.5 text-xs font-medium"
-            style={{ color: 'var(--card-color)', background: 'color-mix(in oklab, var(--card-color) 14%, transparent)' }}
-          >
-            {screen}
-          </span>
-        </div>
-        <p className="max-w-md text-base text-muted-foreground">{text}</p>
-        <div className="max-w-md rounded-lg border border-border bg-card/60 p-3">
-          <p className="text-xs font-medium text-muted-foreground">Na prática</p>
-          <p className="mt-0.5 text-sm font-medium">{practice}</p>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          {points.map((point) => (
-            <p key={point} className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="size-1.5 shrink-0 rounded-full" style={{ background: 'var(--card-color)' }} aria-hidden="true" />
-              {point}
-            </p>
-          ))}
+      <div
+        className={cn(
+          'grid min-w-0 flex-1 gap-5 lg:grid-cols-2 lg:items-center lg:gap-12',
+          last ? 'pb-0' : 'pb-12 lg:pb-24',
+        )}
+      >
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="flex items-center gap-2 text-xl font-semibold">
+              <Icon className="size-5" style={{ color: 'var(--card-color)' }} aria-hidden="true" />
+              {title}
+            </h3>
+            <span
+              className="rounded-full px-2 py-0.5 text-xs font-medium"
+              style={{ color: 'var(--card-color)', background: 'color-mix(in oklab, var(--card-color) 14%, transparent)' }}
+            >
+              {screen}
+            </span>
+          </div>
+          <p className="max-w-md text-base text-muted-foreground">{text}</p>
+          <div className="max-w-md rounded-lg border border-border bg-card/60 p-3">
+            <p className="text-xs font-medium text-muted-foreground">Na prática</p>
+            <p className="mt-0.5 text-sm font-medium">{practice}</p>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {points.map((point) => (
+              <p key={point} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="size-1.5 shrink-0 rounded-full" style={{ background: 'var(--card-color)' }} aria-hidden="true" />
+                {point}
+              </p>
+            ))}
+          </div>
         </div>
         {children}
       </div>
