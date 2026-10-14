@@ -14,13 +14,16 @@ export function scrollProgress(centers: readonly number[], reference: number): n
 }
 
 /**
- * How visible each of `count` stacked views is at `progress`: 1 at its own
- * step, fading linearly to 0 one step away, so neighbours cross-fade. When
- * motion is reduced the views switch at once instead.
+ * How visible each of `count` stacked views is at `progress`: fully visible
+ * within a quarter of a step of its own step, then fading out linearly to 0
+ * half a step away. A view is gone before its neighbour starts to appear, so
+ * two views never overlap (their text would be unreadable). When motion is
+ * reduced the views switch at once instead.
  */
 export function viewWeights(progress: number, count: number, discrete: boolean): number[] {
   return Array.from({ length: count }, (_, index) => {
-    const weight = discrete ? (index === Math.round(progress) ? 1 : 0) : Math.max(0, 1 - Math.abs(progress - index))
+    const distance = Math.abs(progress - index)
+    const weight = discrete ? (index === Math.round(progress) ? 1 : 0) : Math.min(1, Math.max(0, (0.5 - distance) / 0.25))
     return Math.round(weight * 1000) / 1000
   })
 }

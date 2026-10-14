@@ -79,14 +79,19 @@ describe('LandingFlow', () => {
     expect(inSteps.getByText('Marque no dia e veja o progresso mudar')).toBeInTheDocument()
   })
 
-  it('blends the views continuously between two steps', () => {
+  it('fades the first view out as the reader leaves its step, before the next one appears', () => {
     render(<LandingFlow data={data} />)
     scrollTo(700)
     expect(progress()).toBeCloseTo(1 / 3, 2)
     expect(Number(weight(0))).toBeCloseTo(2 / 3, 2)
-    expect(Number(weight(1))).toBeCloseTo(1 / 3, 2)
+    expect(weight(1)).toBe('0')
     expect(weight(2)).toBe('0')
     expect(steps()[0]).toHaveAttribute('aria-current', 'step')
+    scrollTo(800)
+    expect([weight(0), weight(1), weight(2)]).toEqual(['0', '0', '0'])
+    scrollTo(900)
+    expect(weight(0)).toBe('0')
+    expect(Number(weight(1))).toBeCloseTo(2 / 3, 2)
   })
 
   it('shows exactly one view, and marks its step, when a step is on the reference line', () => {

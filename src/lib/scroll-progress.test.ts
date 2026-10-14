@@ -36,12 +36,21 @@ describe('viewWeights', () => {
     expect(viewWeights(0, 3, false)).toEqual([1, 0, 0])
   })
 
-  it('cross-fades between two views: the weights of the neighbours add up to 1', () => {
-    const [a, b, c] = viewWeights(0.25, 3, false)
-    expect(a).toBeCloseTo(0.75)
-    expect(b).toBeCloseTo(0.25)
+  it('keeps a view fully visible near its step, then fades it out before the next one fades in', () => {
+    expect(viewWeights(0.2, 3, false)).toEqual([1, 0, 0])
+    const [a, b, c] = viewWeights(0.4, 3, false)
+    expect(a).toBeCloseTo(0.4)
+    expect(b).toBe(0)
     expect(c).toBe(0)
-    expect(a + b).toBeCloseTo(1)
+    expect(viewWeights(0.5, 3, false)).toEqual([0, 0, 0])
+    expect(viewWeights(0.6, 3, false)[1]).toBeCloseTo(0.4)
+  })
+
+  it('never shows two views at once, so their text does not overlap', () => {
+    for (let progress = 0; progress <= 2; progress += 0.01) {
+      const visible = viewWeights(progress, 3, false).filter((weight) => weight > 0)
+      expect(visible.length, String(progress)).toBeLessThanOrEqual(1)
+    }
   })
 
   it('is exactly one view at each step', () => {

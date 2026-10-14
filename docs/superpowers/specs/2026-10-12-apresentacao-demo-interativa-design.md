@@ -85,3 +85,15 @@ The static screenshot figure and the two images in `public/landing` are removed.
 - Screenshots or recorded videos of the app on the page.
 - Reusing the real objective card (it carries links and actions that make no sense in a demo).
 - A new animation library, and persistence of the demo state.
+
+## Revision (2026-10-14): scroll-linked blending and fuller steps
+
+After trying the first version, the owner found the steps too empty and the view switch abrupt. Approved changes, which replace the matching parts above:
+
+- **Scroll-linked progress instead of a discrete switch.** An `IntersectionObserver` is no longer used. On scroll (one animation frame at a time) the steps' vertical centres and a reference line (half of the window on desktop, 72% on phones, below the sticky demo) give a continuous progress `--p` from 0 to 2 (`scrollProgress`). It is written to the grid as CSS variables, together with a visibility weight per view, `--v0` to `--v2` (`viewWeights`): a view is fully visible within a quarter of a step of its own step and gone half a step away, so two views never overlap. The active step (`round(--p)`) still drives `aria-current`, the live message, and which view is reachable (the others are `inert` and `aria-hidden`).
+- **Stacked views.** The three views share one grid cell and read their weight through `--w`: opacity follows it, with a small slide and scale; only the active layer takes pointer events. The objective's bars grow with the weight.
+- **The rail** between two steps fills as `--p` passes from one to the next, and each step brightens gradually with its weight.
+- **Reduced motion:** weights are 0 or 1 (`round(--p)`), so views switch at once.
+- **No layout** (a bare DOM or a hidden page): step 1 stays showing.
+- **Fuller steps:** shorter (about 45% to 50% of the window), each with a large number, the title with a "Tela: ..." tag, the text, a "Na prática" example taken from the demo's own data, and two points. The objective view gains bars for six earlier weeks plus this one, "5 de 6 semanas cumpridas · sequência de 4".
+- **Tests:** pure unit tests for the two helpers (including that two views are never visible at once); flow tests that mock the steps' boxes and the scroll event.
