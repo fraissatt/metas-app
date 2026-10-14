@@ -15,4 +15,16 @@ describe('BottomNav', () => {
     expect(screen.getByRole('link', { name: 'Hoje' })).toHaveAttribute('href', '/')
     expect(screen.getByRole('link', { name: 'Objetivos' })).toHaveAttribute('aria-current', 'page')
   })
+
+  it('is a bottom island: floating with a margin, rounded, glass, and gone from md up', () => {
+    vi.mocked(usePathname).mockReturnValue('/')
+    render(<BottomNav />)
+    const nav = screen.getByRole('navigation', { name: 'Navegação principal' })
+    const island = nav.parentElement as HTMLElement // the FloatingBar carries the position and the glass
+    expect(island).toHaveAttribute('data-edge', 'bottom')
+    expect(island.className).toMatch(/(^|\s)island(\s|$)/)
+    expect(island.className).toMatch(/md:hidden/)
+    expect(island.className).toMatch(/rounded-full/)
+    expect(island.className).toMatch(/bottom-\[calc\(0\.75rem/) // floating, with a margin from the edge
+  })
 })

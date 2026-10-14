@@ -68,7 +68,7 @@ export default async function RootLayout({
             <div
               id="conteudo"
               tabIndex={-1}
-              className="pb-[calc(3.5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0"
+              className="pb-[calc(5rem_+_env(safe-area-inset-bottom))] outline-none md:pb-0"
             >
               {children}
             </div>
