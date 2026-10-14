@@ -60,6 +60,23 @@ describe('Landing', () => {
     expect(headings).toEqual(['Como funciona', 'E também', 'Pronto para começar?'])
   })
 
+  it('centres the top, the section titles and the closing call on phones only, leaving the steps alone', () => {
+    setup()
+    const top = screen.getByRole('heading', { level: 1 }).closest('section')
+    expect(top).toHaveClass('max-md:items-center', 'max-md:text-center')
+    for (const name of ['Como funciona', 'E também']) {
+      expect(screen.getByRole('heading', { level: 2, name })).toHaveClass('max-md:text-center')
+    }
+    const closing = screen.getByRole('heading', { level: 2, name: 'Pronto para começar?' }).closest('section')
+    expect(closing).toHaveClass('max-md:items-center', 'max-md:text-center')
+    for (const button of screen.getAllByRole('button', { name: 'Entrar como visitante' })) {
+      expect(button.closest('.flex-wrap')).toHaveClass('max-md:justify-center')
+    }
+    // Nothing is centred from md up, and the steps keep their own left-aligned timeline.
+    expect(screen.getByRole('list', { name: 'Como funciona' }).className).not.toMatch(/text-center/)
+    expect(top?.className).not.toMatch(/(^|\s)(md|lg):(items|text)-center/)
+  })
+
   it('has a footer with the source link and the rights notice', () => {
     setup()
     const footer = screen.getByRole('contentinfo')
