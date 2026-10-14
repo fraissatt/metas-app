@@ -140,7 +140,7 @@ export type LandingDemoData = { objective: Objective; goals: DemoGoal[] }
 type Plan = { id: string; title: string; task: string; days: number[] } // 0 = Monday ... 6 = Sunday
 
 const PLANS: Plan[] = [
-  { id: 'vocabulario', title: 'Estudar vocabulário todos os dias', task: 'Revisar 20 cartões no Anki', days: [0, 1, 2, 3, 4] },
+  { id: 'vocabulario', title: 'Estudar vocabulário todos os dias', task: 'Aprender 10 palavras novas', days: [0, 1, 2, 3, 4] },
   { id: 'conversacao', title: 'Praticar conversação', task: 'Ouvir podcast em inglês no trajeto', days: [1, 3, 5] },
 ]
 
@@ -236,7 +236,7 @@ import { buildLandingDemo } from '@/lib/landing-demo'
 
 // Wednesday 14/10/2026: Monday and Tuesday are done, Wednesday (today) is open.
 const data = buildLandingDemo(new Date('2026-10-14T15:00:00Z'))
-const ANKI = 'Revisar 20 cartões no Anki'
+const ANKI = 'Aprender 10 palavras novas'
 
 describe('LandingDemo', () => {
   it('is a labelled region', () => {
@@ -539,7 +539,7 @@ describe('LandingFlow', () => {
 
     reach(2)
     expect(items[2]).toHaveAttribute('aria-current', 'step')
-    expect(screen.getByRole('checkbox', { name: 'Revisar 20 cartões no Anki' })).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: 'Aprender 10 palavras novas' })).toBeInTheDocument()
   })
 
   it('announces the active step politely', () => {
@@ -559,10 +559,10 @@ describe('LandingFlow', () => {
   it('keeps the tasks the visitor ticked when the view changes', () => {
     render(<LandingFlow data={data} />)
     reach(2)
-    screen.getByRole('checkbox', { name: 'Revisar 20 cartões no Anki' }).click()
+    screen.getByRole('checkbox', { name: 'Aprender 10 palavras novas' }).click()
     reach(1)
     reach(2)
-    expect(screen.getByRole('checkbox', { name: 'Revisar 20 cartões no Anki' })).toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'Aprender 10 palavras novas' })).toBeChecked()
   })
 
   it('still renders, on step 1, where IntersectionObserver does not exist', () => {

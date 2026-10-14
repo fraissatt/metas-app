@@ -5,7 +5,7 @@ import { LandingFlow } from '@/components/landing-flow'
 import { buildLandingDemo } from '@/lib/landing-demo'
 
 const data = buildLandingDemo(new Date('2026-10-14T15:00:00Z'))
-const ANKI = 'Revisar 20 cartões no Anki'
+const WORDS = 'Aprender 10 palavras novas'
 
 // The steps' vertical centres at scroll 0; scrolling moves them up. With the
 // reference line at 400 (half of an 800 px window), the progress is 0
@@ -80,7 +80,7 @@ describe('LandingFlow', () => {
     expect(inSteps.getByText('Tela: Hoje')).toBeInTheDocument()
     expect(inSteps.getByText('Falar inglês com fluência, até 15/02/2027')).toBeInTheDocument()
     expect(within(steps()[1]).getAllByText('Estudar vocabulário todos os dias').length).toBeGreaterThan(0)
-    expect(inSteps.getByText(`${ANKI}, hoje`)).toBeInTheDocument()
+    expect(inSteps.getByText(`${WORDS}, hoje`)).toBeInTheDocument()
     expect(inSteps.getByText('Prazo e tempo decorrido')).toBeInTheDocument()
     expect(inSteps.getByText('Marque no dia e veja o progresso mudar')).toBeInTheDocument()
   })
@@ -129,11 +129,11 @@ describe('LandingFlow', () => {
   it('keeps the tasks the visitor ticked while the page scrolls', async () => {
     render(<LandingFlow data={data} />)
     scrollTo(1700)
-    await userEvent.click(card(2).getByRole('checkbox', { name: ANKI }))
-    await waitFor(() => expect(card(2).getByRole('checkbox', { name: ANKI })).toBeChecked())
+    await userEvent.click(card(2).getByRole('checkbox', { name: WORDS }))
+    await waitFor(() => expect(card(2).getByRole('checkbox', { name: WORDS })).toBeChecked())
     scrollTo(1100)
     scrollTo(1700)
-    expect(card(2).getByRole('checkbox', { name: ANKI })).toBeChecked()
+    expect(card(2).getByRole('checkbox', { name: WORDS })).toBeChecked()
   })
 
   it('stays on step 1 where the layout is not available', () => {
@@ -207,8 +207,8 @@ describe('LandingFlow', () => {
   it('keeps one set of tasks for the cards: a tick in the Hoje card moves the week card', async () => {
     render(<LandingFlow data={data} />)
     scrollTo(2060)
-    await userEvent.click(card(2).getByRole('checkbox', { name: ANKI }))
-    await waitFor(() => expect(card(2).getByRole('checkbox', { name: ANKI })).toBeChecked())
+    await userEvent.click(card(2).getByRole('checkbox', { name: WORDS }))
+    await waitFor(() => expect(card(2).getByRole('checkbox', { name: WORDS })).toBeChecked())
     expect(card(1).getByText('60%')).toBeInTheDocument()
   })
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createEvent, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DemoStateProvider } from '@/components/landing-demo-state'
@@ -8,7 +8,7 @@ import { buildLandingDemo } from '@/lib/landing-demo'
 // Wednesday 14/10/2026: Monday and Tuesday are done, Wednesday (today) is open.
 // The vocabulary goal has 5 tasks (2 done), the conversation goal 4 (1 done).
 const data = buildLandingDemo(new Date('2026-10-14T15:00:00Z'))
-const ANKI = 'Revisar 20 cartões no Anki'
+const WORDS = 'Aprender 10 palavras novas'
 const LABELS = ['Demonstração: Objetivo', 'Demonstração: Meta da semana', 'Demonstração: Tarefa do dia']
 
 function renderCards(indexes: (0 | 1 | 2)[] = [0, 1, 2]) {
@@ -51,29 +51,29 @@ describe('DemoCard', () => {
   it("the Hoje card shows today's tasks as checkboxes, all open, with no edit menu", () => {
     renderCards()
     const view = card(2)
-    expect(view.getByRole('checkbox', { name: ANKI })).not.toBeChecked()
+    expect(view.getByRole('checkbox', { name: WORDS })).not.toBeChecked()
     expect(view.getByRole('checkbox', { name: 'Ouvir podcast em inglês no trajeto' })).not.toBeChecked()
     expect(screen.queryByText('⋯')).toBeNull()
   })
 
   it('ticking a task completes the day for its goal', async () => {
     renderCards([2])
-    await userEvent.click(card(2).getByRole('checkbox', { name: ANKI }))
-    await waitFor(() => expect(card(2).getByRole('checkbox', { name: ANKI })).toBeChecked())
+    await userEvent.click(card(2).getByRole('checkbox', { name: WORDS }))
+    await waitFor(() => expect(card(2).getByRole('checkbox', { name: WORDS })).toBeChecked())
     expect(await card(2).findByText('✓ feito')).toBeInTheDocument()
   })
 
   it('shares the tasks between the cards: a tick in Hoje moves the week and the objective', async () => {
     renderCards()
-    await userEvent.click(card(2).getByRole('checkbox', { name: ANKI }))
-    await waitFor(() => expect(card(2).getByRole('checkbox', { name: ANKI })).toBeChecked())
+    await userEvent.click(card(2).getByRole('checkbox', { name: WORDS }))
+    await waitFor(() => expect(card(2).getByRole('checkbox', { name: WORDS })).toBeChecked())
     expect(card(1).getByText('60%')).toBeInTheDocument()
     expect(card(0).getByText('4 de 9 tarefas da semana concluídas')).toBeInTheDocument()
   })
 
   it('unticking reverts', async () => {
     renderCards([2])
-    const checkbox = () => card(2).getByRole('checkbox', { name: ANKI })
+    const checkbox = () => card(2).getByRole('checkbox', { name: WORDS })
     await userEvent.click(checkbox())
     await waitFor(() => expect(checkbox()).toBeChecked())
     await userEvent.click(checkbox())
@@ -85,12 +85,27 @@ describe('DemoCard', () => {
     renderCards()
     expect(screen.getByText('Experimente: marque uma tarefa')).toBeInTheDocument()
 
-    await userEvent.click(card(2).getByRole('checkbox', { name: ANKI }))
+    await userEvent.click(card(2).getByRole('checkbox', { name: WORDS }))
     await waitFor(() => expect(screen.queryByText('Experimente: marque uma tarefa')).toBeNull())
 
     await userEvent.click(screen.getByRole('button', { name: 'Recomeçar' }))
-    await waitFor(() => expect(card(2).getByRole('checkbox', { name: ANKI })).not.toBeChecked())
+    await waitFor(() => expect(card(2).getByRole('checkbox', { name: WORDS })).not.toBeChecked())
     expect(screen.getByText('Experimente: marque uma tarefa')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ver a Meta da semana' })).toBeNull()
+  })
+
+  it('after the first tick, points the visitor back to the week card, and the pointer scrolls there', async () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    renderCards()
+    expect(screen.queryByRole('button', { name: 'Ver a Meta da semana' })).toBeNull()
+
+    await userEvent.click(card(2).getByRole('checkbox', { name: WORDS }))
+    expect(await screen.findByText(/Feito!/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ver a Meta da semana' }))
+    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    expect(scrollIntoView.mock.contexts[0]).toBe(screen.getByRole('group', { name: LABELS[1] }))
   })
 
   it('keeps every link inside the cards inert', () => {

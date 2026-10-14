@@ -14,7 +14,7 @@ const MIN_DONE = 1
 type Plan = { id: string; title: string; task: string; days: number[] } // 0 = Monday ... 6 = Sunday
 
 const PLANS: Plan[] = [
-  { id: 'vocabulario', title: 'Estudar vocabulário todos os dias', task: 'Revisar 20 cartões no Anki', days: [0, 1, 2, 3, 4] },
+  { id: 'vocabulario', title: 'Estudar vocabulário todos os dias', task: 'Aprender 10 palavras novas', days: [0, 1, 2, 3, 4] },
   { id: 'conversacao', title: 'Praticar conversação', task: 'Ouvir podcast em inglês no trajeto', days: [1, 3, 5] },
 ]
 

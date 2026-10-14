@@ -12,6 +12,13 @@ import { groupTasksByWeeklyGoal } from '@/lib/tasks'
 
 export const HINT = 'Experimente: marque uma tarefa'
 
+function showWeekCard() {
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  document
+    .querySelector('[data-card="1"]')
+    ?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' })
+}
+
 /**
  * `t` (0 to 1) is how far the view has been revealed: 1 shows the final numbers,
  * and on phones it grows with the scroll so the numbers count up and the bars rise.
@@ -152,7 +159,23 @@ export function DemoCard({ index, data, label }: { index: 0 | 1 | 2; data: Landi
           <>
             <TodayView today={data.today} goals={goals} onToggle={toggle} />
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">{ticked ? '' : HINT}</p>
+              <p className="text-xs text-muted-foreground">
+                {ticked ? (
+                  <>
+                    Feito!{' '}
+                    <button
+                      type="button"
+                      onClick={showWeekCard}
+                      className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                    >
+                      Ver a Meta da semana
+                    </button>{' '}
+                    avançar.
+                  </>
+                ) : (
+                  HINT
+                )}
+              </p>
               <Button type="button" variant="ghost" size="sm" onClick={reset}>
                 Recomeçar
               </Button>
