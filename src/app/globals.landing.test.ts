@@ -23,3 +23,10 @@ describe('landing card styles', () => {
     }
   })
 })
+
+describe('landing flow styles', () => {
+  it('reveals sections on scroll only where scroll-driven animation exists, and not for reduced motion', () => {
+    expect(css).toMatch(/@supports \(animation-timeline: view\(\)\)\s*{[^}]*\.landing-reveal/)
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{[^}]*\.landing-reveal\s*{\s*animation: none/)
+  })
+})
