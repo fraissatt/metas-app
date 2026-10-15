@@ -10,6 +10,12 @@ describe('GuestBanner', () => {
     ).toBeInTheDocument()
   })
 
+  it('is a rounded strip from md up, aligned with the island', () => {
+    render(<GuestBanner />)
+    expect(screen.getByRole('status').className).toMatch(/md:rounded-xl/)
+    expect(screen.getByRole('status').className).toMatch(/md:max-w-6xl/)
+  })
+
   it('goes straight to the sign-up page, without asking or signing out', () => {
     render(<GuestBanner />)
     expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/cadastro')

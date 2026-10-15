@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { render as rtlRender, screen } from '@testing-library/react'
+import { render as rtlRender, screen, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { BackgroundProvider } from '@/components/background-provider'
 import { TourProvider } from '@/components/tour-provider'
@@ -57,5 +57,32 @@ describe('AppHeader', () => {
   it('guest: shows the guest banner', async () => {
     render(await AppHeader({ ...base, user: { id: 'g', name: 'Visitante', email: 'g@x.com', isAnonymous: true } }))
     expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/cadastro')
+  })
+
+  it('puts the bar in a top island from md up, hidden only where that applies', async () => {
+    render(await AppHeader({ ...base, user: { id: 'u', name: 'Ana', email: 'a@b.com', isAnonymous: false } }))
+    const island = screen.getByRole('banner').querySelector('[data-edge="top"]') as HTMLElement
+    expect(island).not.toBeNull()
+    expect(island.className).toMatch(/md:island/)
+    expect(island.className).toMatch(/md:fixed/)
+    // Below md the plain bar must stick: a sticky element only travels inside its parent, so the
+    // stickiness belongs on the header (as tall as the page), not on the bar inside it.
+    expect(screen.getByRole('banner').className).toMatch(/(^|\s)sticky(\s|$)/)
+    expect(screen.getByRole('banner').className).toMatch(/md:static/)
+    expect(island.className).not.toMatch(/(^|\s)sticky(\s|$)/)
+  })
+
+  it('keeps a spacer where the fixed island used to take room, from md up', async () => {
+    render(await AppHeader({ ...base, user: null }))
+    const spacer = screen.getByRole('banner').nextElementSibling as HTMLElement
+    expect(spacer).toHaveAttribute('aria-hidden', 'true')
+    expect(spacer.className).toMatch(/hidden/)
+    expect(spacer.className).toMatch(/md:block/)
+  })
+
+  it('guest: the notice is outside the bar, in flow below it', async () => {
+    render(await AppHeader({ ...base, user: { id: 'g', name: 'Visitante', email: 'g@x.com', isAnonymous: true } }))
+    expect(within(screen.getByRole('banner')).queryByRole('status')).toBeNull()
+    expect(screen.getByRole('status')).toBeInTheDocument()
   })
 })
