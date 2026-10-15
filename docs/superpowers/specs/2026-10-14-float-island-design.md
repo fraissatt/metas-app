@@ -52,3 +52,7 @@ Routes, `NAV_LINKS`, tour, search, user menu, day summary and the landing's own 
 ## Out of scope
 
 Changing what the island contains, new routes, a different mobile top bar, and any server or data work.
+
+## Revision (2026-10-15, softer exit)
+
+The slide-out was too abrupt. Hiding now takes 700 ms (it returns in 500 ms) with an ease-out curve `cubic-bezier(0.22, 1, 0.36, 1)`, and the bar travels 130% of its own height instead of 150% while it fades. Reduced motion is unchanged: no transition at all.

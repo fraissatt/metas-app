@@ -144,6 +144,18 @@ describe('FloatingBar', () => {
     expect(bar()).not.toHaveAttribute('inert')
   })
 
+  it('slides out slowly and gently, and comes back a little faster', () => {
+    setup()
+    expect(bar().className).toMatch(/motion-safe:duration-500/)
+    scrollTo(300)
+    expect(bar().className).toMatch(/motion-safe:duration-700/)
+    expect(bar().className).not.toMatch(/motion-safe:duration-500/)
+    expect(bar().className).toMatch(/motion-safe:ease-\[cubic-bezier/)
+    // Not a jump: it travels about its own height, not 150% of it, and fades along the way.
+    expect(bar().className).not.toMatch(/150%/)
+    expect(bar().className).toMatch(/opacity-0/)
+  })
+
   it('only transitions when motion is allowed', () => {
     setup()
     expect(bar().className).toMatch(/motion-safe:transition/)

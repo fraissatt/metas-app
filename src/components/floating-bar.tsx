@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 type Edge = 'top' | 'bottom'
 
-const OUT: Record<Edge, string> = { top: '-translate-y-[150%]', bottom: 'translate-y-[150%]' }
+const OUT: Record<Edge, string> = { top: '-translate-y-[130%]', bottom: 'translate-y-[130%]' }
 
 /**
  * A bar that floats at the top or the bottom and slides out while the page scrolls down.
@@ -30,7 +30,9 @@ export function FloatingBar({
       data-hidden={hidden}
       inert={hidden}
       className={cn(
-        'motion-safe:transition-[transform,opacity] motion-safe:duration-300',
+        // Slow, soft slide out (it fades along the way) and a slightly quicker return.
+        'motion-safe:transition-[transform,opacity] motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]',
+        hidden ? 'motion-safe:duration-700' : 'motion-safe:duration-500',
         hidden && cn(OUT[edge], 'pointer-events-none opacity-0'),
         className,
       )}
