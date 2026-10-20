@@ -9,11 +9,14 @@ import {
   format,
   getDate,
   getDay,
+  getDaysInMonth,
+  getYear,
   isSameDay,
   isValid,
   parseISO,
   setHours,
   startOfDay,
+  startOfMonth,
   startOfWeek,
 } from 'date-fns'
 import { tz } from '@date-fns/tz'
@@ -67,6 +70,24 @@ export function getWeekDays(weekStart: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => addAppDays(weekStart, i))
 }
 
+export const appYear = (date: Date) => getYear(date, inApp)
+
+/** 00:00 in Brasília of every day of `year`, Jan 1 → Dec 31. */
+export function getYearDays(year: number): Date[] {
+  const days: Date[] = []
+  for (let day = parseDay(`${year}-01-01`); appYear(day) === year; day = addAppDays(day, 1)) days.push(day)
+  return days
+}
+
+/** 00:00 in Brasília of every day of `date`'s month. */
+export function getMonthDays(date: Date): Date[] {
+  const first = plain(startOfMonth(date, inApp))
+  return Array.from({ length: getDaysInMonth(date, inApp) }, (_, i) => addAppDays(first, i))
+}
+
+/** 0 = Monday … 6 = Sunday, matching the app's Monday-first weeks. */
+export const appWeekdayIndex = (date: Date) => (getDay(date, inApp) + 6) % 7
+
 // Display formatting goes through Intl rather than hand-written patterns so
 // the locale owns separators and ordering.
 const fullDate = new Intl.DateTimeFormat('pt-BR', {
@@ -83,4 +104,16 @@ export function formatDate(date: Date): string {
 
 export function formatDayMonth(date: Date): string {
   return dayMonth.format(date)
+}
+
+const monthYear = new Intl.DateTimeFormat('pt-BR', { timeZone: APP_TIME_ZONE, month: 'long', year: 'numeric' })
+const monthShort = new Intl.DateTimeFormat('pt-BR', { timeZone: APP_TIME_ZONE, month: 'short' })
+
+export function formatMonthYear(date: Date): string {
+  return monthYear.format(date)
+}
+
+/** `out`, without the trailing dot Intl adds to abbreviations. */
+export function formatMonthShort(date: Date): string {
+  return monthShort.format(date).replace(/.$/, '')
 }
