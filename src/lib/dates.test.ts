@@ -3,6 +3,12 @@ import {
   APP_TIME_ZONE,
   addAppDays,
   appDayOfMonth,
+  appWeekdayIndex,
+  appYear,
+  formatMonthShort,
+  formatMonthYear,
+  getMonthDays,
+  getYearDays,
   appToday,
   differenceInAppWeeks,
   endOfAppDay,
@@ -80,5 +86,38 @@ describe('Brasília calendar', () => {
     expect(formatDayMonth(new Date('2026-10-06T02:00:00Z'))).toBe('05/10')
     expect(formatDate(parseDay('2026-07-29'))).toBe('29/07/2026')
     expect(formatDayMonth(parseDay('2026-01-05'))).toBe('05/01')
+  })
+})
+
+describe('year and month helpers', () => {
+  it('reads the Brasília year, not the UTC one', () => {
+    expect(appYear(new Date('2027-01-01T01:00:00Z'))).toBe(2026) // 22:00 on Dec 31 in Brasília
+  })
+
+  it('lists every day of a year', () => {
+    expect(getYearDays(2026)).toHaveLength(365)
+    expect(formatDayKey(getYearDays(2026)[0])).toBe('2026-01-01')
+    const leap = getYearDays(2028)
+    expect(leap).toHaveLength(366)
+    expect(formatDayKey(leap[59])).toBe('2028-02-29')
+    expect(formatDayKey(leap[365])).toBe('2028-12-31')
+  })
+
+  it('lists the days of a month', () => {
+    const days = getMonthDays(parseDay('2026-10-20'))
+    expect(days).toHaveLength(31)
+    expect(formatDayKey(days[0])).toBe('2026-10-01')
+    expect(formatDayKey(days[30])).toBe('2026-10-31')
+  })
+
+  it('indexes weekdays from Monday', () => {
+    expect(appWeekdayIndex(parseDay('2026-10-01'))).toBe(3) // Thursday
+    expect(appWeekdayIndex(parseDay('2026-10-04'))).toBe(6) // Sunday
+    expect(appWeekdayIndex(parseDay('2026-10-05'))).toBe(0) // Monday
+  })
+
+  it('formats month names in pt-BR', () => {
+    expect(formatMonthYear(parseDay('2026-10-20'))).toBe('outubro de 2026')
+    expect(formatMonthShort(parseDay('2026-10-20'))).toBe('out')
   })
 })
