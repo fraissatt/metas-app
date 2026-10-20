@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { deleteDailyTask, listDailyTasksByDate, toggleDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import { countObjectives } from '@/lib/actions/objectives'
 import { enterAsGuest } from '@/lib/actions/guest'
-import { getLifetimeStats } from '@/lib/actions/stats'
+import { getDayDots, getLifetimeStats } from '@/lib/actions/stats'
 import {
   countPendingRecurrences,
   getMissingGoalsPreview,
@@ -18,6 +18,7 @@ import { Landing } from '@/components/landing'
 import { LifetimeProgressBanner } from '@/components/lifetime-progress-banner'
 import { MissingGoalsCard } from '@/components/missing-goals-card'
 import { ReturnEmptyState } from '@/components/return-empty-state'
+import { TodayRails } from '@/components/today-rails'
 import { WeekMaterializer } from '@/components/week-materializer'
 
 // The layout's title template skips pages in its own segment, so spell it out.
@@ -54,24 +55,27 @@ export default async function Home() {
   // S3 — the week is planned. The only branch that needs today's tasks.
   if (goals.length > 0) {
     const tasks = await listDailyTasksByDate(new Date())
+    const dayDots = await getDayDots()
 
     return (
-      <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
-        {materializer}
-        {banner}
-        <FluidDayWeek
-          tasks={tasks}
-          goals={goals}
-          onToggleTask={toggleDailyTask}
-          onUpdateTask={updateDailyTask}
-          onDeleteTask={deleteDailyTask}
-        />
-        {preview && (
-          <div className="mt-6 max-w-md">
-            <MissingGoalsCard preview={preview} onRepeat={repeatMissingGoals} />
-          </div>
-        )}
-      </main>
+      <TodayRails data={dayDots} width="wide">
+        <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
+          {materializer}
+          {banner}
+          <FluidDayWeek
+            tasks={tasks}
+            goals={goals}
+            onToggleTask={toggleDailyTask}
+            onUpdateTask={updateDailyTask}
+            onDeleteTask={deleteDailyTask}
+          />
+          {preview && (
+            <div className="mt-6 max-w-md">
+              <MissingGoalsCard preview={preview} onRepeat={repeatMissingGoals} />
+            </div>
+          )}
+        </main>
+      </TodayRails>
     )
   }
 
@@ -81,16 +85,21 @@ export default async function Home() {
 
   // S2 when something can be brought forward, S2b when nothing can. A pending
   // recurrence is often exactly why this week is still empty, so the
-  // materialiser belongs here too.
+  // materialiser belongs here too. The rails show here as well, so a new
+  // user sees what each day done builds toward instead of an empty screen.
+  const dayDots = await getDayDots()
+
   return (
-    <main className="mx-auto max-w-2xl p-8">
-      {materializer}
-      {banner}
-      {preview ? (
-        <ReturnEmptyState preview={preview} onRepeat={repeatMissingGoals} />
-      ) : (
-        <HomeEmptyState variant="no-goal" />
-      )}
-    </main>
+    <TodayRails data={dayDots} width="narrow">
+      <main className="mx-auto max-w-2xl p-8">
+        {materializer}
+        {banner}
+        {preview ? (
+          <ReturnEmptyState preview={preview} onRepeat={repeatMissingGoals} />
+        ) : (
+          <HomeEmptyState variant="no-goal" />
+        )}
+      </main>
+    </TodayRails>
   )
 }
