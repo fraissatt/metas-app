@@ -66,7 +66,8 @@ export function MonthDotsDialog({
     <Dialog onOpenChange={reset}>
       <DialogTrigger render={<Button type="button" variant="outline" size="xs" />}>Ver o mês</DialogTrigger>
       <DialogContent className="sm:max-w-xs">
-        <DialogHeader className="flex-row items-center justify-between gap-2">
+        {/* pr-8 keeps the next arrow clear of the dialog's own close button */}
+        <DialogHeader className="flex-row items-center justify-between gap-2 pr-10">
           <Button
             type="button"
             variant="ghost"
