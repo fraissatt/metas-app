@@ -115,5 +115,5 @@ export function formatMonthYear(date: Date): string {
 
 /** `out`, without the trailing dot Intl adds to abbreviations. */
 export function formatMonthShort(date: Date): string {
-  return monthShort.format(date).replace(/.$/, '')
+  return monthShort.format(date).replace(/\.$/, '')
 }

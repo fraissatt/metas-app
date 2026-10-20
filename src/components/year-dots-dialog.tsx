@@ -31,7 +31,9 @@ export function YearDotsDialog({
   }
 
   return (
-    <Dialog onOpenChange={(open) => !open && setData(initial)}>
+    // Start from the page's latest data on every open: toggling a task
+    // revalidates the page and sends a new `initial`, which state would ignore.
+    <Dialog onOpenChange={() => setData(initial)}>
       <DialogTrigger render={<Button type="button" variant="link" className="h-auto p-0 text-xs" />}>
         Ver o ano
       </DialogTrigger>

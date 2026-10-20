@@ -58,4 +58,12 @@ describe('YearDotsDialog', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(trigger).toHaveFocus()
   })
+
+  it('opens on the latest data after the page refreshes it', async () => {
+    const { rerender } = render(<YearDotsDialog initial={yearData(2026, 2026)} loadYear={vi.fn()} />)
+    rerender(<YearDotsDialog initial={yearData(2026, 2026, ['2026-10-20'])} loadYear={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Ver o ano' }))
+
+    expect(screen.getByText('1 dia feito em 2026')).toBeInTheDocument()
+  })
 })
