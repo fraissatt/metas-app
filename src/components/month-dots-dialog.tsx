@@ -44,11 +44,18 @@ export function MonthDotsDialog({
   async function move(delta: number) {
     const next = fromIndex(monthIndex(target.current) + delta)
     if (monthIndex(next) < monthIndex(first) || monthIndex(next) > monthIndex(current)) return
+    const before = target.current
     target.current = next
     const id = ++request.current
 
-    const data = next.year === initial.year ? initial : await loadYear(next.year)
-    if (id === request.current) setShown({ period: next, data })
+    try {
+      const data = next.year === initial.year ? initial : await loadYear(next.year)
+      if (id === request.current) setShown({ period: next, data })
+    } catch {
+      // The year did not load: stay on the month on screen, so the next click
+      // retries it instead of skipping ahead.
+      if (id === request.current) target.current = before
+    }
   }
 
   const { period, data } = shown

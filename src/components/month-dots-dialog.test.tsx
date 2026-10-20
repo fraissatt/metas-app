@@ -5,6 +5,10 @@ import { MonthDotsDialog } from '@/components/month-dots-dialog'
 import { getYearDays, parseDay } from '@/lib/dates'
 import { buildDayDots, type DayDotsYear } from '@/lib/day-dots'
 
+// The click-through tests are slow when the machine is busy (the first one also pays
+// for loading the dialog), so the default 5 s would flake under load.
+vi.setConfig({ testTimeout: 20_000 })
+
 const now = new Date('2026-10-20T15:00:00Z')
 
 function yearData(year: number, firstYear: number, done: string[] = []): DayDotsYear {
@@ -18,7 +22,11 @@ function yearData(year: number, firstYear: number, done: string[] = []): DayDots
   }
 }
 
-const open = () => userEvent.click(screen.getByRole('button', { name: 'Ver o mês' }))
+// The dialog mounts after the click, and slightly later on a busy machine.
+const open = async () => {
+  await userEvent.click(screen.getByRole('button', { name: 'Ver o mês' }))
+  await screen.findByRole('dialog')
+}
 
 describe('MonthDotsDialog', () => {
   it('opens on the current month with its grid, legend and total', async () => {
@@ -67,7 +75,7 @@ describe('MonthDotsDialog', () => {
     }
     expect(screen.getByRole('dialog', { name: 'janeiro de 2025' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mês anterior' })).toHaveAttribute('aria-disabled', 'true')
-  }, 20_000)
+  })
 
   it('does not skip or repeat a month when two clicks come while a year is loading', async () => {
     const pending: Array<(data: DayDotsYear) => void> = []
@@ -81,7 +89,7 @@ describe('MonthDotsDialog', () => {
     await act(async () => pending.forEach((resolve) => resolve(yearData(2025, 2025))))
 
     await waitFor(() => expect(screen.getByRole('dialog', { name: 'novembro de 2025' })).toBeInTheDocument())
-  }, 20_000)
+  })
 
   it('shows the first-dot hint only while no day is done', async () => {
     const { unmount } = render(<MonthDotsDialog initial={yearData(2026, 2026)} loadYear={vi.fn()} />)
@@ -113,5 +121,21 @@ describe('MonthDotsDialog', () => {
     await open()
 
     expect(screen.getByText('1 de 20 dias feitos')).toBeInTheDocument()
+  })
+
+  it('stays on the month it shows when a year fails to load, then retries the same month', async () => {
+    const loadYear = vi
+      .fn<(year: number) => Promise<DayDotsYear>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue(yearData(2025, 2025))
+    render(<MonthDotsDialog initial={yearData(2026, 2025)} loadYear={loadYear} />)
+    await open()
+    for (let i = 0; i < 9; i++) await userEvent.click(screen.getByRole('button', { name: 'Mês anterior' })) // → janeiro de 2026
+
+    await userEvent.click(screen.getByRole('button', { name: 'Mês anterior' })) // fails
+    expect(screen.getByRole('dialog', { name: 'janeiro de 2026' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Mês anterior' })) // retry: december, not november
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'dezembro de 2025' })).toBeInTheDocument())
   })
 })
