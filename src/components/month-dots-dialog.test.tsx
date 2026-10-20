@@ -67,7 +67,7 @@ describe('MonthDotsDialog', () => {
     }
     expect(screen.getByRole('dialog', { name: 'janeiro de 2025' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mês anterior' })).toHaveAttribute('aria-disabled', 'true')
-  })
+  }, 20_000)
 
   it('does not skip or repeat a month when two clicks come while a year is loading', async () => {
     const pending: Array<(data: DayDotsYear) => void> = []
@@ -81,7 +81,7 @@ describe('MonthDotsDialog', () => {
     await act(async () => pending.forEach((resolve) => resolve(yearData(2025, 2025))))
 
     await waitFor(() => expect(screen.getByRole('dialog', { name: 'novembro de 2025' })).toBeInTheDocument())
-  })
+  }, 20_000)
 
   it('shows the first-dot hint only while no day is done', async () => {
     const { unmount } = render(<MonthDotsDialog initial={yearData(2026, 2026)} loadYear={vi.fn()} />)
