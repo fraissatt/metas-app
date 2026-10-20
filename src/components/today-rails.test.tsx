@@ -23,6 +23,8 @@ describe('TodayRails', () => {
     )
 
     expect(screen.getByRole('main')).toHaveTextContent('conteúdo')
+    // A grid item with auto margins shrinks to its content unless told to fill.
+    expect(screen.getByRole('main').parentElement).toHaveClass('[&>main]:w-full')
     for (const name of ['Efeito composto', 'Calendário']) {
       const rail = screen.getByRole('complementary', { name })
       expect(rail).toHaveClass('hidden', '2xl:block')

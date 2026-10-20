@@ -21,7 +21,9 @@ export function TodayRails({
   return (
     <div
       className={cn(
-        '2xl:grid 2xl:justify-center 2xl:gap-6',
+        // Auto margins shrink a grid item to its content, so the main is told to
+        // fill its column (it already does in normal block flow).
+        '2xl:grid 2xl:justify-center 2xl:gap-6 [&>main]:w-full',
         width === 'wide'
           ? '2xl:grid-cols-[170px_minmax(0,72rem)_170px]'
           : '2xl:grid-cols-[170px_minmax(0,42rem)_170px]',
