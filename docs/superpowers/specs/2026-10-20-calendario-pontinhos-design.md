@@ -58,7 +58,7 @@ The lifetime progress banner, the header day summary, tasks, week progress, rout
 - A day whose tasks were all deleted has no tasks, so it is empty.
 - Today before any task is done: empty with the ring.
 - Month or year boundaries and DST: day keys come from the app-timezone helpers, never from UTC dates.
-- Large N: X grows fast (365 days ≈ 37,8×, 730 ≈ 1.427×); formatting keeps it short with a thousands separator.
+- Large N: X grows fast (365 days ≈ 37,8×, 730 ≈ 1.428×); formatting keeps it short with a thousands separator.
 
 ## Testing
 

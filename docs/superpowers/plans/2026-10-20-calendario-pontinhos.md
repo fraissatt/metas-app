@@ -15,7 +15,7 @@
 - All day/week/month/year math goes in `src/lib/dates.ts`; `dates-guard.test.ts` fails on `startOfDay`, `.getFullYear()`, `.getDay()`, `format(…'yyyy-MM-dd')` etc. anywhere else.
 - App day = `America/Sao_Paulo`. A task belongs to the day of its `date` field, never `completedAt`.
 - Done threshold: `DONE_THRESHOLD = 0.6`; `ratio >= 0.6` done, `0 < ratio < 0.6` partial, else empty. Future days are always empty.
-- Compound factor: `1.01 ** daysDone`, all-time days done. pt-BR: one decimal under 100 (`5,6×`), whole number with thousands separator from 100 (`1.427×`).
+- Compound factor: `1.01 ** daysDone`, all-time days done. pt-BR: one decimal under 100 (`5,6×`), whole number with thousands separator from 100 (`1.428×`).
 - Copy (exact): `1% melhor a cada dia feito`; `Seus {N} dias feitos já valem {X}` (singular `Seu 1 dia feito já vale 1,0×`); N = 0: `Cada dia feito soma 1%. Em um ano, isso vira 37×.`; month footer `{X} de {Y} dias feitos`; empty-month hint `Seu primeiro ponto acende quando você concluir 60% das tarefas de um dia.`; link `Ver o ano`; year footer `{N} dias feitos em {ano}`; legend `Nada feito`, `Parte feita`, `Dia feito`.
 - Weeks start on Monday; weekday initials `S T Q Q S S D`.
 - `firstYear` = the smaller of the user's `createdAt` year and the earliest task's `date` year.
@@ -88,7 +88,7 @@ describe('year and month helpers', () => {
 - Produces:
   - `export const DONE_THRESHOLD = 0.6`
   - `export type DayTone = 'empty' | 'partial' | 'done'`
-  - `export type DayDot = { key: string; tone: DayTone; isToday: boolean }` (`key` is `yyyy-MM-dd`; plain data, safe to pass to client components)
+  - `export type DayDot = { key: string; tone: DayTone; isCurrentDay: boolean }` (`key` is `yyyy-MM-dd`; plain data, safe to pass to client components)
   - `export type TaskDay = { date: Date; completed: boolean }`
   - `dayTone(completed: number, total: number): DayTone`
   - `buildDayDots(tasks: TaskDay[], days: Date[], now: Date): DayDot[]` — one dot per entry of `days`, in order; days after `appToday(now)` are `empty`.
@@ -117,9 +117,9 @@ it('buckets tasks by their Brasília day and leaves the future empty', () => {
     { date: parseDay('2026-10-25'), completed: true },
   ]
   const dots = buildDayDots(tasks, days, new Date('2026-10-20T15:00:00Z'))
-  expect(dots[4]).toEqual({ key: '2026-10-05', tone: 'partial', isToday: false })
+  expect(dots[4]).toEqual({ key: '2026-10-05', tone: 'partial', isCurrentDay: false })
   expect(dots[5].tone).toBe('done')
-  expect(dots[19].isToday).toBe(true)
+  expect(dots[19].isCurrentDay).toBe(true)
   expect(dots[24].tone).toBe('empty') // future
 })
 it('counts all-time days done', () => {
@@ -134,7 +134,7 @@ it('compounds 1% per day and formats it', () => {
   expect(formatFactor(compoundFactor(0))).toBe('1,0×')
   expect(formatFactor(compoundFactor(70))).toBe('2,0×')
   expect(formatFactor(compoundFactor(365))).toBe('37,8×')
-  expect(formatFactor(compoundFactor(730))).toBe('1.427×')
+  expect(formatFactor(compoundFactor(730))).toBe('1.428×')
 })
 it('lays the year out in Monday-first weeks', () => {
   const dots = buildDayDots([], getYearDays(2026), new Date('2026-10-20T15:00:00Z'))
