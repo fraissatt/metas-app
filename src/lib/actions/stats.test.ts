@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
-import { getLifetimeStats } from '@/lib/actions/stats'
-import { getWeekBounds } from '@/lib/dates'
+import { getDayDots, getLifetimeStats } from '@/lib/actions/stats'
+import { appYear, getWeekBounds, getYearDays, parseDay } from '@/lib/dates'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
 
-async function makeGoal() {
+async function makeGoal(userId = TEST_USER_ID) {
   const objective = await prisma.objective.create({
-    data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() },
+    data: { userId, title: 'Obj', startDate: new Date() },
   })
   const bounds = getWeekBounds(new Date())
   return prisma.weeklyGoal.create({
@@ -90,5 +90,55 @@ describe('getLifetimeStats isolation', () => {
       data: { title: 'Tarefa Alheio', weeklyGoalId: foreignGoal.id, date: new Date(), completed: true, completedAt: new Date() },
     })
     expect(await getLifetimeStats()).toMatchObject({ totalCompleted: 0, firstCompletedAt: null })
+  })
+})
+
+describe('getDayDots', () => {
+  it('returns the current year with every dot empty for a new user', async () => {
+    const result = await getDayDots()
+    const year = appYear(new Date())
+
+    expect(result.year).toBe(year)
+    expect(result.dots).toHaveLength(getYearDays(year).length)
+    expect(result.dots.every((dot) => dot.tone === 'empty')).toBe(true)
+    expect(result).toMatchObject({ daysDone: 0, firstYear: year, currentYear: year })
+  })
+
+  it("lights only the user's own days and counts days done all-time", async () => {
+    const goal = await makeGoal()
+    await createTestUser('other')
+    const otherGoal = await makeGoal('other')
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'A', weeklyGoalId: goal.id, date: parseDay('2026-10-05'), completed: true },
+        { title: 'B', weeklyGoalId: goal.id, date: parseDay('2025-03-01'), completed: true },
+        { title: 'C', weeklyGoalId: otherGoal.id, date: parseDay('2026-10-06'), completed: true },
+      ],
+    })
+
+    const result = await getDayDots(2026)
+    const lit = result.dots.filter((dot) => dot.tone !== 'empty').map((dot) => dot.key)
+
+    expect(lit).toEqual(['2026-10-05'])
+    expect(result.daysDone).toBe(2)
+  })
+
+  it('starts firstYear at the earliest task year and reads past years', async () => {
+    const goal = await makeGoal()
+    await prisma.dailyTask.create({
+      data: { title: 'Old', weeklyGoalId: goal.id, date: parseDay('2025-03-01'), completed: true },
+    })
+
+    const result = await getDayDots(2025)
+
+    expect(result.firstYear).toBe(2025)
+    expect(result.year).toBe(2025)
+    expect(result.dots.find((dot) => dot.key === '2025-03-01')?.tone).toBe('done')
+  })
+
+  it('clamps a year outside firstYear..currentYear', async () => {
+    const year = appYear(new Date())
+    expect((await getDayDots(1999)).year).toBe(year)
+    expect((await getDayDots(year + 5)).year).toBe(year)
   })
 })
