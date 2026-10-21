@@ -7,6 +7,7 @@ import {
   dayTone,
   formatFactor,
   layoutYearWeeks,
+  monthFromDots,
 } from '@/lib/day-dots'
 
 describe('dayTone', () => {
@@ -81,5 +82,26 @@ describe('layoutYearWeeks', () => {
     expect(weeks[0][3]?.key).toBe('2026-01-01')
     expect(weeks.flat().filter(Boolean)).toHaveLength(365)
     expect(weeks.at(-1)?.at(-1)).toBeNull() // Dec 31 2026 is a Thursday
+  })
+})
+
+describe('monthFromDots', () => {
+  const now = new Date('2026-10-20T15:00:00Z')
+
+  it('picks one month in order, with its real length', () => {
+    const dots = buildDayDots([], getYearDays(2026), now)
+    const february = monthFromDots(dots, 2026, 2)
+    expect(february).toHaveLength(28)
+    expect(february[0].key).toBe('2026-02-01')
+    expect(february[27].key).toBe('2026-02-28')
+    expect(monthFromDots(dots, 2026, 12)[30].key).toBe('2026-12-31')
+  })
+
+  it('has 29 days in a leap February', () => {
+    expect(monthFromDots(buildDayDots([], getYearDays(2028), now), 2028, 2)).toHaveLength(29)
+  })
+
+  it('is empty for a month the dots do not cover', () => {
+    expect(monthFromDots(buildDayDots([], getYearDays(2026), now), 2025, 6)).toEqual([])
   })
 })
