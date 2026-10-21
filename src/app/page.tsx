@@ -18,7 +18,7 @@ import { Landing } from '@/components/landing'
 import { LifetimeProgressBanner } from '@/components/lifetime-progress-banner'
 import { MissingGoalsCard } from '@/components/missing-goals-card'
 import { ReturnEmptyState } from '@/components/return-empty-state'
-import { TodayRails } from '@/components/today-rails'
+import { SmallStepsSection } from '@/components/small-steps-section'
 import { WeekMaterializer } from '@/components/week-materializer'
 
 // The layout's title template skips pages in its own segment, so spell it out.
@@ -58,24 +58,23 @@ export default async function Home() {
     const dayDots = await getDayDots()
 
     return (
-      <TodayRails data={dayDots} width="wide">
-        <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
-          {materializer}
-          {banner}
-          <FluidDayWeek
-            tasks={tasks}
-            goals={goals}
-            onToggleTask={toggleDailyTask}
-            onUpdateTask={updateDailyTask}
-            onDeleteTask={deleteDailyTask}
-          />
-          {preview && (
-            <div className="mt-6 max-w-md">
-              <MissingGoalsCard preview={preview} onRepeat={repeatMissingGoals} />
-            </div>
-          )}
-        </main>
-      </TodayRails>
+      <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
+        {materializer}
+        {banner}
+        <FluidDayWeek
+          tasks={tasks}
+          goals={goals}
+          onToggleTask={toggleDailyTask}
+          onUpdateTask={updateDailyTask}
+          onDeleteTask={deleteDailyTask}
+        />
+        {preview && (
+          <div className="mt-6 max-w-md">
+            <MissingGoalsCard preview={preview} onRepeat={repeatMissingGoals} />
+          </div>
+        )}
+        <SmallStepsSection data={dayDots} />
+      </main>
     )
   }
 
@@ -85,21 +84,21 @@ export default async function Home() {
 
   // S2 when something can be brought forward, S2b when nothing can. A pending
   // recurrence is often exactly why this week is still empty, so the
-  // materialiser belongs here too. The rails show here as well, so a new
-  // user sees what each day done builds toward instead of an empty screen.
+  // materialiser belongs here too. The small steps section shows here as
+  // well, so a new user sees what each day done builds toward instead of an
+  // empty screen.
   const dayDots = await getDayDots()
 
   return (
-    <TodayRails data={dayDots} width="narrow">
-      <main className="mx-auto max-w-2xl p-8">
-        {materializer}
-        {banner}
-        {preview ? (
-          <ReturnEmptyState preview={preview} onRepeat={repeatMissingGoals} />
-        ) : (
-          <HomeEmptyState variant="no-goal" />
-        )}
-      </main>
-    </TodayRails>
+    <main className="mx-auto max-w-2xl p-8">
+      {materializer}
+      {banner}
+      {preview ? (
+        <ReturnEmptyState preview={preview} onRepeat={repeatMissingGoals} />
+      ) : (
+        <HomeEmptyState variant="no-goal" />
+      )}
+      <SmallStepsSection data={dayDots} />
+    </main>
   )
 }

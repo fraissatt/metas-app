@@ -28,21 +28,22 @@ describe('root page', () => {
     expect(await generateMetadata()).toMatchObject({ title: { absolute: 'Hoje · Metas' } })
   })
 
-  it('shows the calendar rails on the empty week screen', async () => {
+  it('shows the small steps section on the empty week screen', async () => {
     await prisma.objective.create({ data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() } })
     render(await Home())
-    expect(screen.getByRole('complementary', { name: 'Calendário' })).toBeInTheDocument()
-    expect(screen.getByRole('complementary', { name: 'Efeito composto' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Seus pequenos passos' })).toBeInTheDocument()
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
   })
 
-  it('shows the calendar rails beside a planned week', async () => {
+  it('shows the small steps section under a planned week', async () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
     const objective = await prisma.objective.create({
       data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() },
     })
     await prisma.weeklyGoal.create({ data: { title: 'Meta', objectiveId: objective.id, ...getWeekBounds(new Date()) } })
     render(await Home())
-    expect(screen.getByRole('complementary', { name: 'Calendário' })).toBeInTheDocument()
-    expect(screen.getByRole('complementary', { name: 'Efeito composto' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Seus pequenos passos' })).toBeInTheDocument()
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
+    expect(screen.getByRole('main')).toContainElement(screen.getByRole('heading', { name: 'Seus pequenos passos' }))
   })
 })

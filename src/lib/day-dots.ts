@@ -75,3 +75,9 @@ export function layoutYearWeeks(dots: DayDot[]): (DayDot | null)[][] {
   while (cells.length % 7 !== 0) cells.push(null)
   return Array.from({ length: cells.length / 7 }, (_, i) => cells.slice(i * 7, i * 7 + 7))
 }
+
+/** One month (1–12) of a year's dots, in order; empty when the dots do not cover it. */
+export function monthFromDots(dots: DayDot[], year: number, month: number): DayDot[] {
+  const prefix = `${year}-${String(month).padStart(2, '0')}-`
+  return dots.filter((dot) => dot.key.startsWith(prefix))
+}
