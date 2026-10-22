@@ -16,13 +16,14 @@ describe('island style', () => {
     expect(rule?.[1]).toMatch(/box-shadow: var\(--island-shadow\)/)
   })
 
-  it('has layered, bluish shadows in the light theme', () => {
+  it('has a soft, neutral two-layer shadow in the light theme, not the old bluish glow', () => {
     const light = css.match(/:root {\s*--island-shadow:([^;]*);/)
     expect(light, 'light --island-shadow').not.toBeNull()
-    expect(light?.[1].match(/rgb\(/g)?.length).toBeGreaterThanOrEqual(3)
+    expect(light?.[1].match(/rgb\(/g)?.length).toBe(2)
+    expect(light?.[1]).not.toMatch(/rgb\(0 87 255|rgb\(10 42 102/)
   })
 
-  it('has its own dark shadow, so the neon stays on the active link only', () => {
+  it('has its own dark shadow', () => {
     const dark = css.match(/\.dark {\s*--island-shadow:([^;]*);/)
     expect(dark, 'dark --island-shadow').not.toBeNull()
     expect(dark?.[1]).toMatch(/rgb\(0 0 0/)
