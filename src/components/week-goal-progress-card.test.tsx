@@ -132,4 +132,10 @@ describe('WeekGoalProgressCard', () => {
     expect(screen.queryByText('✓ concluída')).not.toBeInTheDocument()
     expect(screen.getByText('0/0 tarefas')).toBeInTheDocument()
   })
+
+  it('has no coloured rail on its left edge', () => {
+    const { container } = render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks: [] }} />)
+
+    expect(container.querySelector('.w-\\[3px\\]')).toBeNull()
+  })
 })

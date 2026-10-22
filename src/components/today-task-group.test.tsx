@@ -93,4 +93,18 @@ describe('TodayTaskGroup', () => {
     render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
     expect(screen.queryByRole('button', { name: 'Ações de Tarefa 0' })).not.toBeInTheDocument()
   })
+
+  it('has no coloured rail on its left edge', () => {
+    const { container } = render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
+
+    expect(container.querySelector('.w-\\[3px\\]')).toBeNull()
+  })
+
+  it('shows the done badge as a soft pill, not a solid one', () => {
+    render(<TodayTaskGroup group={group([true])} onToggleTask={vi.fn()} />)
+
+    const badge = screen.getByText('✓ feito')
+    expect(badge).toHaveClass('bg-primary/15')
+    expect(badge).not.toHaveClass('bg-primary')
+  })
 })
