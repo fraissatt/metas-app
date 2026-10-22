@@ -138,4 +138,16 @@ describe('WeekGoalProgressCard', () => {
 
     expect(container.querySelector('.w-\\[3px\\]')).toBeNull()
   })
+
+  it('drops its own frame when it sits in a panel, and keeps it by default', () => {
+    const goal = { ...weeklyGoal, dailyTasks: [] }
+    const flat = render(<WeekGoalProgressCard goal={goal} flat />)
+    expect(flat.container.firstElementChild).not.toHaveClass('rounded-lg')
+    expect(flat.container.firstElementChild).not.toHaveClass('border')
+    expect(flat.container.firstElementChild).not.toHaveClass('bg-card')
+    flat.unmount()
+
+    const framed = render(<WeekGoalProgressCard goal={goal} />)
+    expect(framed.container.firstElementChild).toHaveClass('rounded-lg', 'border', 'bg-card')
+  })
 })

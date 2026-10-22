@@ -12,12 +12,15 @@ export function TodayTaskGroup({
   onToggleTask,
   onUpdateTask,
   onDeleteTask,
+  flat = false,
 }: {
   group: TaskGroup
   onToggleTask: (id: string) => Promise<void>
   /** With both edit handlers, each task gets the "⋯" menu to edit or delete it. */
   onUpdateTask?: (id: string, formData: FormData) => Promise<void>
   onDeleteTask?: (id: string) => Promise<void>
+  /** Inside a `PanelList`: the panel draws the frame, so the group does not. */
+  flat?: boolean
 }) {
   const { weeklyGoal, tasks } = group
   const completed = tasks.filter((t) => t.completed).length
@@ -30,8 +33,9 @@ export function TodayTaskGroup({
     <div
       data-complete={dayComplete}
       className={cn(
-        'flex overflow-hidden rounded-lg border bg-card transition-[border-color,box-shadow] motion-reduce:transition-none',
-        dayComplete ? 'border-primary/60 shadow-[0_0_18px_var(--glow)]' : 'border-border',
+        'flex overflow-hidden transition-[border-color,box-shadow] motion-reduce:transition-none',
+        !flat && 'rounded-lg border bg-card',
+        !flat && (dayComplete ? 'border-primary/60 shadow-[0_0_18px_var(--glow)]' : 'border-border'),
       )}
     >
       <div className="flex-1">

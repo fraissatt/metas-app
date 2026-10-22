@@ -19,4 +19,14 @@ describe('CompoundEffectCard', () => {
     render(<CompoundEffectCard daysDone={1} />)
     expect(screen.getByText('Seu 1 dia feito já vale 1,0×')).toBeInTheDocument()
   })
+
+  it('drops its own frame when it sits in a panel, and keeps it by default', () => {
+    const { rerender } = render(<CompoundEffectCard daysDone={3} flat />)
+    const region = () => screen.getByRole('region', { name: 'Efeito composto' })
+    expect(region()).not.toHaveClass('rounded-lg')
+    expect(region()).not.toHaveClass('border')
+
+    rerender(<CompoundEffectCard daysDone={3} />)
+    expect(region()).toHaveClass('rounded-lg', 'border')
+  })
 })

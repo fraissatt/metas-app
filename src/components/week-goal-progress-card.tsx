@@ -11,10 +11,13 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 export function WeekGoalProgressCard({
   goal,
   reveal = 1,
+  flat = false,
 }: {
   goal: WeeklyGoal & { objective: Objective; dailyTasks: DailyTask[] }
   /** 0 to 1: how much of the real progress shows, so the ring and bars can fill smoothly (the demo ties it to the scroll). */
   reveal?: number
+  /** Inside a `PanelList`: the panel draws the frame, so the card does not. */
+  flat?: boolean
 }) {
   const total = goal.dailyTasks.length
   const completed = goal.dailyTasks.filter((t) => t.completed).length
@@ -26,8 +29,9 @@ export function WeekGoalProgressCard({
     <div
       data-fulfilled={fulfilled}
       className={cn(
-        'flex overflow-hidden rounded-lg border transition-[border-color,box-shadow] motion-reduce:transition-none',
-        fulfilled ? 'border-primary/60 bg-card shadow-[0_0_18px_var(--glow)]' : 'border-border bg-card',
+        'flex overflow-hidden transition-[border-color,box-shadow] motion-reduce:transition-none',
+        !flat && 'rounded-lg border',
+        !flat && (fulfilled ? 'border-primary/60 bg-card shadow-[0_0_18px_var(--glow)]' : 'border-border bg-card'),
       )}
     >
       <div className="card-roomy flex-1 p-4">

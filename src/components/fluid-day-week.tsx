@@ -3,6 +3,7 @@
 import { useCallback, useOptimistic, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { PanelList } from '@/components/panel-list'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
 import { Button } from '@/components/ui/button'
@@ -99,7 +100,7 @@ export function FluidDayWeek({
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <PanelList>
             {todayGroups.map((group) => (
               <TodayTaskGroup
                 key={group.weeklyGoal.id}
@@ -107,9 +108,10 @@ export function FluidDayWeek({
                 onToggleTask={handleToggle}
                 onUpdateTask={onUpdateTask}
                 onDeleteTask={onDeleteTask}
+                flat
               />
             ))}
-          </div>
+          </PanelList>
         )}
       </div>
 
@@ -140,17 +142,21 @@ export function FluidDayWeek({
               <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
             ) : (
               <div className="flex flex-col gap-4">
-                {goalsWithTasksToday.map((goal) => (
-                  <WeekGoalProgressCard key={goal.id} goal={goal} />
-                ))}
+                <PanelList>
+                  {goalsWithTasksToday.map((goal) => (
+                    <WeekGoalProgressCard key={goal.id} goal={goal} flat />
+                  ))}
+                </PanelList>
                 {goalsWithTasksToday.length > 0 && otherGoals.length > 0 && (
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     outras metas da semana
                   </p>
                 )}
-                {otherGoals.map((goal) => (
-                  <WeekGoalProgressCard key={goal.id} goal={goal} />
-                ))}
+                <PanelList>
+                  {otherGoals.map((goal) => (
+                    <WeekGoalProgressCard key={goal.id} goal={goal} flat />
+                  ))}
+                </PanelList>
               </div>
             )}
           </div>
