@@ -224,13 +224,13 @@
 }
 
 /* Presentation page: one accent per card. Light values are darker so the icon
-   and border keep their contrast on a white card; dark values are the neon ones. */
+   and border keep their contrast on a white card; dark values are soft, like the app's own. */
 :root {
   /* Light theme: the three step colours are bright for fills; the -ink twins are
      the darker shades used for text and icons, so they stay readable. */
-  --lp-green: #22c55e;
-  --lp-blue: #3b8cff;
-  --lp-amber: #f5a623;
+  --lp-green: #3aa76d;
+  --lp-blue: #4f86d8;
+  --lp-amber: #e0a43a;
   --lp-tint: 24%;
   --lp-tint-chip: 22%;
   --lp-green-ink: #15803d;
@@ -243,21 +243,21 @@
 .dark {
   --lp-tint: 16%;
   --lp-tint-chip: 14%;
-  --lp-green: #39ff14;
-  --lp-blue: #4f9dff;
-  --lp-amber: #ffb020;
+  --lp-green: #7fd18f;
+  --lp-blue: #6ea8ff;
+  --lp-amber: #e3b865;
   --lp-green-ink: var(--lp-green);
   --lp-blue-ink: var(--lp-blue);
   --lp-amber-ink: var(--lp-amber);
-  --lp-violet: #b78cff;
-  --lp-pink: #ff6fae;
-  --lp-cyan: #2fd4d4;
+  --lp-violet: #a99cf0;
+  --lp-pink: #e892b3;
+  --lp-cyan: #6cc4c4;
 }
 
-/* Step number and title. Light theme: the number is a seal of the topic colour with a glow
-   and the title takes the dark shade of that colour. Dark theme: the number stays a tinted
-   circle and the title is lit in its own neon colour, staying so even when the rest of the
-   step dims, so it does not get lost against the Aurora background. */
+/* Step number and title. Light theme: the number is a solid seal of the topic colour and the
+   title takes the dark shade of that colour. Dark theme: the number stays a tinted circle and
+   the title is in its own colour, staying so even when the rest of the step dims, so it does
+   not get lost against the Aurora background. No glow in either theme. */
 .landing-step-badge {
   color: var(--card-ink);
   background: color-mix(in oklab, var(--card-color) var(--lp-tint), transparent);
@@ -266,8 +266,6 @@
 :root:not(.dark) .landing-step-badge {
   color: #fff;
   background: var(--card-color);
-  box-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 70%, transparent);
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
 }
 
 .landing-title {
@@ -276,7 +274,61 @@
 
 .dark .landing-title {
   color: var(--card-color);
-  text-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 80%, transparent);
+}
+
+/* The presentation page keeps the original light theme (ice blue page, bright blue, glowing number
+   seals, bluish card shadows): there the white demo cards stand out against the ice blue, which the
+   calmer light theme of the app does not do. `:has(.landing-root)` scopes it to the page that renders
+   the landing, header included; the dark theme is the same calm one everywhere. */
+:root:not(.dark):has(.landing-root) {
+  --background: #eaf3ff;
+  --foreground: #0f1b33;
+  --card: #ffffff;
+  --card-foreground: #0f1b33;
+  --popover: #ffffff;
+  --popover-foreground: #0f1b33;
+  --primary: #0057ff;
+  --primary-foreground: #ffffff;
+  --secondary: #dcebff;
+  --secondary-foreground: #0f1b33;
+  --muted: #dcebff;
+  --muted-foreground: #52607a;
+  --accent: #d6e8ff;
+  --accent-foreground: #0047e1;
+  --glow: #0057ff33;
+  --border: #cfe0f7;
+  --input: #cfe0f7;
+  --ring: #0057ff;
+  --chart-1: #cfe0f7;
+  --chart-2: #9cc3ff;
+  --chart-3: #5c97ff;
+  --chart-4: #2c72ff;
+  --chart-5: #0057ff;
+  --lp-green: #22c55e;
+  --lp-blue: #3b8cff;
+  --lp-amber: #f5a623;
+  --island-shadow:
+    0 1px 2px rgb(10 42 102 / 0.08), 0 6px 14px rgb(10 42 102 / 0.07), 0 14px 28px rgb(0 87 255 / 0.08);
+  /* Strength of the Aurora wash and spots of light on this page (read by the canvas). */
+  --aurora-wash: 0.16;
+  --aurora-glow: 0.85;
+}
+
+:root:not(.dark):has(.landing-root) .landing-step-badge {
+  box-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 70%, transparent);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+:root:not(.dark):has(.landing-root) .landing-surface {
+  background-image: linear-gradient(
+    160deg,
+    var(--card) 0%,
+    color-mix(in oklab, var(--card) 60%, var(--background)) 100%
+  );
+  box-shadow:
+    0 1px 2px rgb(10 42 102 / 0.08),
+    0 4px 8px rgb(10 42 102 / 0.07),
+    0 12px 24px rgb(0 87 255 / 0.08);
 }
 
 @keyframes landing-in {

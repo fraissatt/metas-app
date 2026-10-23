@@ -83,7 +83,7 @@ export function ObjectiveDashboardCard({
   const currentHasGoal = weeks.find((w) => w.current)?.hasGoal ?? false
 
   return (
-    <div className="card-surface card-roomy group/card rounded-lg border border-border bg-card p-4 flex flex-col gap-3 motion-safe:transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_0_16px_var(--glow)] focus-within:border-primary/40 focus-within:shadow-[0_0_16px_var(--glow)]">
+    <div className="card-roomy group/card rounded-lg border border-border bg-card p-4 flex flex-col gap-3 motion-safe:transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_0_16px_var(--glow)] focus-within:border-primary/40 focus-within:shadow-[0_0_16px_var(--glow)]">
       <div className="flex items-start gap-2">
         <h3 className="min-w-0 flex-1">
           <Link href={`/objectives/${id}`} className="block font-semibold line-clamp-2 break-words">

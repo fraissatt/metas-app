@@ -8,7 +8,9 @@ const css = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8').rep
 describe('card styles', () => {
   it('leave the cards flat: no gradient and no layered shadows in either theme', () => {
     expect(css).not.toMatch(/\.card-surface/)
-    expect(css).not.toMatch(/linear-gradient\(\s*160deg/)
+    // The only gradient left is the presentation page's own surface (see globals.landing.test.ts).
+    const scope = css.indexOf(':has(.landing-root)')
+    for (const gradient of css.matchAll(/linear-gradient\(/g)) expect(gradient.index).toBeGreaterThan(scope)
   })
 
   it('only gives more room in the light theme, with padding that beats the card’s own p-4', () => {

@@ -64,6 +64,14 @@ interface Palette {
   support: Rgb
   neutral: Rgb
   isDark: boolean
+  /** Light theme: strength of the wash and of the spots of light (a page may ask for more). */
+  wash: number
+  glow: number
+}
+
+function readNumber(value: string, fallback: number): number {
+  const parsed = Number.parseFloat(value)
+  return Number.isFinite(parsed) ? parsed : fallback
 }
 
 function readColors(): Palette {
@@ -76,6 +84,8 @@ function readColors(): Palette {
     support: read('--support', FALLBACK_SUPPORT),
     neutral: read('--chart-1', FALLBACK_NEUTRAL),
     isDark: root.classList.contains('dark'),
+    wash: readNumber(styles.getPropertyValue('--aurora-wash'), AURORA_WASH_LIGHT),
+    glow: readNumber(styles.getPropertyValue('--aurora-glow'), AURORA_GLOW_LIGHT),
   }
 }
 
@@ -98,9 +108,9 @@ function drawAurora(
   pull: number,
 ) {
   const radius = Math.max(width, height) * AURORA_RADIUS
-  const alpha = palette.isDark ? AURORA_ALPHA_DARK : AURORA_GLOW_LIGHT
+  const alpha = palette.isDark ? AURORA_ALPHA_DARK : palette.glow
   if (!palette.isDark) {
-    ctx.fillStyle = rgba(palette.primary, AURORA_WASH_LIGHT)
+    ctx.fillStyle = rgba(palette.primary, palette.wash)
     ctx.fillRect(0, 0, width, height)
   }
   AURORA_BLOBS.forEach((blob, index) => {

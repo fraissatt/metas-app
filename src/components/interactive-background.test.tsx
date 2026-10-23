@@ -179,6 +179,17 @@ describe('InteractiveBackground', () => {
     for (const stop of colorStops) expect(stop).toMatch(/^rgba\(255, 255, 255,/)
   })
 
+  it('light theme: the wash and the spots take their strength from --aurora-wash and --aurora-glow when the page sets them', () => {
+    vi.stubGlobal('getComputedStyle', () => ({
+      getPropertyValue: (name: string) =>
+        name === '--primary' ? '#0057ff' : name === '--aurora-wash' ? '0.16' : name === '--aurora-glow' ? '0.85' : '',
+    }))
+    render(<InteractiveBackground style="aurora" />)
+    flushFrame()
+    expect(fills).toContain('rgba(0, 87, 255, 0.16)')
+    expect(colorStops.some((c) => c.startsWith('rgba(255, 255, 255, 0.85)'))).toBe(true)
+  })
+
   it('dark theme: a barely-there tint, the support blobs neutral and no wash', () => {
     document.documentElement.classList.add('dark')
     vi.stubGlobal('getComputedStyle', () => ({
