@@ -29,4 +29,12 @@ describe('CompoundEffectCard', () => {
     rerender(<CompoundEffectCard daysDone={3} />)
     expect(region()).toHaveClass('rounded-lg', 'border')
   })
+
+  it('is one compact row: the words on the left and the curve at the right, spanning both lines', () => {
+    const { container } = render(<CompoundEffectCard daysDone={3} />)
+
+    expect(screen.getByRole('region', { name: 'Efeito composto' })).toHaveClass('grid', 'grid-cols-[1fr_5.5rem]')
+    const curve = container.querySelector('svg')
+    expect(curve).toHaveClass('row-span-2', 'col-start-2')
+  })
 })

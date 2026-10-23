@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dot, DotLegend, daysDoneLabel } from '@/components/dot'
@@ -33,6 +33,16 @@ export function YearDotsCard({
     setData(initial)
   }
   const request = useRef(0)
+  const scroller = useRef<HTMLDivElement>(null)
+
+  // On a phone the grid is wider than the card, so open it on the current month (with a little of
+  // what is ahead) instead of January; a past year starts at January.
+  useLayoutEffect(() => {
+    const el = scroller.current
+    if (!el) return
+    const today = data.year === data.currentYear ? el.querySelector<HTMLElement>('[data-current-day]') : null
+    el.scrollLeft = today ? Math.max(0, today.offsetLeft - el.clientWidth * 0.6) : 0
+  }, [data.year, data.currentYear])
 
   const weeks = layoutYearWeeks(data.dots)
   const done = daysDoneLabel(data.dots.filter((dot) => dot.tone === 'done').length)
@@ -86,7 +96,7 @@ export function YearDotsCard({
         <MonthDotsDialog initial={initial} loadYear={loadYear} />
       </div>
 
-      <div className="mt-3 overflow-x-auto pb-1">
+      <div ref={scroller} className="relative mt-3 overflow-x-auto pb-1">
         <div style={{ minWidth: `${weeks.length * COLUMN_REM}rem` }}>
           <div
             aria-hidden="true"
