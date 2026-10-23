@@ -7,6 +7,7 @@ import { Dot, DotLegend, daysDoneLabel } from '@/components/dot'
 import { MonthDotsDialog } from '@/components/month-dots-dialog'
 import { formatMonthShort, parseDay } from '@/lib/dates'
 import { layoutYearWeeks, type DayDotsYear } from '@/lib/day-dots'
+import { cn } from '@/lib/utils'
 
 const ARROW = 'aria-disabled:pointer-events-none aria-disabled:opacity-40'
 // A week column never gets narrower than a dot plus its gap; below that the
@@ -16,9 +17,12 @@ const COLUMN_REM = 0.875
 export function YearDotsCard({
   initial,
   loadYear,
+  flat = false,
 }: {
   initial: DayDotsYear
   loadYear: (year: number) => Promise<DayDotsYear>
+  /** Inside a `PanelList`, which draws the frame. */
+  flat?: boolean
 }) {
   const [data, setData] = useState(initial)
   // Toggling a task re-renders the page with a new `initial`; state alone
@@ -43,7 +47,10 @@ export function YearDotsCard({
   }
 
   return (
-    <section aria-label="Calendário do ano" className="rounded-lg border border-border bg-card px-4 py-3">
+    <section
+      aria-label="Calendário do ano"
+      className={cn('px-4 py-3', !flat && 'rounded-lg border border-border bg-card')}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           {browsable && (

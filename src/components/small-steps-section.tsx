@@ -1,4 +1,5 @@
 import { CompoundEffectCard } from '@/components/compound-effect-card'
+import { PanelList } from '@/components/panel-list'
 import { YearDotsCard } from '@/components/year-dots-card'
 import { getDayDots } from '@/lib/actions/stats'
 import type { DayDotsYear } from '@/lib/day-dots'
@@ -10,8 +11,10 @@ export function SmallStepsSection({ data }: { data: DayDotsYear }) {
       <h2 id="pequenos-passos" className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
         Seus pequenos passos
       </h2>
-      <CompoundEffectCard daysDone={data.daysDone} />
-      <YearDotsCard initial={data} loadYear={getDayDots} />
+      <PanelList>
+        <CompoundEffectCard daysDone={data.daysDone} flat />
+        <YearDotsCard initial={data} loadYear={getDayDots} flat />
+      </PanelList>
     </section>
   )
 }

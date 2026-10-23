@@ -166,29 +166,32 @@ describe('InteractiveBackground', () => {
     expect(colorStops.some((c) => c.startsWith('rgba(17, 34, 51'))).toBe(true)
   })
 
-  it('light theme: a blue wash over the page with spots of light, no colour blobs', () => {
+  it('light theme: a faint blue wash over the page with faint spots of light, no colour blobs', () => {
     vi.stubGlobal('getComputedStyle', () => ({
-      getPropertyValue: (name: string) => (name === '--primary' ? '#0057ff' : name === '--support' ? '#38a3ff' : ''),
+      getPropertyValue: (name: string) => (name === '--primary' ? '#2563c9' : name === '--support' ? '#38a3ff' : ''),
     }))
     render(<InteractiveBackground style="aurora" />)
     flushFrame()
-    expect(fills).toContain('rgba(0, 87, 255, 0.16)')
+    expect(fills).toContain('rgba(37, 99, 201, 0.05)')
+    expect(colorStops.some((c) => c.startsWith('rgba(255, 255, 255, 0.3)'))).toBe(true)
     expect(context.fillRect).toHaveBeenCalledWith(0, 0, expect.any(Number), expect.any(Number))
     expect(colorStops.length).toBeGreaterThan(0)
     for (const stop of colorStops) expect(stop).toMatch(/^rgba\(255, 255, 255,/)
   })
 
-  it('dark theme: unchanged, blobs of the primary and support colours and no wash', () => {
+  it('dark theme: a barely-there tint, the support blobs neutral and no wash', () => {
     document.documentElement.classList.add('dark')
     vi.stubGlobal('getComputedStyle', () => ({
-      getPropertyValue: (name: string) => (name === '--primary' ? '#39ff14' : name === '--support' ? '#a78bfa' : ''),
+      getPropertyValue: (name: string) =>
+        name === '--primary' ? '#7fd18f' : name === '--support' ? '#a78bfa' : name === '--chart-1' ? '#26292e' : '',
     }))
     render(<InteractiveBackground style="aurora" />)
     flushFrame()
-    expect(colorStops.some((c) => c.startsWith('rgba(57, 255, 20, 0.18)'))).toBe(true)
-    expect(colorStops.some((c) => c.startsWith('rgba(167, 139, 250, 0.18)'))).toBe(true)
+    expect(colorStops.some((c) => c.startsWith('rgba(127, 209, 143, 0.05)'))).toBe(true)
+    expect(colorStops.some((c) => c.startsWith('rgba(38, 41, 46, 0.05)'))).toBe(true)
+    expect(colorStops.some((c) => c.startsWith('rgba(167, 139, 250'))).toBe(false)
     expect(colorStops.some((c) => c.startsWith('rgba(255, 255, 255'))).toBe(false)
-    expect(fills.some((c) => c.startsWith('rgba(57, 255, 20, 0.16)'))).toBe(false)
+    expect(fills.some((c) => c.startsWith('rgba(127, 209, 143, 0.05)'))).toBe(false)
   })
 
   it('sizes the aurora backing store at half scale', () => {

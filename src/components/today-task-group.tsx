@@ -12,12 +12,15 @@ export function TodayTaskGroup({
   onToggleTask,
   onUpdateTask,
   onDeleteTask,
+  flat = false,
 }: {
   group: TaskGroup
   onToggleTask: (id: string) => Promise<void>
   /** With both edit handlers, each task gets the "⋯" menu to edit or delete it. */
   onUpdateTask?: (id: string, formData: FormData) => Promise<void>
   onDeleteTask?: (id: string) => Promise<void>
+  /** Inside a `PanelList`: the panel draws the frame, so the group does not. */
+  flat?: boolean
 }) {
   const { weeklyGoal, tasks } = group
   const completed = tasks.filter((t) => t.completed).length
@@ -30,11 +33,11 @@ export function TodayTaskGroup({
     <div
       data-complete={dayComplete}
       className={cn(
-        'card-surface flex overflow-hidden rounded-lg border bg-card transition-[border-color,box-shadow] motion-reduce:transition-none',
-        dayComplete ? 'border-primary/60 shadow-[0_0_18px_var(--glow)]' : 'border-border',
+        'flex overflow-hidden transition-[border-color,box-shadow] motion-reduce:transition-none',
+        !flat && 'rounded-lg border bg-card',
+        !flat && (dayComplete ? 'border-primary/60 shadow-[0_0_18px_var(--glow)]' : 'border-border'),
       )}
     >
-      <div className="w-[3px] shrink-0 bg-primary" />
       <div className="flex-1">
         <div className="card-roomy-header flex items-center gap-3 border-b border-border bg-card px-4 py-3">
           <div className="flex min-w-0 flex-1 flex-col text-left">
@@ -54,7 +57,7 @@ export function TodayTaskGroup({
           <span
             className={cn(
               'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold tabular-nums',
-              dayComplete ? 'bg-primary text-primary-foreground shadow-[0_0_10px_var(--glow)]' : 'bg-accent text-accent-foreground',
+              dayComplete ? 'bg-primary/15 text-accent-foreground' : 'bg-accent text-accent-foreground',
             )}
           >
             {dayComplete ? '✓ feito' : `${completed}/${tasks.length}`}

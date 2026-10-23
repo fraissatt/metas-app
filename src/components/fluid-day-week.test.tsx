@@ -299,6 +299,54 @@ describe('FluidDayWeek', () => {
     expect(container.querySelector('#week-section')).toHaveAttribute('aria-hidden', 'false')
     expect(within(container.querySelector('#week-section')!).getByText('0/1 tarefas')).toBeInTheDocument()
   })
+
+  it('gathers the groups of the day in one panel, one row per goal', () => {
+    const financeGoal = { ...weeklyGoal, id: 'goal-finance', title: 'Revisar orçamento mensal' }
+    const financeTask = {
+      id: 'task-finance',
+      title: 'Categorizar gastos',
+      weeklyGoalId: 'goal-finance',
+      date: new Date('2026-07-30'),
+      completed: false,
+      completedAt: null,
+      weeklyGoal: { ...financeGoal, objective },
+    }
+    render(<FluidDayWeek tasks={[task, financeTask]} goals={[]} onToggleTask={vi.fn()} />)
+
+    const panel = screen.getByRole('link', { name: 'Ler documentação do App Router' }).closest('.divide-y')
+    expect(panel).not.toBeNull()
+    expect(panel).toContainElement(screen.getByRole('link', { name: 'Revisar orçamento mensal' }))
+  })
+
+  it('keeps a single group in a panel of its own', () => {
+    render(<FluidDayWeek tasks={[task]} goals={[]} onToggleTask={vi.fn()} />)
+
+    const panel = screen.getByRole('link', { name: 'Ler documentação do App Router' }).closest('.divide-y')
+    expect(panel).not.toBeNull()
+    expect(panel?.children).toHaveLength(1)
+  })
+
+  it('does not wrap the empty states in a panel', () => {
+    render(<FluidDayWeek tasks={[]} goals={[]} onToggleTask={vi.fn()} />)
+
+    expect(screen.getByText('Nenhuma tarefa para hoje.').closest('.divide-y')).toBeNull()
+    expect(screen.getByText('Nenhuma meta semanal para esta semana.').closest('.divide-y')).toBeNull()
+  })
+
+  it('gathers the week cards in one panel, and the other goals in a second one under their label', () => {
+    const otherGoal = { ...weeklyGoal, id: 'goal-2', title: 'Meditar', objective, dailyTasks: [] }
+    const { container } = render(
+      <FluidDayWeek tasks={[task]} goals={[goal, otherGoal]} onToggleTask={vi.fn()} />,
+    )
+
+    const week = container.querySelector('#week-section')!
+    const panels = week.querySelectorAll('.divide-y')
+    expect(panels).toHaveLength(2)
+    // The week section is collapsed by default, so its links are hidden from the accessibility tree.
+    const link = (name: string) => within(week as HTMLElement).getByRole('link', { name, hidden: true })
+    expect(panels[0]).toContainElement(link('Ler documentação do App Router'))
+    expect(panels[1]).toContainElement(link('Meditar'))
+  })
 })
 
 describe('toggleTaskOptimistic', () => {

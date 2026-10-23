@@ -85,4 +85,15 @@ describe('LifetimeProgressBanner', () => {
     expect(screen.queryByText('Sua primeira semana')).not.toBeInTheDocument()
     expect(screen.getByText('1 semana ativa')).toBeInTheDocument()
   })
+
+  it('is a plain row: no coloured frame or tint, and the count in the normal text colour', () => {
+    const { container } = render(
+      <LifetimeProgressBanner totalCompleted={247} firstCompletedAt={new Date(2026, 6, 29, 10)} weekWindow={[week(7, 17, true)]} />,
+    )
+
+    const section = container.firstElementChild
+    expect(section).not.toHaveClass('border-primary')
+    expect(section).not.toHaveClass('bg-accent')
+    expect(screen.getByText('247')).toHaveClass('text-foreground')
+  })
 })

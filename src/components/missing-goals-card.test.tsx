@@ -55,4 +55,11 @@ describe('MissingGoalsCard', () => {
     resolve()
     await screen.findByRole('button', { name: /trazer para esta semana/i })
   })
+
+  it('has no coloured strip on its left edge', () => {
+    const { container } = render(<MissingGoalsCard preview={preview} onRepeat={vi.fn()} />)
+
+    expect(container.firstElementChild).not.toHaveClass('border-l-support')
+    expect(container.firstElementChild).not.toHaveClass('border-l-[3px]')
+  })
 })
