@@ -33,6 +33,8 @@ const PAIRS: Array<[string, string]> = [
   ['foreground', 'card'],
   ['muted-foreground', 'background'],
   ['muted-foreground', 'card'],
+  ['muted-foreground', 'muted'],
+  ['muted-foreground', 'accent'],
   ['accent-foreground', 'accent'],
   ['support-foreground', 'background'],
   ['support-foreground', 'card'],

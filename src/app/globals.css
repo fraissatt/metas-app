@@ -53,101 +53,85 @@
 
 :root {
   color-scheme: light;
-  --background: #eaf3ff;
-  --foreground: #0f1b33;
+  --background: #f4f6f9;
+  --foreground: #161a22;
   --card: #ffffff;
-  --card-foreground: #0f1b33;
+  --card-foreground: #161a22;
   --popover: #ffffff;
-  --popover-foreground: #0f1b33;
-  --primary: #0057ff;
+  --popover-foreground: #161a22;
+  --primary: #2563c9;
   --primary-foreground: #ffffff;
-  --secondary: #dcebff;
-  --secondary-foreground: #0f1b33;
-  --muted: #dcebff;
-  --muted-foreground: #52607a;
-  --accent: #d6e8ff;
-  --accent-foreground: #0047e1;
+  --secondary: #eceff4;
+  --secondary-foreground: #161a22;
+  --muted: #eceff4;
+  --muted-foreground: #5f6879;
+  --accent: #e6eefb;
+  --accent-foreground: #1d4fa0;
   --support: #38a3ff;
   --support-foreground: #0b5fb8;
   --support-muted: #38a3ff26;
-  --glow: #0057ff33;
+  --glow: transparent;
   --destructive: #b91c1c;
-  --border: #cfe0f7;
-  --input: #cfe0f7;
-  --ring: #0057ff;
-  --chart-1: #cfe0f7;
-  --chart-2: #9cc3ff;
-  --chart-3: #5c97ff;
-  --chart-4: #2c72ff;
-  --chart-5: #0057ff;
+  --border: #e1e5ec;
+  --input: #e1e5ec;
+  --ring: #2563c9;
+  --chart-1: #eceff4;
+  --chart-2: #bacce9;
+  --chart-3: #88a9df;
+  --chart-4: #5786d4;
+  --chart-5: #2563c9;
   --radius: 0.625rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f1b33;
-  --sidebar-primary: #0057ff;
+  --sidebar-foreground: #161a22;
+  --sidebar-primary: #2563c9;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #d6e8ff;
-  --sidebar-accent-foreground: #0047e1;
-  --sidebar-border: #cfe0f7;
-  --sidebar-ring: #0057ff;
+  --sidebar-accent: #e6eefb;
+  --sidebar-accent-foreground: #1d4fa0;
+  --sidebar-border: #e1e5ec;
+  --sidebar-ring: #2563c9;
 }
 
 .dark {
   color-scheme: dark;
-  --background: #0d0f13;
-  --foreground: #e6e8ee;
-  --card: #161a21;
-  --card-foreground: #e6e8ee;
-  --popover: #161a21;
-  --popover-foreground: #e6e8ee;
-  --primary: #39ff14;
-  --primary-foreground: #0a0a0a;
-  --secondary: #1f242e;
-  --secondary-foreground: #e6e8ee;
-  --muted: #1f242e;
-  --muted-foreground: #9aa1ae;
-  --accent: #14261a;
-  --accent-foreground: #39ff14;
+  --background: #111214;
+  --foreground: #e7e8ea;
+  --card: #17191c;
+  --card-foreground: #e7e8ea;
+  --popover: #17191c;
+  --popover-foreground: #e7e8ea;
+  --primary: #7fd18f;
+  --primary-foreground: #0f1a12;
+  --secondary: #26292e;
+  --secondary-foreground: #e7e8ea;
+  --muted: #26292e;
+  --muted-foreground: #9aa0a9;
+  --accent: #242f2a;
+  --accent-foreground: #7fd18f;
   --support: #a78bfa;
   --support-foreground: #c4b5fd;
   --support-muted: #a78bfa26;
-  --glow: #39ff1440;
+  --glow: transparent;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: #262b36;
-  --input: #262b36;
-  --ring: #39ff14;
-  --chart-1: #2a303c;
-  --chart-2: #52713f;
-  --chart-3: #4f8f2a;
-  --chart-4: #2fbf1a;
-  --chart-5: #39ff14;
-  --sidebar: #0a0c10;
-  --sidebar-foreground: #e6e8ee;
-  --sidebar-primary: #39ff14;
-  --sidebar-primary-foreground: #0a0a0a;
-  --sidebar-accent: #14261a;
-  --sidebar-accent-foreground: #39ff14;
-  --sidebar-border: #262b36;
-  --sidebar-ring: #39ff14;
+  --border: #24272b;
+  --input: #24272b;
+  --ring: #7fd18f;
+  --chart-1: #26292e;
+  --chart-2: #3c5346;
+  --chart-3: #527d5e;
+  --chart-4: #69a777;
+  --chart-5: #7fd18f;
+  --sidebar: #0e0f11;
+  --sidebar-foreground: #e7e8ea;
+  --sidebar-primary: #7fd18f;
+  --sidebar-primary-foreground: #0f1a12;
+  --sidebar-accent: #242f2a;
+  --sidebar-accent-foreground: #7fd18f;
+  --sidebar-border: #24272b;
+  --sidebar-ring: #7fd18f;
 }
 
-/* Light theme only: the main cards get layered, bluish shadows and a pastel gradient from
-   white to ice, and the ones with their own padding get a little more room. In the
-   components layer so a utility on the card (the glow of a finished goal, a hover shadow)
-   still wins; the padding is plain CSS so it beats the card's own `p-4`. */
-@layer components {
-  :root:not(.dark) .card-surface {
-    background-image: linear-gradient(
-      160deg,
-      var(--card) 0%,
-      color-mix(in oklab, var(--card) 60%, var(--background)) 100%
-    );
-    box-shadow:
-      0 1px 2px rgb(10 42 102 / 0.08),
-      0 4px 8px rgb(10 42 102 / 0.07),
-      0 12px 24px rgb(0 87 255 / 0.08);
-  }
-}
-
+/* Light theme only: the cards that have their own padding get a little more room. The padding
+   is plain CSS (not in a layer) so it beats the card's own `p-4`. */
 :root:not(.dark) .card-roomy {
   padding: 1.25rem;
 }
@@ -161,12 +145,11 @@
    variable per theme, because a variant utility (`md:island`) cannot be targeted by a
    `.dark .island` selector. */
 :root {
-  --island-shadow:
-    0 1px 2px rgb(10 42 102 / 0.08), 0 6px 14px rgb(10 42 102 / 0.07), 0 14px 28px rgb(0 87 255 / 0.08);
+  --island-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 4px 12px rgb(16 24 40 / 0.05);
 }
 
 .dark {
-  --island-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 10px 28px rgb(0 0 0 / 0.45);
+  --island-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px rgb(0 0 0 / 0.3);
 }
 
 @utility island {

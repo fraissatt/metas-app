@@ -84,4 +84,15 @@ describe('YearDotsCard', () => {
     render(<YearDotsCard initial={yearData(2026, 2026, ['2026-10-05'])} loadYear={vi.fn()} />)
     expect(screen.queryByText(/Seu primeiro ponto/)).not.toBeInTheDocument()
   })
+
+  it('drops its own frame when it sits in a panel, and keeps it by default', () => {
+    const { rerender } = render(<YearDotsCard initial={yearData(2026, 2026)} loadYear={vi.fn()} flat />)
+    const region = () => screen.getByRole('region', { name: 'Calendário do ano' })
+    expect(region()).not.toHaveClass('rounded-lg')
+    expect(region()).not.toHaveClass('border')
+    expect(region()).not.toHaveClass('bg-card')
+
+    rerender(<YearDotsCard initial={yearData(2026, 2026)} loadYear={vi.fn()} />)
+    expect(region()).toHaveClass('rounded-lg', 'border', 'bg-card')
+  })
 })

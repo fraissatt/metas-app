@@ -1,10 +1,15 @@
 import { compoundFactor, formatFactor } from '@/lib/day-dots'
+import { cn } from '@/lib/utils'
 
-export function CompoundEffectCard({ daysDone }: { daysDone: number }) {
+/** `flat`: inside a `PanelList`, which draws the frame. */
+export function CompoundEffectCard({ daysDone, flat = false }: { daysDone: number; flat?: boolean }) {
   const worth = formatFactor(compoundFactor(daysDone))
 
   return (
-    <section aria-label="Efeito composto" className="rounded-lg border border-primary bg-accent px-4 py-3">
+    <section
+      aria-label="Efeito composto"
+      className={cn('px-4 py-3', !flat && 'rounded-lg border border-border bg-card')}
+    >
       <h2 className="text-sm font-semibold text-primary">1% melhor a cada dia feito</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         {daysDone === 0

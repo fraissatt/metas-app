@@ -93,4 +93,33 @@ describe('TodayTaskGroup', () => {
     render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
     expect(screen.queryByRole('button', { name: 'Ações de Tarefa 0' })).not.toBeInTheDocument()
   })
+
+  it('has no coloured rail on its left edge', () => {
+    const { container } = render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
+
+    expect(container.querySelector('.w-\\[3px\\]')).toBeNull()
+  })
+
+  it('shows the done badge as a soft pill, not a solid one', () => {
+    render(<TodayTaskGroup group={group([true])} onToggleTask={vi.fn()} />)
+
+    const badge = screen.getByText('✓ feito')
+    expect(badge).toHaveClass('bg-primary/15')
+    expect(badge).not.toHaveClass('bg-primary')
+  })
+
+  it('drops its own frame when it sits in a panel', () => {
+    const { container } = render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} flat />)
+
+    const root = container.firstElementChild
+    expect(root).not.toHaveClass('rounded-lg')
+    expect(root).not.toHaveClass('border')
+    expect(root).not.toHaveClass('bg-card')
+  })
+
+  it('keeps its own frame by default', () => {
+    const { container } = render(<TodayTaskGroup group={group([false])} onToggleTask={vi.fn()} />)
+
+    expect(container.firstElementChild).toHaveClass('rounded-lg', 'border', 'bg-card')
+  })
 })

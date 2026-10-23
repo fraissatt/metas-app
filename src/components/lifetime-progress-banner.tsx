@@ -10,10 +10,10 @@ export function LifetimeProgressBanner({ totalCompleted, firstCompletedAt, weekW
   return (
     <section
       aria-label="Progresso acumulado"
-      className="mb-6 flex flex-col gap-3 rounded-lg border border-primary bg-accent px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+      className="mb-6 flex flex-col gap-3 px-1 py-2 sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold text-primary tabular-nums">{totalCompleted}</span>
+        <span className="text-2xl font-bold text-foreground tabular-nums">{totalCompleted}</span>
         <span className="text-sm text-muted-foreground">
           {totalCompleted === 1 ? 'tarefa concluída' : 'tarefas concluídas'}
           {firstCompletedAt ? ` desde ${formatDate(firstCompletedAt)}` : ''}

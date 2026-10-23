@@ -23,11 +23,12 @@ const AURORA_BLOBS = [
   { x: 0.15, y: 0.85, tone: 'support' },
 ] as const
 const AURORA_RADIUS = 0.35
-const AURORA_ALPHA_DARK = 0.18
-// Light theme, inverted: a blue wash over the whole page, with spots of light where
-// the colour blobs are in the dark theme.
-const AURORA_WASH_LIGHT = 0.16
-const AURORA_GLOW_LIGHT = 0.85
+const AURORA_ALPHA_DARK = 0.05
+// Both themes are kept faint on purpose: a tint, not a light show. Dark: the "support" blobs are
+// neutral instead of violet. Light, inverted: a blue wash over the whole page, with spots of light
+// where the colour blobs are in the dark theme.
+const AURORA_WASH_LIGHT = 0.05
+const AURORA_GLOW_LIGHT = 0.3
 const AURORA_GLOW_COLOR: Rgb = [255, 255, 255]
 const AURORA_DRIFT_X = 0.08
 const AURORA_DRIFT_Y = 0.1
@@ -114,7 +115,7 @@ function drawAurora(
       ? AURORA_GLOW_COLOR
       : blob.tone === 'primary'
         ? palette.primary
-        : palette.support
+        : palette.neutral
     const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius)
     gradient.addColorStop(0, rgba(color, alpha))
     gradient.addColorStop(0.5, rgba(color, alpha * 0.55))

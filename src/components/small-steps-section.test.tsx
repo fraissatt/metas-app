@@ -29,4 +29,12 @@ describe('SmallStepsSection', () => {
     expect(screen.getByText('Cada dia feito soma 1%. Em um ano, isso vira 37×.')).toBeInTheDocument()
     expect(screen.getByText(/Seu primeiro ponto acende/)).toBeInTheDocument()
   })
+
+  it('puts the compound effect and the year in one panel', () => {
+    render(<SmallStepsSection data={data(['2026-10-05'])} />)
+
+    const panel = screen.getByRole('region', { name: 'Efeito composto' }).closest('.divide-y')
+    expect(panel).not.toBeNull()
+    expect(panel).toContainElement(screen.getByRole('region', { name: 'Calendário do ano' }))
+  })
 })
