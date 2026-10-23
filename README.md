@@ -4,7 +4,8 @@
 
 Acompanhe **objetivos**, quebre-os em **metas semanais** e execute com **tarefas diárias** — com um
 quiz de onboarding que monta o primeiro plano, um funil de conversão medido no próprio app, gráficos de
-progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular e no desktop.
+progresso, sequência de semanas cumpridas, um calendário de pontos do ano e um app instalável (PWA) no
+celular e no desktop.
 
 **[Ver online](https://metas-app-flax.vercel.app)** · [abrir direto no quiz](https://metas-app-flax.vercel.app/quiz)
 · [ver o funil](https://metas-app-flax.vercel.app/funil)
@@ -12,7 +13,7 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 > Entre como visitante para ver uma conta de demonstração com dados prontos (apagada após 24 h sem uso),
 > ou crie sua conta com e-mail e senha.
 
-![Tela Hoje, em tema escuro: tarefas do dia agrupadas por meta e o progresso da semana](docs/screenshots/hoje.jpg)
+![Tela Hoje, em tema escuro: as tarefas do dia e o progresso da semana, cada assunto em um painel](docs/screenshots/hoje.jpg)
 
 > As imagens deste README foram geradas com dados fictícios.
 
@@ -39,7 +40,12 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 - **Hierarquia de três níveis:** objetivo → metas semanais → tarefas diárias, com prazo e acompanhamento
   do tempo decorrido até a data-alvo.
 - **Tela Hoje:** as tarefas do dia agrupadas por meta, ao lado do progresso da semana (anel de progresso
-  e uma barra por dia). Marcar uma tarefa atualiza a tela na hora, antes de o servidor responder.
+  e uma barra por dia), cada assunto em um painel. Marcar uma tarefa atualiza a tela na hora, antes de o
+  servidor responder.
+- **Seus pequenos passos:** no fim da tela Hoje, o **efeito composto** (1% melhor a cada dia feito) e o ano
+  inteiro em pontinhos, um por dia, em três tons: nada feito, parte feita e dia feito (60% ou mais das tarefas
+  planejadas para o dia, para que um imprevisto não apague o dia). Setas voltam aos anos anteriores e o botão
+  "Ver o mês" abre o mês numa janela. A seção aparece também para quem ainda não tem nada feito, como convite.
 - **Metas recorrentes:** uma meta marcada como "repete toda semana" é recriada, com suas tarefas, a cada
   nova semana. Quem volta depois de dias fora vê o que foi planejado e repete a última semana com um clique.
 - **Dashboard de objetivos:** média de conclusão das últimas 8 semanas, barras por semana, sequência de
@@ -51,7 +57,8 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
   perde um dia.
 - **Busca global (`Ctrl K`):** encontra objetivos e metas semanais, de qualquer semana, a partir de
   qualquer tela.
-- **Tema claro e escuro** e **fundo interativo** (aurora ou grade de pontos, desenhado em canvas).
+- **Tema claro e escuro**, com um visual sóbrio (sem brilho, uma cor de destaque calma usada só no que
+  importa) e **fundo interativo** (aurora discreta ou grade de pontos, desenhado em canvas).
 - **Instalável como app (PWA)** e com layout próprio para celular, com navegação inferior.
 - **Navegação flutuante ("ilha"):** no computador, o cabeçalho é uma barra arredondada flutuante no topo; no
   celular, a barra de baixo flutua. As duas somem ao rolar para baixo e voltam ao rolar para cima, e não
@@ -62,6 +69,10 @@ progresso, sequência de semanas cumpridas e um app instalável (PWA) no celular
 ### Tour de boas-vindas
 
 ![Diálogo de boas-vindas na primeira etapa, sobre a tela Hoje](docs/screenshots/tour.jpg)
+
+### Seus pequenos passos
+
+![Seção "Seus pequenos passos" no fim da tela Hoje: o efeito composto e o ano em pontinhos, com o botão "Ver o mês"](docs/screenshots/pequenos-passos.jpg)
 
 ### Objetivos
 
@@ -142,7 +153,7 @@ src/app/**/page.tsx       ◀──     · validam a entrada
 ## Decisões de projeto
 
 - **Testes contra um Postgres de verdade.** A camada de dados é testada com o banco `metas_app_test`, sem
-  mocks do Prisma. Os componentes têm testes com Testing Library. A suíte tem mais de 450 testes.
+  mocks do Prisma. Os componentes têm testes com Testing Library. A suíte tem mais de 800 testes.
 - **Isolamento por usuário testado.** Toda consulta filtra pelo dono, e registros de outra pessoa se
   comportam como inexistentes; cada módulo de dados tem testes garantindo isso.
 - **Tema vindo do servidor.** O tema fica em um cookie e a página já sai renderizada com ele; a cor da
@@ -270,7 +281,8 @@ o banco.
   [GitHub Projects](https://github.com/users/fraissatt/projects).
 - **Branches por tarefa** com o número da issue (`feature/12-…`, `fix/15-…`), saindo de `develop`.
 - **Pull Requests** para `develop` (homologação) e depois para `master` (produção, deploy automático na
-  Vercel). Cada PR fecha sua issue com `Closes #N`.
+  Vercel). Cada PR cita sua issue com `Closes #N`; como o GitHub só fecha issues em PRs para a `master`, uma
+  automação (`.github/workflows/close-issues-on-develop.yml`) fecha a issue assim que o PR entra na `develop`.
 - **CI no GitHub Actions** em todo push e PR: lint, checagem de tipos e a suíte de testes contra um Postgres
   de teste, rodando em UTC e no horário de Brasília.
 - **Features maiores têm spec e plano** antes do código, em [`docs/superpowers`](docs/superpowers).
