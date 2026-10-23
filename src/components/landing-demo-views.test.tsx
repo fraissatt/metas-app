@@ -39,6 +39,32 @@ describe('DemoCard', () => {
     expect(view.getAllByTestId('week-bar')).toHaveLength(7)
   })
 
+  it('the objective card has no coloured strip on its left edge', () => {
+    const { container } = renderCards([0])
+
+    expect(container.querySelector('.w-\\[3px\\]')).toBeNull()
+  })
+
+  it('the demo surfaces carry the landing surface class, for the light theme of this page', () => {
+    renderCards()
+
+    expect(screen.getByRole('group', { name: LABELS[0] }).querySelector('.landing-surface')).not.toBeNull()
+    for (const index of [1, 2]) {
+      const panel = screen.getByRole('group', { name: LABELS[index] }).querySelector('.divide-y')
+      expect(panel).toHaveClass('landing-surface')
+    }
+  })
+
+  it('the week card and the day card gather their goals in one panel each', () => {
+    renderCards()
+
+    for (const index of [1, 2]) {
+      const panel = screen.getByRole('group', { name: LABELS[index] }).querySelector('.divide-y')
+      expect(panel, 'panel of card ' + index).not.toBeNull()
+      expect(panel?.children.length, 'rows of card ' + index).toBeGreaterThanOrEqual(2)
+    }
+  })
+
   it('the week card shows the goals with their progress ring', () => {
     renderCards()
     const view = card(1)

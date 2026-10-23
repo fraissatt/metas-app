@@ -86,4 +86,9 @@ describe('Landing', () => {
     )
     expect(within(footer).getByText('Todos os direitos reservados')).toBeInTheDocument()
   })
+
+  it('marks its page, so the presentation page can keep the original light theme', () => {
+    const { container } = setup()
+    expect(container.querySelector('main')).toHaveClass('landing-root')
+  })
 })

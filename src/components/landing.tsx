@@ -29,7 +29,7 @@ function Actions({ onEnterAsGuest }: { onEnterAsGuest: () => Promise<{ throttled
 export function Landing({ onEnterAsGuest }: { onEnterAsGuest: () => Promise<{ throttled: true } | void> }) {
   return (
     <>
-      <main className="mx-auto flex max-w-5xl flex-col gap-14 px-4 py-10 md:px-8 md:py-16">
+      <main className="landing-root mx-auto flex max-w-5xl flex-col gap-14 px-4 py-10 md:px-8 md:py-16">
         <section className="flex flex-col items-start gap-5 max-md:items-center max-md:text-center">
           <h1 className="text-4xl font-bold text-accent-foreground md:text-5xl">Metas</h1>
           <p className="max-w-xl text-lg text-muted-foreground">

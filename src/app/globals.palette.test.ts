@@ -33,6 +33,7 @@ describe('calmer palettes', () => {
   it('defines a soft floating-bar shadow per theme, without the old bluish glow', () => {
     expect(css).toMatch(/:root\s*{\s*--island-shadow:/)
     expect(css).toMatch(/\.dark\s*{\s*--island-shadow:/)
-    expect(css).not.toMatch(/--island-shadow:[^;]*rgb\(0 87 255/)
+    const light = css.match(/\n:root\s*{\s*--island-shadow:([^;]*);/)
+    expect(light?.[1]).not.toMatch(/rgb\(0 87 255/)
   })
 })
