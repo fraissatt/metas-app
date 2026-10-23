@@ -43,7 +43,7 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
   const count = (value: number) => Math.round(value * t)
 
   return (
-    <div className="flex overflow-hidden rounded-lg border border-border bg-card">
+    <div className="landing-surface flex overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <p className="text-sm font-semibold">{objective.title}</p>
@@ -97,7 +97,7 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
 export function WeekView({ goals, t = 1 }: { goals: DemoGoal[]; t?: number }) {
   // The real cards, filling smoothly with `t`, gathered in one panel like on the Hoje screen.
   return (
-    <PanelList>
+    <PanelList className="landing-surface">
       {goals.map((goal) => (
         <WeekGoalProgressCard key={goal.id} goal={goal} reveal={t} flat />
       ))}
@@ -118,7 +118,7 @@ export function TodayView({
     goal.dailyTasks.filter((task) => isSameAppDay(task.date, today)).map((task) => ({ ...task, weeklyGoal: goal })),
   )
   return (
-    <PanelList>
+    <PanelList className="landing-surface">
       {groupTasksByWeeklyGoal(tasks).map((group) => (
         <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={onToggle} flat />
       ))}

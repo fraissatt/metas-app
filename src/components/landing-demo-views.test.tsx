@@ -45,6 +45,16 @@ describe('DemoCard', () => {
     expect(container.querySelector('.w-\\[3px\\]')).toBeNull()
   })
 
+  it('the demo surfaces carry the landing surface class, for the light theme of this page', () => {
+    renderCards()
+
+    expect(screen.getByRole('group', { name: LABELS[0] }).querySelector('.landing-surface')).not.toBeNull()
+    for (const index of [1, 2]) {
+      const panel = screen.getByRole('group', { name: LABELS[index] }).querySelector('.divide-y')
+      expect(panel).toHaveClass('landing-surface')
+    }
+  })
+
   it('the week card and the day card gather their goals in one panel each', () => {
     renderCards()
 

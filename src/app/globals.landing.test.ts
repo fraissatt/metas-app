@@ -20,7 +20,9 @@ describe('landing card styles', () => {
 
   it('defines the six colours for both themes', () => {
     for (const name of ['green', 'blue', 'amber', 'violet', 'pink', 'cyan']) {
-      expect(css.match(new RegExp(`--lp-${name}:`, 'g'))?.length, name).toBe(2)
+      // Counted before the presentation page's own light-theme scope, which repeats three of them.
+      const own = css.slice(0, css.indexOf(':has(.landing-root)'))
+      expect(own.match(new RegExp(`--lp-${name}:`, 'g'))?.length, name).toBe(2)
     }
   })
 })
@@ -65,7 +67,8 @@ describe('step number badge', () => {
   it('is a tinted circle by default, and a solid seal of the topic colour in the light theme only, with no glow', () => {
     expect(css).toMatch(/(^|\s)\.landing-step-badge\s*{[^}]*color: var\(--card-ink\)[^}]*background: color-mix/)
     expect(css).toMatch(/:root:not\(\.dark\) \.landing-step-badge\s*{[^}]*background: var\(--card-color\)/)
-    expect(css).not.toMatch(/\.landing-step-badge\s*{[^}]*(box|text)-shadow/)
+    // Only the presentation page's light scope (below) may glow.
+    expect(css).not.toMatch(/(^|\n)(:root:not\(\.dark\) )?\.landing-step-badge\s*{[^}]*(box|text)-shadow/)
     expect(css).not.toMatch(/\.dark \.landing-step-badge/)
   })
 })
@@ -74,5 +77,31 @@ describe('landing flow styles', () => {
   it('reveals sections on scroll only where scroll-driven animation exists, and not for reduced motion', () => {
     expect(css).toMatch(/@supports \(animation-timeline: view\(\)\)\s*{[^}]*\.landing-reveal/)
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*{[^}]*\.landing-reveal\s*{\s*animation: none/)
+  })
+})
+
+describe('original light theme on the presentation page', () => {
+  const scope = ':root:not(.dark):has(.landing-root)'
+  const start = css.indexOf(scope + ' {')
+  const block = css.slice(start, css.indexOf('\n}', start))
+
+  it('brings back the ice blue page, the bright blue and the glow, for the page that renders the landing only', () => {
+    expect(start, 'scope block').toBeGreaterThan(-1)
+    expect(block).toMatch(/--background:\s*#eaf3ff/)
+    expect(block).toMatch(/--primary:\s*#0057ff/)
+    expect(block).toMatch(/--glow:\s*#0057ff33/)
+    expect(block).toMatch(/--lp-green:\s*#22c55e/)
+    expect(block).toMatch(/--aurora-wash:\s*0\.16/)
+    expect(block).toMatch(/--aurora-glow:\s*0\.85/)
+  })
+
+  it('has glowing number seals and bluish layered shadows on the demo surfaces, in that scope only', () => {
+    expect(css).toMatch(/:root:not\(\.dark\):has\(\.landing-root\) \.landing-step-badge\s*{[^}]*box-shadow/)
+    const surface = css.match(/:root:not\(\.dark\):has\(\.landing-root\) \.landing-surface\s*{([^}]*)}/)
+    expect(surface, 'landing-surface rule').not.toBeNull()
+    expect(surface?.[1]).toMatch(/linear-gradient/)
+    expect(surface?.[1].match(/rgb\(/g)?.length).toBeGreaterThanOrEqual(3)
+    expect(css).not.toMatch(/\.dark:has\(\.landing-root\)/)
+    expect(css).not.toMatch(/\n\.landing-surface\s*{/)
   })
 })

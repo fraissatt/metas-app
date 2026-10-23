@@ -276,6 +276,61 @@
   color: var(--card-color);
 }
 
+/* The presentation page keeps the original light theme (ice blue page, bright blue, glowing number
+   seals, bluish card shadows): there the white demo cards stand out against the ice blue, which the
+   calmer light theme of the app does not do. `:has(.landing-root)` scopes it to the page that renders
+   the landing, header included; the dark theme is the same calm one everywhere. */
+:root:not(.dark):has(.landing-root) {
+  --background: #eaf3ff;
+  --foreground: #0f1b33;
+  --card: #ffffff;
+  --card-foreground: #0f1b33;
+  --popover: #ffffff;
+  --popover-foreground: #0f1b33;
+  --primary: #0057ff;
+  --primary-foreground: #ffffff;
+  --secondary: #dcebff;
+  --secondary-foreground: #0f1b33;
+  --muted: #dcebff;
+  --muted-foreground: #52607a;
+  --accent: #d6e8ff;
+  --accent-foreground: #0047e1;
+  --glow: #0057ff33;
+  --border: #cfe0f7;
+  --input: #cfe0f7;
+  --ring: #0057ff;
+  --chart-1: #cfe0f7;
+  --chart-2: #9cc3ff;
+  --chart-3: #5c97ff;
+  --chart-4: #2c72ff;
+  --chart-5: #0057ff;
+  --lp-green: #22c55e;
+  --lp-blue: #3b8cff;
+  --lp-amber: #f5a623;
+  --island-shadow:
+    0 1px 2px rgb(10 42 102 / 0.08), 0 6px 14px rgb(10 42 102 / 0.07), 0 14px 28px rgb(0 87 255 / 0.08);
+  /* Strength of the Aurora wash and spots of light on this page (read by the canvas). */
+  --aurora-wash: 0.16;
+  --aurora-glow: 0.85;
+}
+
+:root:not(.dark):has(.landing-root) .landing-step-badge {
+  box-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 70%, transparent);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+}
+
+:root:not(.dark):has(.landing-root) .landing-surface {
+  background-image: linear-gradient(
+    160deg,
+    var(--card) 0%,
+    color-mix(in oklab, var(--card) 60%, var(--background)) 100%
+  );
+  box-shadow:
+    0 1px 2px rgb(10 42 102 / 0.08),
+    0 4px 8px rgb(10 42 102 / 0.07),
+    0 12px 24px rgb(0 87 255 / 0.08);
+}
+
 @keyframes landing-in {
   from {
     opacity: 0;
