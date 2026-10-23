@@ -21,4 +21,14 @@ describe('GuestBanner', () => {
     expect(screen.getByRole('link', { name: 'Criar conta' })).toHaveAttribute('href', '/cadastro')
     expect(screen.queryByRole('dialog')).toBeNull()
   })
+
+  it('has a short text for a phone and the full one from md up, so a screen reader hears only one', () => {
+    render(<GuestBanner />)
+
+    expect(screen.getByText('Visitante: seus dados somem em 24 h')).toHaveClass('md:hidden')
+    expect(
+      screen.getByText('Você está como visitante. Os dados somem após 24 h sem uso. Crie uma conta para guardá-los.'),
+    ).toHaveClass('hidden', 'md:inline')
+    expect(screen.getByRole('link', { name: 'Criar conta' })).toBeInTheDocument()
+  })
 })

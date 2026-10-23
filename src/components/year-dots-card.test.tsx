@@ -95,4 +95,19 @@ describe('YearDotsCard', () => {
     rerender(<YearDotsCard initial={yearData(2026, 2026)} loadYear={vi.fn()} />)
     expect(region()).toHaveClass('rounded-lg', 'border', 'bg-card')
   })
+
+  it('opens scrolled to the current month, and to January on a past year', async () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetLeft', 'get').mockReturnValue(500)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300)
+    const scrolled = vi.spyOn(Element.prototype, 'scrollLeft', 'set')
+    const loadYear = vi.fn(async () => yearData(2025, 2025))
+    render(<YearDotsCard initial={yearData(2026, 2025)} loadYear={loadYear} />)
+
+    expect(scrolled).toHaveBeenLastCalledWith(320) // 500 - 300 * 0.6
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ano anterior' }))
+    await waitFor(() => expect(screen.getByRole('heading', { name: '2025' })).toBeInTheDocument())
+    expect(scrolled).toHaveBeenLastCalledWith(0)
+    vi.restoreAllMocks()
+  })
 })
