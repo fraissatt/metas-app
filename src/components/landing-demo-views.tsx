@@ -3,6 +3,7 @@
 import type { CSSProperties } from 'react'
 import { useCardProgress } from '@/components/landing-card-progress'
 import { DemoGuard, useDemoState } from '@/components/landing-demo-state'
+import { PanelList } from '@/components/panel-list'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
 import { Button } from '@/components/ui/button'
@@ -40,12 +41,9 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
   // The bars grow with the view's visibility (--w), so they rise as the view appears.
   const bar = (rate: number): CSSProperties => ({ height: `max(8%, calc(${rate} * var(--w, 1) * 100%))` })
   const count = (value: number) => Math.round(value * t)
-  // The current week's bar glows while it rises and calms once it has arrived.
-  const pulse = Math.sin(Math.PI * Math.min(1, Math.max(0, t)))
 
   return (
-    <div className="card-surface flex overflow-hidden rounded-lg border border-border bg-card">
-      <div className="w-[3px] shrink-0 bg-primary" />
+    <div className="flex overflow-hidden rounded-lg border border-border bg-card">
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
           <p className="text-sm font-semibold">{objective.title}</p>
@@ -81,7 +79,7 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
               data-testid="week-bar"
               title={`Esta semana: ${Math.round(currentRate * 100)}%`}
               className="flex-1 rounded-t-sm bg-primary"
-              style={{ ...bar(currentRate), boxShadow: `0 0 ${Math.round(14 * pulse)}px var(--primary)` }}
+              style={bar(currentRate)}
             />
           </div>
           <p className="mt-1 text-xs text-muted-foreground tabular-nums">
@@ -97,21 +95,13 @@ export function ObjectiveView({ data, goals, t = 1 }: { data: LandingDemoData; g
 }
 
 export function WeekView({ goals, t = 1 }: { goals: DemoGoal[]; t?: number }) {
-  // The real cards, filling smoothly with `t`, each with a glow that swells while it fills and calms at its real value.
-  const glow = Math.sin(Math.PI * Math.min(1, Math.max(0, t)))
+  // The real cards, filling smoothly with `t`, gathered in one panel like on the Hoje screen.
   return (
-    <div className="flex flex-col gap-3">
+    <PanelList>
       {goals.map((goal) => (
-        <div
-          key={goal.id}
-          data-testid="goal-glow"
-          className="rounded-lg"
-          style={{ boxShadow: `0 0 ${Math.round(22 * glow)}px color-mix(in oklab, var(--primary) ${Math.round(45 * glow)}%, transparent)` }}
-        >
-          <WeekGoalProgressCard goal={goal} reveal={t} />
-        </div>
+        <WeekGoalProgressCard key={goal.id} goal={goal} reveal={t} flat />
       ))}
-    </div>
+    </PanelList>
   )
 }
 
@@ -128,11 +118,11 @@ export function TodayView({
     goal.dailyTasks.filter((task) => isSameAppDay(task.date, today)).map((task) => ({ ...task, weeklyGoal: goal })),
   )
   return (
-    <div className="flex flex-col gap-3">
+    <PanelList>
       {groupTasksByWeeklyGoal(tasks).map((group) => (
-        <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={onToggle} />
+        <TodayTaskGroup key={group.weeklyGoal.id} group={group} onToggleTask={onToggle} flat />
       ))}
-    </div>
+    </PanelList>
   )
 }
 

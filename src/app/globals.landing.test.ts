@@ -28,19 +28,22 @@ describe('landing card styles', () => {
 describe('step colours per theme', () => {
   const darkStart = css.indexOf('.dark {\n  --lp-tint')
   const dark = css.slice(darkStart, css.indexOf('}', darkStart))
-  const light = css.slice(css.indexOf('--lp-green: #22c55e'), darkStart)
+  const light = css.slice(css.indexOf('--lp-green: #3aa76d'), darkStart)
 
-  it('keeps the dark neon colours as they are, with the text shade equal to the fill', () => {
-    expect(dark).toMatch(/--lp-green: #39ff14/)
-    expect(dark).toMatch(/--lp-blue: #4f9dff/)
-    expect(dark).toMatch(/--lp-amber: #ffb020/)
+  it('uses calm dark colours, with the text shade equal to the fill', () => {
+    expect(dark).toMatch(/--lp-green: #7fd18f/)
+    expect(dark).toMatch(/--lp-blue: #6ea8ff/)
+    expect(dark).toMatch(/--lp-amber: #e3b865/)
+    expect(dark).not.toMatch(/#39ff14/)
     for (const name of ['green', 'blue', 'amber']) {
       expect(dark).toContain(`--lp-${name}-ink: var(--lp-${name});`)
     }
   })
 
   it('has brighter fills with darker text shades in the light theme only', () => {
-    expect(light).toMatch(/--lp-green: #22c55e/)
+    expect(light).toMatch(/--lp-green: #3aa76d/)
+    expect(light).toMatch(/--lp-blue: #4f86d8/)
+    expect(light).toMatch(/--lp-amber: #e0a43a/)
     expect(light).toMatch(/--lp-green-ink: #15803d/)
     expect(light).toMatch(/--lp-blue-ink: #1d4ed8/)
     expect(light).toMatch(/--lp-amber-ink: #b45309/)
@@ -48,9 +51,9 @@ describe('step colours per theme', () => {
 })
 
 describe('step titles', () => {
-  it('are lit in their own colour with a glow, in the dark theme only', () => {
-    expect(css).toMatch(/\.dark \.landing-title\s*{[^}]*color: var\(--card-color\)[^}]*text-shadow/)
-    expect(css).not.toMatch(/\n\.landing-title\s*{[^}]*text-shadow/)
+  it('are lit in their own colour in the dark theme, with no glow', () => {
+    expect(css).toMatch(/\.dark \.landing-title\s*{[^}]*color: var\(--card-color\)/)
+    expect(css).not.toMatch(/\.landing-title\s*{[^}]*text-shadow/)
   })
 
   it('take the dark shade of the topic colour in the light theme', () => {
@@ -59,9 +62,10 @@ describe('step titles', () => {
 })
 
 describe('step number badge', () => {
-  it('is a tinted circle by default, and a lit solid seal of the topic colour in the light theme only', () => {
+  it('is a tinted circle by default, and a solid seal of the topic colour in the light theme only, with no glow', () => {
     expect(css).toMatch(/(^|\s)\.landing-step-badge\s*{[^}]*color: var\(--card-ink\)[^}]*background: color-mix/)
-    expect(css).toMatch(/:root:not\(\.dark\) \.landing-step-badge\s*{[^}]*background: var\(--card-color\)[^}]*box-shadow/)
+    expect(css).toMatch(/:root:not\(\.dark\) \.landing-step-badge\s*{[^}]*background: var\(--card-color\)/)
+    expect(css).not.toMatch(/\.landing-step-badge\s*{[^}]*(box|text)-shadow/)
     expect(css).not.toMatch(/\.dark \.landing-step-badge/)
   })
 })

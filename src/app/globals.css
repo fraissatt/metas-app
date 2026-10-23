@@ -224,13 +224,13 @@
 }
 
 /* Presentation page: one accent per card. Light values are darker so the icon
-   and border keep their contrast on a white card; dark values are the neon ones. */
+   and border keep their contrast on a white card; dark values are soft, like the app's own. */
 :root {
   /* Light theme: the three step colours are bright for fills; the -ink twins are
      the darker shades used for text and icons, so they stay readable. */
-  --lp-green: #22c55e;
-  --lp-blue: #3b8cff;
-  --lp-amber: #f5a623;
+  --lp-green: #3aa76d;
+  --lp-blue: #4f86d8;
+  --lp-amber: #e0a43a;
   --lp-tint: 24%;
   --lp-tint-chip: 22%;
   --lp-green-ink: #15803d;
@@ -243,21 +243,21 @@
 .dark {
   --lp-tint: 16%;
   --lp-tint-chip: 14%;
-  --lp-green: #39ff14;
-  --lp-blue: #4f9dff;
-  --lp-amber: #ffb020;
+  --lp-green: #7fd18f;
+  --lp-blue: #6ea8ff;
+  --lp-amber: #e3b865;
   --lp-green-ink: var(--lp-green);
   --lp-blue-ink: var(--lp-blue);
   --lp-amber-ink: var(--lp-amber);
-  --lp-violet: #b78cff;
-  --lp-pink: #ff6fae;
-  --lp-cyan: #2fd4d4;
+  --lp-violet: #a99cf0;
+  --lp-pink: #e892b3;
+  --lp-cyan: #6cc4c4;
 }
 
-/* Step number and title. Light theme: the number is a seal of the topic colour with a glow
-   and the title takes the dark shade of that colour. Dark theme: the number stays a tinted
-   circle and the title is lit in its own neon colour, staying so even when the rest of the
-   step dims, so it does not get lost against the Aurora background. */
+/* Step number and title. Light theme: the number is a solid seal of the topic colour and the
+   title takes the dark shade of that colour. Dark theme: the number stays a tinted circle and
+   the title is in its own colour, staying so even when the rest of the step dims, so it does
+   not get lost against the Aurora background. No glow in either theme. */
 .landing-step-badge {
   color: var(--card-ink);
   background: color-mix(in oklab, var(--card-color) var(--lp-tint), transparent);
@@ -266,8 +266,6 @@
 :root:not(.dark) .landing-step-badge {
   color: #fff;
   background: var(--card-color);
-  box-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 70%, transparent);
-  text-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
 }
 
 .landing-title {
@@ -276,7 +274,6 @@
 
 .dark .landing-title {
   color: var(--card-color);
-  text-shadow: 0 0 14px color-mix(in oklab, var(--card-color) 80%, transparent);
 }
 
 @keyframes landing-in {
