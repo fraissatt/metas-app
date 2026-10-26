@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { prisma } from '@/lib/db'
-import { getWeekBounds } from '@/lib/dates'
+import { addAppWeeks, getWeekBounds } from '@/lib/dates'
 import { actAs, TEST_USER_ID } from '@/test/session-mock'
 import Home, { generateMetadata } from '@/app/page'
 
@@ -45,5 +45,23 @@ describe('root page', () => {
     expect(screen.getByRole('heading', { name: 'Seus pequenos passos' })).toBeInTheDocument()
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument()
     expect(screen.getByRole('main')).toContainElement(screen.getByRole('heading', { name: 'Seus pequenos passos' }))
+  })
+
+  it('invites the review of last week at the start of a new week', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-26T12:00:00-03:00')) // Monday
+    try {
+      const objective = await prisma.objective.create({
+        data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() },
+      })
+      const lastWeek = getWeekBounds(addAppWeeks(new Date(), -1))
+      await prisma.weeklyGoal.create({ data: { title: 'Meta', objectiveId: objective.id, ...lastWeek } })
+      render(await Home())
+      expect(screen.getByRole('link', { name: 'Revisar' })).toHaveAttribute('href', '/revisao')
+      // The review is the one place to decide; no competing "bring everything" button.
+      expect(screen.queryByRole('button', { name: /Trazer para esta semana/ })).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

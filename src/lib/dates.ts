@@ -117,3 +117,15 @@ export function formatMonthYear(date: Date): string {
 export function formatMonthShort(date: Date): string {
   return monthShort.format(date).replace(/\.$/, '')
 }
+
+/** `19 a 25 de out.`, or `26 de out. a 1 de nov.` when the week spans two months. */
+export function formatWeekRange(weekStart: Date): string {
+  const weekEnd = addAppDays(weekStart, 6)
+  const startMonth = formatMonthShort(weekStart)
+  const endMonth = formatMonthShort(weekEnd)
+  const start = appDayOfMonth(weekStart)
+  const end = appDayOfMonth(weekEnd)
+  return startMonth === endMonth
+    ? `${start} a ${end} de ${endMonth}.`
+    : `${start} de ${startMonth}. a ${end} de ${endMonth}.`
+}

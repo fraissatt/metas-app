@@ -1,0 +1,59 @@
+# Tags and GitHub Releases stopped at v1.6.0 because they were made by hand. When the master receives a
+# version that has no tag yet (the version bump of a release PR), this creates the tag and the Release,
+# with the notes taken from the "Depois" section of the PR that landed on the master. A release that
+# keeps the same version (for example a README-only one) finds its tag and does nothing.
+name: Criar release no GitHub
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    name: Tag e Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version
+            const tag = `v${version}`
+
+            try {
+              await github.rest.git.getRef({ ...context.repo, ref: `tags/${tag}` })
+              core.info(`${tag} já existe; nada a fazer.`)
+              return
+            } catch (error) {
+              if (error.status !== 404) throw error
+            }
+
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              ...context.repo,
+              commit_sha: context.sha,
+            })
+            const pr = prs.find((p) => p.base.ref === 'master' && p.merged_at)
+            const body = (pr?.body ?? '').replace(/\r\n/g, '\n')
+            const news = body.match(/### Depois\n([\s\S]*?)(?=\n### |\n🤖|$)/)?.[1].trim()
+            const notes = [
+              `## Metas ${tag}`,
+              '',
+              news ? `### Novidades\n${news}` : 'Veja o PR da release para os detalhes.',
+              '',
+              pr ? `PR da release: #${pr.number}` : '',
+            ].join('\n').trim()
+
+            await github.rest.repos.createRelease({
+              ...context.repo,
+              tag_name: tag,
+              target_commitish: context.sha,
+              name: tag,
+              body: notes,
+              make_latest: 'true',
+            })
+            core.info(`Criada a Release ${tag}.`)

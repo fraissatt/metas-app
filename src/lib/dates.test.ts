@@ -6,6 +6,7 @@ import {
   appWeekdayIndex,
   appYear,
   formatMonthShort,
+  formatWeekRange,
   formatMonthYear,
   getMonthDays,
   getYearDays,
@@ -119,5 +120,15 @@ describe('year and month helpers', () => {
   it('formats month names in pt-BR', () => {
     expect(formatMonthYear(parseDay('2026-10-20'))).toBe('outubro de 2026')
     expect(formatMonthShort(parseDay('2026-10-20'))).toBe('out')
+  })
+})
+
+describe('formatWeekRange', () => {
+  it('names the month once inside a month', () => {
+    expect(formatWeekRange(parseDay('2026-10-19'))).toBe('19 a 25 de out.')
+  })
+
+  it('names both months across a month boundary', () => {
+    expect(formatWeekRange(parseDay('2026-10-26'))).toBe('26 de out. a 1 de nov.')
   })
 })

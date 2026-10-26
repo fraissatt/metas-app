@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Menu } from '@base-ui/react/menu'
-import { Check, Moon, Palette, Sun } from 'lucide-react'
+import { Bell, Check, Moon, Palette, Sun } from 'lucide-react'
 import { useBackground } from '@/components/background-provider'
 import { LeaveGuestDialog } from '@/components/leave-guest-dialog'
 import { useTheme } from '@/components/use-theme'
 import { useTour } from '@/components/tour-provider'
+import { useDailyReminder, type ReminderState } from '@/components/use-daily-reminder'
 import { BACKGROUND_LABELS, BACKGROUND_STYLES, type BackgroundStyle } from '@/lib/background-options'
 import { initialsOf } from '@/lib/initials'
 import { runRedirectingAction } from '@/lib/run-redirecting-action'
@@ -25,6 +26,52 @@ const THEMES: { value: Theme; label: string; Icon: typeof Sun }[] = [
   { value: 'light', label: 'Claro', Icon: Sun },
   { value: 'dark', label: 'Escuro', Icon: Moon },
 ]
+
+const REMINDER_HINT: Partial<Record<ReminderState, string>> = {
+  install: 'No iPhone, instale o app na tela de início para receber.',
+  blocked: 'Notificações bloqueadas nas configurações do navegador.',
+}
+
+/** "Lembrete diário": on/off for this browser, or why it can't be turned on here. */
+function ReminderItem() {
+  const { state, busy, toggle } = useDailyReminder()
+  if (state === 'hidden') return null
+
+  const hint = REMINDER_HINT[state]
+  return (
+    <>
+      {separator}
+      <Menu.CheckboxItem
+        checked={state === 'on'}
+        // Not disabled while busy: that would drop keyboard focus mid-toggle;
+        // `toggle` ignores clicks until the last one finished.
+        disabled={hint !== undefined}
+        aria-busy={busy || undefined}
+        onCheckedChange={() => void toggle()}
+        closeOnClick={false}
+        className={cn(itemClass, 'items-start data-disabled:text-muted-foreground')}
+      >
+        <Bell className="mt-0.5 size-4 text-muted-foreground" />
+        <span className="flex flex-1 flex-col">
+          <span>Lembrete diário às 19h</span>
+          <span className="text-xs text-muted-foreground">
+            {hint ?? 'Só nos dias que ainda não estão feitos.'}
+          </span>
+        </span>
+        {/* Always drawn, so "off" reads as an empty box rather than nothing. */}
+        <span
+          aria-hidden="true"
+          className={cn(
+            'mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input',
+            state === 'on' && 'border-primary bg-primary text-primary-foreground',
+          )}
+        >
+          {state === 'on' && <Check className="size-3.5" />}
+        </span>
+      </Menu.CheckboxItem>
+    </>
+  )
+}
 
 export type MenuUser = { name: string; email: string; isAnonymous: boolean }
 
@@ -106,6 +153,7 @@ export function UserMenu({
                   ))}
                 </Menu.RadioGroup>
               </Menu.Group>
+              {user && <ReminderItem />}
               {user && (
                 <>
                   {separator}
