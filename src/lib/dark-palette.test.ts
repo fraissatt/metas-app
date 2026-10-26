@@ -3,8 +3,9 @@ import { parseDarkPalette, readDarkPalette, withAlpha } from '@/lib/dark-palette
 
 describe('dark palette', () => {
   it('reads only the hex tokens of the .dark block', () => {
-    const css = ':root {\n  --primary: #2563c9;\n}\n.dark {\n  --primary: #7fd18f;\n  --destructive: oklch(0.7 0.19 22);\n}\n'
-    expect(parseDarkPalette(css)).toEqual({ primary: '#7fd18f' })
+    const css =
+      ':root {\n  --primary: #2563c9;\n}\n.dark .card {\n  color: #ffffff;\n}\n.dark{\n  --background: #111214;\n  --primary: #7fd18f;\n  --destructive: oklch(0.7 0.19 22);\n}\n'
+    expect(parseDarkPalette(css)).toEqual({ background: '#111214', primary: '#7fd18f' })
   })
 
   it('has every token the link-preview image uses', async () => {

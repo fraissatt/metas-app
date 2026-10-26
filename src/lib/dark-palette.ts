@@ -9,11 +9,15 @@ export type DarkPalette = Record<string, string>
  * in step with the theme instead of copying colours by hand.
  */
 export function parseDarkPalette(css: string): DarkPalette {
-  const start = css.indexOf('.dark {')
-  const block = css.slice(start, css.indexOf('}', start))
-  const vars: DarkPalette = {}
-  for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})\b/g)) vars[name] = value
-  return vars
+  // globals.css has several `.dark` rules; the token block is the one that
+  // defines --background.
+  for (const [, block] of css.matchAll(/(?:^|\n)\.dark\s*\{([^}]*)\}/g)) {
+    if (!/--background:/.test(block)) continue
+    const vars: DarkPalette = {}
+    for (const [, name, value] of block.matchAll(/--([\w-]+):\s*(#[0-9a-fA-F]{6})\b/g)) vars[name] = value
+    return vars
+  }
+  return {}
 }
 
 export async function readDarkPalette(): Promise<DarkPalette> {

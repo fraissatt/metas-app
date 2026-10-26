@@ -3,7 +3,8 @@ import { ImageResponse } from 'next/og'
 import { readDarkPalette, withAlpha, type DarkPalette } from '@/lib/dark-palette'
 
 // The preview card that WhatsApp, LinkedIn and Slack show for a shared link,
-// in the dark theme's colours so it looks like the app it opens.
+// in the dark theme's colours so it looks like the app it opens. No font
+// weights: next/og ships only Geist Regular, and hierarchy here comes from size.
 
 export const alt = 'Metas: do objetivo à tarefa do dia. Objetivos, metas semanais e tarefas diárias em um só lugar.'
 export const size = { width: 1200, height: 630 }
@@ -63,8 +64,8 @@ export default async function OpengraphImage() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', width: 560 }}>
-          <div style={{ display: 'flex', fontSize: 34, fontWeight: 700, color: colors.primary }}>Metas</div>
-          <div style={{ display: 'flex', marginTop: 36, fontSize: 64, fontWeight: 700, lineHeight: 1.1 }}>
+          <div style={{ display: 'flex', fontSize: 34, color: colors.primary }}>Metas</div>
+          <div style={{ display: 'flex', marginTop: 36, fontSize: 64, lineHeight: 1.1 }}>
             Do objetivo à tarefa do dia
           </div>
           <div style={{ display: 'flex', marginTop: 28, fontSize: 28, lineHeight: 1.4, color: colors['muted-foreground'] }}>
@@ -87,7 +88,7 @@ export default async function OpengraphImage() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', padding: '28px 32px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline' }}>
-              <span style={{ fontSize: 44, fontWeight: 700 }}>5</span>
+              <span style={{ fontSize: 44 }}>5</span>
               <span style={{ marginLeft: 12, fontSize: 22, color: colors['muted-foreground'] }}>de 7 dias feitos</span>
             </div>
             <div style={{ display: 'flex', marginTop: 20, gap: 14 }}>
