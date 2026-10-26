@@ -61,13 +61,14 @@ describe('proxy matcher', () => {
   const matcher = new RegExp(`^${config.matcher[0]}$`)
 
   it('runs on app pages', () => {
-    for (const path of ['/', '/objectives', '/objectives/abc', '/quiz', '/funil', '/entrar', '/cadastro']) {
+    for (const path of ['/', '/objectives', '/objectives/abc', '/quiz', '/funil', '/entrar', '/cadastro', '/opengraph-imagefoo']) {
       expect(matcher.test(path), path).toBe(true)
     }
   })
 
-  it('skips Next internals, the auth API, the manifest and files with an extension', () => {
+  it('skips Next internals, the auth API, the manifest, the link-preview image and files with an extension', () => {
     for (const path of [
+      '/opengraph-image',
       '/_next/static/chunks/a.js',
       '/_next/image',
       '/api/auth/sign-in/email',

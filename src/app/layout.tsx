@@ -11,6 +11,7 @@ import { getBackground } from "@/lib/background";
 import { getCurrentUser } from "@/lib/session";
 import { BROWSER_CHROME, getTheme } from "@/lib/theme";
 import { getTourSeen } from "@/lib/tour";
+import { SHARE_METADATA } from "@/lib/share-metadata";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,6 +30,7 @@ export const metadata: Metadata = {
     default: "Metas",
   },
   description: "Objetivos, metas semanais e tarefas do dia.",
+  ...SHARE_METADATA,
   // iOS ignores the manifest icons, so it needs its own link and title.
   icons: { apple: "/icons/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "Metas" },
