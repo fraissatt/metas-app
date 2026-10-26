@@ -44,12 +44,14 @@ export default async function Home() {
 
   const goals = await listWeeklyGoalsForCurrentWeek()
   const stats = await getLifetimeStats()
-  const preview = await getMissingGoalsPreview()
+  const reviewInvite = await getWeekReviewInvite()
+  // While the review is due it is the one place to decide what continues;
+  // "Ficou para trás" would offer the same week's goals as a competing action.
+  const preview = reviewInvite ? null : await getMissingGoalsPreview()
   // A read, never a write. The write happens in the effect below, because
   // Next prefetches the header and bottom-bar links to "/" and a mutation here would run
   // on hover.
   const pendingRecurrences = await countPendingRecurrences()
-  const reviewInvite = await getWeekReviewInvite()
 
   const banner = stats.totalCompleted > 0 ? <LifetimeProgressBanner {...stats} /> : null
   const invite = reviewInvite ? <WeekReviewInvite invite={reviewInvite} /> : null

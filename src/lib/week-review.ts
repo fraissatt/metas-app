@@ -25,6 +25,8 @@ export type ReviewWeek = {
   repeatInto: 'next' | 'current'
 }
 
+const isWeekend = (now: Date) => appWeekdayIndex(now) >= WEEKEND_FROM
+
 /**
  * At the weekend, the week that is ending (when it was planned at all).
  * Otherwise the most recent week before the current one that had goals — the
@@ -35,30 +37,32 @@ export function pickReviewWeek(
   now: Date,
   { currentWeekHasGoals, lastPlannedWeekStart }: { currentWeekHasGoals: boolean; lastPlannedWeekStart: Date | null },
 ): ReviewWeek | null {
-  if (appWeekdayIndex(now) >= WEEKEND_FROM && currentWeekHasGoals) {
-    return { weekStart: getWeekBounds(now).weekStart, repeatInto: 'next' }
-  }
-  return lastPlannedWeekStart ? { weekStart: lastPlannedWeekStart, repeatInto: 'current' } : null
+  const repeatInto = isWeekend(now) ? 'next' : 'current'
+  if (isWeekend(now) && currentWeekHasGoals) return { weekStart: getWeekBounds(now).weekStart, repeatInto }
+  return lastPlannedWeekStart ? { weekStart: lastPlannedWeekStart, repeatInto } : null
 }
 
 /**
- * Whether Hoje should invite the review. Narrow on purpose: the end of the
- * week, and the first days of the next one for the week just gone. Outside
- * that the page still works, but nothing asks.
+ * Whether Hoje should invite the review. Narrow on purpose: the weekend for
+ * the week that is ending, and Monday to Wednesday for the week just gone.
+ * Outside that the page still works, but nothing asks.
  */
 export function isInviteDue(now: Date, week: ReviewWeek): boolean {
-  const day = appWeekdayIndex(now)
-  if (week.repeatInto === 'next') return day >= WEEKEND_FROM
-  const previousWeekStart = addAppWeeks(getWeekBounds(now).weekStart, -1)
-  return day <= INVITE_UNTIL && week.weekStart.getTime() === previousWeekStart.getTime()
+  const currentWeekStart = getWeekBounds(now).weekStart
+  if (isWeekend(now)) return week.weekStart.getTime() === currentWeekStart.getTime()
+  return (
+    appWeekdayIndex(now) <= INVITE_UNTIL &&
+    week.weekStart.getTime() === addAppWeeks(currentWeekStart, -1).getTime()
+  )
 }
 
-/** The week that ticked goals are copied into. */
-export function repeatTargetWeek(now: Date, reviewWeekStart: Date): { weekStart: Date; weekEnd: Date } {
+/**
+ * The week that ticked goals are copied into: next week from Saturday on (the
+ * days left in this one are too few to plan), the current week otherwise.
+ */
+export function repeatTargetWeek(now: Date): { weekStart: Date; weekEnd: Date } {
   const current = getWeekBounds(now)
-  return reviewWeekStart.getTime() === current.weekStart.getTime()
-    ? getWeekBounds(addAppWeeks(current.weekStart, 1))
-    : current
+  return isWeekend(now) ? getWeekBounds(addAppWeeks(current.weekStart, 1)) : current
 }
 
 export type ReviewGoalInput = {

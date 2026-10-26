@@ -137,6 +137,7 @@ export function WeekReview({
   const [selected, setSelected] = useState(
     () => new Set(review.goals.filter((goal) => goal.repeat === 'choose').map((goal) => goal.id)),
   )
+  const [failed, setFailed] = useState(false)
   const hasRecurring = review.goals.some((goal) => goal.repeat === 'recurring')
   const { compound, projection } = review
 
@@ -150,8 +151,16 @@ export function WeekReview({
   }
 
   function finish() {
+    setFailed(false)
     startTransition(async () => {
-      await onFinish(review.weekKey, [...selected])
+      try {
+        await onFinish(review.weekKey, [...selected])
+      } catch {
+        // A stale page (the week moved on) or a network failure: say so and
+        // keep the choices, rather than handing over to the error page.
+        setFailed(true)
+        return
+      }
       router.push('/')
     })
   }
@@ -239,6 +248,11 @@ export function WeekReview({
             {selected.size > 0 ? <RotateCcw className="size-4" /> : <Check className="size-4" />}
             {isPending ? 'Salvando…' : actionLabel(selected.size, review.repeatInto)}
           </Button>
+          {failed && (
+            <p role="alert" className="text-sm text-destructive">
+              Não deu para salvar. Recarregue a página e tente de novo.
+            </p>
+          )}
           {hasRecurring && (
             <p className="text-xs text-muted-foreground">Metas que se repetem sozinhas não precisam ser marcadas.</p>
           )}

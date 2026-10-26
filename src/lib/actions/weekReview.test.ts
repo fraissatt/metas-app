@@ -167,6 +167,41 @@ describe('finishWeekReview', () => {
     expect(await prisma.weeklyGoal.count({ where: { weekStart: CURRENT } })).toBe(0)
   })
 
+  it('on a weekend with an empty current week, repeats the last planned week into next week', async () => {
+    setNow('2026-11-01T12:00:00-03:00') // Sunday, nothing planned this week
+    const objective = await makeObjective()
+    const goal = await makeGoal(objective.id, LAST, 'Correr', [['2026-10-21', true]])
+
+    await finishWeekReview('2026-10-19', [goal.id])
+
+    expect(await prisma.weeklyGoal.count({ where: { weekStart: CURRENT } })).toBe(0)
+    const next = await prisma.weeklyGoal.findMany({ where: { weekStart: NEXT }, include: { dailyTasks: true } })
+    expect(next.map((g) => g.title)).toEqual(['Correr'])
+    expect(formatDayKey(next[0].dailyTasks[0].date)).toBe('2026-11-04')
+  })
+
+  it('creates the goals once when the same review is submitted twice at the same time', async () => {
+    const objective = await makeObjective()
+    const goal = await makeGoal(objective.id, LAST, 'Correr', [['2026-10-21', true]])
+
+    await Promise.all([finishWeekReview('2026-10-19', [goal.id]), finishWeekReview('2026-10-19', [goal.id])])
+
+    expect(await prisma.weeklyGoal.count({ where: { weekStart: CURRENT } })).toBe(1)
+    expect(await prisma.weekReview.count()).toBe(1)
+  })
+
+  it('only accepts the week that is up for review, and only its goals', async () => {
+    const objective = await makeObjective()
+    const older = await makeGoal(objective.id, parseDay('2026-10-12'), 'Antigo')
+    await makeGoal(objective.id, LAST, 'Correr')
+
+    await expect(finishWeekReview('2026-10-12', [older.id])).rejects.toThrow()
+    await finishWeekReview('2026-10-19', [older.id])
+
+    expect(await prisma.weeklyGoal.count({ where: { weekStart: CURRENT } })).toBe(0)
+    expect(await prisma.weekReview.count({ where: { weekStart: parseDay('2026-10-12') } })).toBe(0)
+  })
+
   it('rejects a future week and an invalid key', async () => {
     await expect(finishWeekReview('2026-11-02', [])).rejects.toThrow()
     await expect(finishWeekReview('ontem', [])).rejects.toThrow()

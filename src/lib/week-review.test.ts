@@ -47,10 +47,10 @@ describe('pickReviewWeek', () => {
     expect(week?.repeatInto).toBe('current')
   })
 
-  it('falls back to the last planned week on a weekend with an empty current week', () => {
+  it('falls back to the last planned week on a weekend with an empty current week, still repeating into next week', () => {
     const week = pickReviewWeek(at('2026-10-25'), { currentWeekHasGoals: false, lastPlannedWeekStart: parseDay('2026-10-12') })
     expect(week && formatDayKey(week.weekStart)).toBe('2026-10-12')
-    expect(week?.repeatInto).toBe('current')
+    expect(week?.repeatInto).toBe('next')
   })
 
   it('has nothing to review without any planned week', () => {
@@ -64,8 +64,9 @@ describe('pickReviewWeek', () => {
 })
 
 describe('isInviteDue', () => {
-  it('invites on the weekend for the current week', () => {
+  it('invites on the weekend for the current week only', () => {
     expect(isInviteDue(at('2026-10-24'), { weekStart: MONDAY, repeatInto: 'next' })).toBe(true)
+    expect(isInviteDue(at('2026-10-24'), { weekStart: parseDay('2026-10-12'), repeatInto: 'next' })).toBe(false)
   })
 
   it('invites Monday to Wednesday for the previous calendar week only', () => {
@@ -78,13 +79,14 @@ describe('isInviteDue', () => {
 })
 
 describe('repeatTargetWeek', () => {
-  it('sends the current week to the next one', () => {
-    expect(formatDayKey(repeatTargetWeek(at('2026-10-25'), MONDAY).weekStart)).toBe('2026-10-26')
+  it('repeats into next week from Saturday on', () => {
+    expect(formatDayKey(repeatTargetWeek(at('2026-10-24')).weekStart)).toBe('2026-10-26')
+    expect(formatDayKey(repeatTargetWeek(at('2026-10-25')).weekStart)).toBe('2026-10-26')
   })
 
-  it('sends an earlier week to the current one', () => {
-    expect(formatDayKey(repeatTargetWeek(at('2026-10-27'), MONDAY).weekStart)).toBe('2026-10-26')
-    expect(formatDayKey(repeatTargetWeek(at('2026-11-10'), MONDAY).weekStart)).toBe('2026-11-09')
+  it('repeats into the current week on weekdays', () => {
+    expect(formatDayKey(repeatTargetWeek(at('2026-10-27')).weekStart)).toBe('2026-10-26')
+    expect(formatDayKey(repeatTargetWeek(at('2026-11-13')).weekStart)).toBe('2026-11-09')
   })
 })
 

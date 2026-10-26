@@ -102,6 +102,18 @@ describe('WeekReview', () => {
     expect(onFinish).toHaveBeenCalledWith('2026-10-19', [])
   })
 
+  it('keeps the page and says so when saving fails', async () => {
+    push.mockClear()
+    const onFinish = vi.fn().mockRejectedValue(new Error('stale'))
+    render(<WeekReview review={review()} onFinish={onFinish} />)
+
+    await userEvent.click(screen.getByRole('button', { name: /Repetir 2 metas nesta semana/ }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não deu para salvar')
+    expect(push).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /Repetir 2 metas nesta semana/ })).toBeEnabled()
+  })
+
   it('says when the week was already reviewed', () => {
     render(<WeekReview review={review({ reviewedOn: '26/10' })} onFinish={vi.fn()} />)
     expect(screen.getByText('Revisada em 26/10')).toBeInTheDocument()

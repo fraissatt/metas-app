@@ -58,6 +58,8 @@ describe('root page', () => {
       await prisma.weeklyGoal.create({ data: { title: 'Meta', objectiveId: objective.id, ...lastWeek } })
       render(await Home())
       expect(screen.getByRole('link', { name: 'Revisar' })).toHaveAttribute('href', '/revisao')
+      // The review is the one place to decide; no competing "bring everything" button.
+      expect(screen.queryByRole('button', { name: /Trazer para esta semana/ })).toBeNull()
     } finally {
       vi.useRealTimers()
     }

@@ -17,9 +17,9 @@ A short, single-column page (`max-w-2xl`), in the order a person reads a week:
 1. **Header.** A small uppercase label "Revisão da semana" and the week as the title, e.g. "19 a 25 de out." ("27 de out. a 2 de nov." across months). If the week was already reviewed, a muted line "Revisada em 26/10".
 2. **"Resultado" panel** (one `PanelList`, four rows):
    - **Days done:** the seven day dots of the week (Monday → Sunday, the same `Dot` as the year calendar, size `md`, with S T Q Q S S D under them) and "4 de 7 dias feitos". Future days of the week (reviewing on Saturday) stay empty, as in the calendar.
-   - **Tasks:** a large number and "de 24 tarefas cumpridas", then a comparison with the calendar week just before: "5 a mais que na semana anterior", "2 a menos que na semana anterior" or "o mesmo que na semana anterior". No comparison when that week had no tasks.
+   - **Tasks:** a large number and "de 24 tarefas cumpridas", then a comparison with the calendar week just before: "5 a mais que na semana anterior", "2 a menos que na semana anterior" or "O mesmo que na semana anterior". No comparison when that week had no tasks.
    - **Compound effect:** "+5% no seu efeito composto" (what the week's days added, as a whole percentage, because a one-decimal factor hides a single day's 1%), with "De 1,4× para 1,5×. Cada dia feito soma 1% ao anterior." under it (all-time days done before the week → through the week). When the week added no day: "Seu efeito composto segue em 1,3×".
-   - **Projection:** "Mantendo 4 dias feitos por semana, em 3 meses: 1,37× → 1,96×", under it "Projeção a partir desta semana.". When the week had no day done, the projection uses 3 days a week and says so: "Com 3 dias feitos por semana, em 3 meses: …". The horizon is 13 weeks.
+   - **Projection:** "Mantendo 4 dias feitos por semana, em 3 meses: 1,5× → 2,5×" (factors with the app's usual one decimal), under it "Projeção a partir desta semana.". When the week had no day done, the projection uses 3 days a week and says so: "Com 3 dias feitos por semana, em 3 meses: …", under it "Uma projeção para um ritmo leve.". The horizon is 13 weeks.
    These are numbers, not praise: the week's result, the change it caused and where the same pace leads.
 3. **"Metas da semana" panel**, one row per goal of the week (ordered by objective, then title): goal title, objective title, a thin progress bar, "4/5", and the soft "✓ cumprida" pill when every task was done (`isGoalFulfilled`). On the right, what happens next:
    - a one-off goal of an active objective: a checkbox "Repetir", ticked by default (today's button repeats everything, so ticking off is the deliberate act);
@@ -32,8 +32,8 @@ When there is no week to review (a new account, or nothing planned before), the 
 
 ### Which week
 
-- **Saturday and Sunday:** the current week, if it has goals. Ticked goals go to **next** week.
-- **Otherwise:** the most recent week before the current one that had goals (the same "last planned week" the existing repeat uses, so someone back after three weeks away still reviews their last real week). Ticked goals go to the **current** week.
+- **Saturday and Sunday:** the current week, if it has goals; otherwise the last planned week. Ticked goals go to **next** week (the days left in the current one are too few to plan).
+- **Monday to Friday:** the most recent week before the current one that had goals (the same "last planned week" the existing repeat uses, so someone back after three weeks away still reviews their last real week). Ticked goals go to the **current** week.
 
 ### The invitation on Hoje
 
@@ -46,14 +46,14 @@ Outside those windows the page still works by URL, but nothing nags.
 
 ### Interplay with "Ficou para trás"
 
-Once a week is reviewed, the existing "Ficou para trás" card (and the empty-week state built on it) no longer offers that week's goals: the person already decided. An empty current week whose source week was reviewed shows the normal empty state.
+While the invitation shows, the existing "Ficou para trás" card (and the empty-week state built on it) is hidden, so Hoje never offers two competing ways to bring the same goals. Once a week is reviewed, the card no longer offers that week's goals either: the person already decided. An empty current week in either case shows the normal empty state under the invitation.
 
 ## Design
 
 - **Data:** a new `WeekReview` table (`id`, `userId` → `user` with cascade delete, `weekStart`, `reviewedAt` default now, unique `userId + weekStart`). Migration `week_review` only creates the table; nothing is deleted or rewritten. A guest who signs up keeps their reviews (`moveGuestDataOnSignUp` moves them with the objectives).
 - **Pure logic** in `src/lib/week-review.ts` (no I/O, no date-fns outside `dates.ts`): picking the week to review, whether the invitation is due, and building the review (dots, totals, comparison, compound before/after, projection, goal rows).
 - **Goal copying** (`goalKey`, `cloneGoalsInto`, `findMissingGoals`) moves from `weeklyGoals.ts` into a plain server module `src/lib/goal-copy.ts` so both the existing repeat and the review use the same code. Behaviour of the existing actions is unchanged except for the "reviewed week" rule above.
-- **Server actions** in `src/lib/actions/weekReview.ts`: `getWeekReview()` (the page), `getWeekReviewInvite()` (Hoje) and `finishWeekReview(weekStartKey, goalIds)`. The write recomputes everything inside one transaction: it accepts only the user's own one-off goals of that week from active objectives, skips any already in the target week (so a double click or a stale page creates nothing twice), clones them with their weekday positions, and upserts the review. The week must not be in the future.
+- **Server actions** in `src/lib/actions/weekReview.ts`: `getWeekReview()` (the page), `getWeekReviewInvite()` (Hoje) and `finishWeekReview(weekStartKey, goalIds)`. The write recomputes everything inside one transaction: it accepts only the week the page would show right now (a stale page gets an error and an inline message), upserts the review first (its row lock makes a concurrent second submit wait and then see the copies), accepts only the user's own one-off goals of that week from active objectives, skips any already in the target week and clones them with their weekday positions.
 - **UI:** `src/app/revisao/page.tsx` (dynamic, title "Revisão da semana · Metas"), `src/components/week-review.tsx` (client: the checkboxes and the button), `src/components/week-review-invite.tsx` (the Hoje card). Existing pieces are reused: `PanelList`, `Dot`, `Checkbox`, `Button`, the `RotateCcw` icon of the repeat button, `compoundFactor`/`formatFactor`.
 - `/revisao` requires a session like the other app pages.
 

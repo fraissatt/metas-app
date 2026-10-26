@@ -38,7 +38,7 @@ async function findReviewWeek(userId: string, now: Date): Promise<ReviewWeek | n
 }
 
 async function loadWeekReview(userId: string, week: ReviewWeek, now: Date): Promise<WeekReviewData> {
-  const target = repeatTargetWeek(now, week.weekStart)
+  const target = repeatTargetWeek(now)
   const taskDay = { select: { date: true, completed: true } } as const
 
   const [goals, plannedInTarget, review, previousWeekTasks, tasksBefore] = await Promise.all([
@@ -118,56 +118,64 @@ export async function getWeekReviewInvite(): Promise<WeekReviewInvite | null> {
 }
 
 /**
- * Closes a week: copies the ticked goals into the week after it (or into the
- * current week, for an earlier one) and records the review.
+ * Closes the week that is up for review: copies the ticked goals into the
+ * target week (next week at the weekend, the current one otherwise) and
+ * records the review.
  *
- * Everything is re-read inside the transaction, as `repeatMissingGoals` does:
- * only the user's own one-off goals of that week from active objectives are
- * accepted, and any already planned in the target week are skipped, so a
- * double submit or a stale page never creates a goal twice.
+ * Only the week the page itself would show is accepted, so a stale page or a
+ * crafted call cannot review some other week. Everything is re-read inside
+ * the transaction, as `repeatMissingGoals` does: only the user's own one-off
+ * goals of that week from active objectives are copied, and any already
+ * planned in the target week are skipped.
  */
 export async function finishWeekReview(weekKey: string, goalIds: string[]): Promise<void> {
   const user = await requireUser()
   const now = new Date()
   const { weekStart } = getWeekBounds(parseDay(String(weekKey)))
-  if (weekStart > getWeekBounds(now).weekStart) throw new RangeError('A semana ainda não começou.')
+  const week = await findReviewWeek(user.id, now)
+  if (!week || week.weekStart.getTime() !== weekStart.getTime()) {
+    throw new RangeError('Esta semana não está mais em revisão. Recarregue a página.')
+  }
 
   const ids = (Array.isArray(goalIds) ? goalIds : [])
     .filter((id): id is string => typeof id === 'string')
     .slice(0, MAX_GOAL_IDS)
-  const target = repeatTargetWeek(now, weekStart)
+  const target = repeatTargetWeek(now)
   let touchedObjectiveIds: string[] = []
 
   await prisma.$transaction(async (tx) => {
-    if (ids.length > 0) {
-      const [chosen, planned] = await Promise.all([
-        tx.weeklyGoal.findMany({
-          where: {
-            id: { in: ids },
-            weekStart,
-            recurring: false,
-            objective: { userId: user.id, status: { not: 'COMPLETED' } },
-          },
-          orderBy: { title: 'asc' },
-          include: { dailyTasks: true, objective: { select: { status: true } } },
-        }),
-        tx.weeklyGoal.findMany({
-          where: { weekStart: target.weekStart, objective: { userId: user.id } },
-          select: { objectiveId: true, title: true },
-        }),
-      ])
-
-      const alreadyThere = new Set(planned.map(goalKey))
-      const goals = chosen.filter((goal) => !alreadyThere.has(goalKey(goal)))
-      touchedObjectiveIds = [...new Set(goals.map((goal) => goal.objectiveId))]
-      await cloneGoalsInto(tx, goals, weekStart, target.weekStart, target.weekEnd)
-    }
-
+    // First, not last: the upsert (INSERT … ON CONFLICT) locks this user's
+    // review row, so a second submit of the same week (another tab, a retry)
+    // waits here until this one commits, and then reads the goals it copied
+    // instead of copying them again.
     await tx.weekReview.upsert({
       where: { userId_weekStart: { userId: user.id, weekStart } },
       create: { userId: user.id, weekStart },
       update: { reviewedAt: now },
     })
+    if (ids.length === 0) return
+
+    const [chosen, planned] = await Promise.all([
+      tx.weeklyGoal.findMany({
+        where: {
+          id: { in: ids },
+          weekStart,
+          recurring: false,
+          objective: { userId: user.id, status: { not: 'COMPLETED' } },
+        },
+        orderBy: { title: 'asc' },
+        include: { dailyTasks: true, objective: { select: { status: true } } },
+      }),
+      tx.weeklyGoal.findMany({
+        where: { weekStart: target.weekStart, objective: { userId: user.id } },
+        select: { objectiveId: true, title: true },
+      }),
+    ])
+
+    const alreadyThere = new Set(planned.map(goalKey))
+    const goals = chosen.filter((goal) => !alreadyThere.has(goalKey(goal)))
+    touchedObjectiveIds = [...new Set(goals.map((goal) => goal.objectiveId))]
+    await cloneGoalsInto(tx, goals, weekStart, target.weekStart, target.weekEnd)
   })
 
   revalidatePath('/')
