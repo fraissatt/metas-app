@@ -45,6 +45,18 @@ model DailyTask {
   completedAt  DateTime?
 }
 
+/// A week the user closed on /revisao. Its existence is the whole signal:
+/// the invitation on Hoje and the "Ficou para trás" card stop asking.
+model WeekReview {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart  DateTime
+  reviewedAt DateTime @default(now())
+
+  @@unique([userId, weekStart])
+}
+
 enum Status {
   ACTIVE
   COMPLETED
@@ -76,6 +88,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   objectives    Objective[]
+  weekReviews   WeekReview[]
 
   @@index([isAnonymous, lastSeenAt])
   @@map("user")
