@@ -69,6 +69,7 @@ describe('proxy matcher', () => {
   it('skips Next internals, the auth API, the manifest, the link-preview image and files with an extension', () => {
     for (const path of [
       '/opengraph-image',
+      '/api/cron/lembrete',
       '/_next/static/chunks/a.js',
       '/_next/image',
       '/api/auth/sign-in/email',

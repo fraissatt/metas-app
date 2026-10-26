@@ -11,7 +11,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip Next internals, the auth API, the manifest, the link-preview image
+  // Skip Next internals, the auth API, the cron routes (they check
+  // CRON_SECRET themselves), the manifest, the link-preview image
   // (crawlers have no session) and any file with an extension (icons, images).
-  matcher: ['/((?!_next/|api/auth|manifest\\.webmanifest|opengraph-image$|.*\\.[a-zA-Z0-9]+$).*)'],
+  matcher: ['/((?!_next/|api/auth|api/cron/|manifest\\.webmanifest|opengraph-image$|.*\\.[a-zA-Z0-9]+$).*)'],
 }

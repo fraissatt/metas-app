@@ -28,6 +28,7 @@ afterEach(async () => {
   await prisma.weeklyGoal.deleteMany()
   await prisma.objective.deleteMany()
   await prisma.weekReview.deleteMany()
+  await prisma.pushSubscription.deleteMany()
   await prisma.session.deleteMany()
   await prisma.account.deleteMany()
   await prisma.verification.deleteMany()

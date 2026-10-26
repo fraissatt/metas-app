@@ -57,6 +57,20 @@ model WeekReview {
   @@unique([userId, weekStart])
 }
 
+/// A browser that turned on the daily reminder ("Lembrete diário"). One
+/// row per device: the endpoint identifies it, the keys encrypt the push.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 enum Status {
   ACTIVE
   COMPLETED
@@ -76,19 +90,20 @@ model FunnelEvent {
 }
 
 model User {
-  id            String      @id
-  name          String
-  email         String      @unique
-  emailVerified Boolean     @default(false)
-  image         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  isAnonymous   Boolean     @default(false)
-  lastSeenAt    DateTime    @default(now())
-  sessions      Session[]
-  accounts      Account[]
-  objectives    Objective[]
-  weekReviews   WeekReview[]
+  id                String             @id
+  name              String
+  email             String             @unique
+  emailVerified     Boolean            @default(false)
+  image             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  isAnonymous       Boolean            @default(false)
+  lastSeenAt        DateTime           @default(now())
+  sessions          Session[]
+  accounts          Account[]
+  objectives        Objective[]
+  weekReviews       WeekReview[]
+  pushSubscriptions PushSubscription[]
 
   @@index([isAnonymous, lastSeenAt])
   @@map("user")
