@@ -41,6 +41,16 @@ describe('moveGuestDataOnSignUp', () => {
     expect(await prisma.dailyTask.count({ where: { weeklyGoal: { objective: { userId: 'new-1' } } } })).toBe(2)
   })
 
+  it('keeps the weeks the guest reviewed', async () => {
+    await guestWithData('guest-r')
+    await prisma.weekReview.create({ data: { userId: 'guest-r', weekStart: new Date('2026-10-05T03:00:00Z') } })
+    await createTestUser('new-r')
+
+    await moveGuestDataOnSignUp(args('guest-r', { id: 'new-r' }, '/sign-up/email'))
+
+    expect(await prisma.weekReview.count({ where: { userId: 'new-r' } })).toBe(1)
+  })
+
   it('moves nothing when the guest signs in to an existing account', async () => {
     await guestWithData('guest-2')
     await createTestUser('existing-2')

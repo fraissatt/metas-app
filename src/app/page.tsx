@@ -4,6 +4,7 @@ import { deleteDailyTask, listDailyTasksByDate, toggleDailyTask, updateDailyTask
 import { countObjectives } from '@/lib/actions/objectives'
 import { enterAsGuest } from '@/lib/actions/guest'
 import { getDayDots, getLifetimeStats } from '@/lib/actions/stats'
+import { getWeekReviewInvite } from '@/lib/actions/weekReview'
 import {
   countPendingRecurrences,
   getMissingGoalsPreview,
@@ -20,6 +21,7 @@ import { MissingGoalsCard } from '@/components/missing-goals-card'
 import { ReturnEmptyState } from '@/components/return-empty-state'
 import { SmallStepsSection } from '@/components/small-steps-section'
 import { WeekMaterializer } from '@/components/week-materializer'
+import { WeekReviewInvite } from '@/components/week-review-invite'
 
 // The layout's title template skips pages in its own segment, so spell it out.
 // The title depends on the session: signed-out visitors see the presentation page.
@@ -47,8 +49,10 @@ export default async function Home() {
   // Next prefetches the header and bottom-bar links to "/" and a mutation here would run
   // on hover.
   const pendingRecurrences = await countPendingRecurrences()
+  const reviewInvite = await getWeekReviewInvite()
 
   const banner = stats.totalCompleted > 0 ? <LifetimeProgressBanner {...stats} /> : null
+  const invite = reviewInvite ? <WeekReviewInvite invite={reviewInvite} /> : null
   const materializer =
     pendingRecurrences > 0 ? <WeekMaterializer onMaterialize={materializePendingWeek} /> : null
 
@@ -61,6 +65,7 @@ export default async function Home() {
       <main className="mx-auto max-w-2xl p-8 lg:max-w-6xl">
         {materializer}
         {banner}
+        {invite}
         <FluidDayWeek
           tasks={tasks}
           goals={goals}
@@ -93,6 +98,7 @@ export default async function Home() {
     <main className="mx-auto max-w-2xl p-8">
       {materializer}
       {banner}
+      {invite}
       {preview ? (
         <ReturnEmptyState preview={preview} onRepeat={repeatMissingGoals} />
       ) : (
