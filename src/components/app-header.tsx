@@ -13,6 +13,14 @@ import { UserMenu } from '@/components/user-menu'
 import type { CurrentUser } from '@/lib/session'
 import type { Theme } from '@/lib/theme'
 
+/**
+ * The bar slides away while the page scrolls down, on desktop only. In the
+ * installed app's title bar (window-controls-overlay) it stays: it is the
+ * window's title bar and drag area.
+ */
+export const HIDE_WHEN = '(min-width: 768px)'
+export const HIDE_UNLESS = '(display-mode: window-controls-overlay)'
+
 export async function AppHeader({
   theme,
   onThemeChange,
@@ -31,10 +39,12 @@ export async function AppHeader({
         {user && <RefreshOnFocus />}
         <FloatingBar
           edge="top"
-          when="(min-width: 768px)"
+          when={HIDE_WHEN}
+          unless={HIDE_UNLESS}
+          data-app-bar=""
           className="border-b border-border bg-background/80 backdrop-blur md:island md:fixed md:inset-x-4 md:top-3 md:mx-auto md:max-w-6xl md:rounded-full"
         >
-          <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:px-6">
+          <div data-app-bar-inner="" className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:px-6">
             <Link href="/" className="text-base font-bold text-accent-foreground">
               Metas
             </Link>
@@ -69,7 +79,7 @@ export async function AppHeader({
         </FloatingBar>
       </header>
       {/* The fixed island takes no room: this keeps the page below it. */}
-      <div aria-hidden="true" className="hidden h-[4.5rem] md:block" />
+      <div aria-hidden="true" data-app-bar-spacer="" className="hidden h-[4.5rem] md:block" />
       {user?.isAnonymous && <GuestBanner />}
     </>
   )

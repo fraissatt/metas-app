@@ -13,6 +13,10 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'pt-BR',
     start_url: '/',
     display: 'standalone',
+    // On desktop Chrome and Edge the header takes the title bar (see the
+    // `display-mode: window-controls-overlay` block in globals.css); anywhere
+    // else this falls back to `display` above.
+    display_override: ['window-controls-overlay'],
     background_color: BROWSER_CHROME[DEFAULT_THEME],
     theme_color: BROWSER_CHROME[DEFAULT_THEME],
     icons: [

@@ -159,6 +159,49 @@
   box-shadow: var(--island-shadow);
 }
 
+/* The installed app on desktop (Chrome and Edge, `display_override` in the manifest): the
+   header moves into the title bar, flat and flush with the top, and the empty space drags the
+   window. The system keeps the right end for the extension, menu and window buttons, so the
+   bar's content stays inside `titlebar-area-*`. Unlayered on purpose: it must beat the
+   utilities that style the floating island. */
+@media (display-mode: window-controls-overlay) {
+  [data-app-bar] {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 40;
+    margin: 0;
+    max-width: none;
+    height: env(titlebar-area-height, 2.5rem);
+    padding-left: env(titlebar-area-x, 0px);
+    padding-right: calc(100% - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100%));
+    border-radius: 0;
+    border-width: 0 0 1px;
+    background: var(--background);
+    backdrop-filter: none;
+    box-shadow: none;
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  [data-app-bar-inner] {
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    padding-inline: 0.75rem;
+  }
+
+  [data-app-bar] :is(a, button, input, select, textarea, [tabindex]) {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+
+  /* Takes the place the bar used to leave in the page, at every width. */
+  [data-app-bar-spacer] {
+    display: block;
+    height: calc(env(titlebar-area-height, 2.5rem) + 0.5rem);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
