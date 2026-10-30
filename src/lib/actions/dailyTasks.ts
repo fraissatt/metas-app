@@ -1,6 +1,6 @@
 'use server'
 
-import { endOfAppDay, parseDay, startOfAppDay } from '@/lib/dates'
+import { appToday, endOfAppDay, getWeekBounds, parseDay, startOfAppDay } from '@/lib/dates'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 import { readDate, readTitle } from '@/lib/actions/validation'
@@ -32,6 +32,31 @@ export async function createDailyTask(weeklyGoalId: string, formData: FormData):
   await revalidateWeekPath(weeklyGoalId)
   // The Today view on `/` also renders daily tasks by date, so a task
   // created for today needs to appear there too.
+  revalidatePath('/')
+}
+
+/** Longest title the quick entry accepts. */
+const MAX_QUICK_TITLE = 200
+
+/**
+ * The quick entry on Hoje: a task for today in one of this week's goals. The
+ * day is decided here, in Brasília, and never taken from the client, so a
+ * phone in another time zone cannot file it under the wrong day.
+ */
+export async function createTodayTask(weeklyGoalId: string, title: string): Promise<void> {
+  const user = await requireUser()
+  const goal = await findOwnedWeeklyGoal(user.id, String(weeklyGoalId))
+  const now = new Date()
+  if (goal.weekStart.getTime() !== getWeekBounds(now).weekStart.getTime()) {
+    throw new RangeError('Esta meta não é da semana atual.')
+  }
+
+  const clean = String(title ?? '').trim()
+  if (!clean) throw new Error('"title" is required')
+  if (clean.length > MAX_QUICK_TITLE) throw new RangeError('"title" is too long')
+
+  await prisma.dailyTask.create({ data: { title: clean, date: appToday(now), weeklyGoalId: goal.id } })
+  await revalidateWeekPath(goal.id)
   revalidatePath('/')
 }
 

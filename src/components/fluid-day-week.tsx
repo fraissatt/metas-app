@@ -4,6 +4,7 @@ import { useCallback, useOptimistic, useRef, useState, useSyncExternalStore } fr
 import Link from 'next/link'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { PanelList } from '@/components/panel-list'
+import { QuickAddTask } from '@/components/quick-add-task'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
 import { Button } from '@/components/ui/button'
@@ -64,12 +65,15 @@ export function FluidDayWeek({
   onToggleTask,
   onUpdateTask,
   onDeleteTask,
+  onCreateTask,
 }: {
   tasks: DailyTasks
   goals: WeeklyGoals
   onToggleTask: (id: string) => Promise<void>
   onUpdateTask?: (id: string, formData: FormData) => Promise<void>
   onDeleteTask?: (id: string) => Promise<void>
+  /** With it, the quick entry is shown under the "Hoje" heading. */
+  onCreateTask?: (weeklyGoalId: string, title: string) => Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
   const isDesktop = useIsDesktop()
@@ -91,7 +95,13 @@ export function FluidDayWeek({
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
       <div className="lg:basis-3/5">
-        <h1 className="mb-6 text-2xl font-semibold">Hoje</h1>
+        <h1 className="mb-4 text-2xl font-semibold">Hoje</h1>
+        {onCreateTask && (
+          <QuickAddTask
+            goals={[...goalsWithTasksToday, ...otherGoals].map((goal) => ({ id: goal.id, title: goal.title }))}
+            onAdd={onCreateTask}
+          />
+        )}
         {optimisticState.tasks.length === 0 ? (
           <div className="flex flex-col items-start gap-2">
             <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>

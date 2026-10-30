@@ -1,6 +1,12 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { deleteDailyTask, listDailyTasksByDate, toggleDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
+import {
+  createTodayTask,
+  deleteDailyTask,
+  listDailyTasksByDate,
+  toggleDailyTask,
+  updateDailyTask,
+} from '@/lib/actions/dailyTasks'
 import { countObjectives } from '@/lib/actions/objectives'
 import { enterAsGuest } from '@/lib/actions/guest'
 import { getDayDots, getLifetimeStats } from '@/lib/actions/stats'
@@ -74,6 +80,7 @@ export default async function Home() {
           onToggleTask={toggleDailyTask}
           onUpdateTask={updateDailyTask}
           onDeleteTask={deleteDailyTask}
+          onCreateTask={createTodayTask}
         />
         {preview && (
           <div className="mt-6 max-w-md">

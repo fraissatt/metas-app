@@ -413,4 +413,27 @@ describe('useIsDesktop', () => {
     rerender(<IsDesktopProbe breakpointPx={1440} />)
     expect(getByText('not-desktop')).toBeInTheDocument() // 1200 < 1440
   })
+
+  it('offers the quick entry under the heading, with the goals that have tasks today first', async () => {
+    const other = { ...goal, id: 'goal-0', title: 'Alongar', dailyTasks: [] }
+    const onCreateTask = vi.fn().mockResolvedValue(undefined)
+    render(
+      <FluidDayWeek
+        tasks={[task]}
+        goals={[other, goal]}
+        onToggleTask={vi.fn()}
+        onCreateTask={onCreateTask}
+      />,
+    )
+
+    await userEvent.type(screen.getByRole('textbox', { name: 'Nova tarefa para hoje' }), 'Anotar dúvidas{Enter}')
+
+    // The goal with a task today is the default, ahead of the one listed first.
+    expect(onCreateTask).toHaveBeenCalledWith('goal-1', 'Anotar dúvidas')
+  })
+
+  it('leaves the quick entry out when no handler is given', () => {
+    render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
+    expect(screen.queryByRole('textbox', { name: 'Nova tarefa para hoje' })).toBeNull()
+  })
 })

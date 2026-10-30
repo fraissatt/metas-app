@@ -64,4 +64,16 @@ describe('root page', () => {
       vi.useRealTimers()
     }
   })
+
+  it('offers the quick entry of tasks under a planned week', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+    const objective = await prisma.objective.create({
+      data: { userId: TEST_USER_ID, title: 'Obj', startDate: new Date() },
+    })
+    await prisma.weeklyGoal.create({ data: { title: 'Meta', objectiveId: objective.id, ...getWeekBounds(new Date()) } })
+
+    render(await Home())
+
+    expect(screen.getByRole('textbox', { name: 'Nova tarefa para hoje' })).toBeInTheDocument()
+  })
 })
