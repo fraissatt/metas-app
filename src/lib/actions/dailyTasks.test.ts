@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import {
   createDailyTask,
   createDailyTasks,
+  createTodayTask,
   deleteDailyTask,
   getDailyTask,
   listDailyTasksByDate,
@@ -278,5 +279,83 @@ describe('task days are Brasília days', () => {
     expect(task.date.toISOString()).toBe('2026-10-05T03:00:00.000Z')
     expect((await listDailyTasksByDate(parseDay('2026-10-05'))).map((t) => t.id)).toEqual([task.id])
     expect(await listDailyTasksByDate(parseDay('2026-10-04'))).toEqual([])
+  })
+})
+
+describe('createTodayTask (quick entry on Hoje)', () => {
+  const MONDAY = '2026-10-26'
+
+  async function currentWeekGoal(userId = TEST_USER_ID, weekOf = MONDAY) {
+    const objective = await prisma.objective.create({ data: { userId, title: 'Obj', startDate: new Date() } })
+    return prisma.weeklyGoal.create({
+      data: { title: 'Meta', objectiveId: objective.id, ...getWeekBounds(parseDay(weekOf)) },
+    })
+  }
+
+  async function at(iso: string, run: () => Promise<void>) {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(iso))
+    try {
+      await run()
+    } finally {
+      vi.useRealTimers()
+    }
+  }
+
+  it('creates the task for today in Brasília, trimmed, and revalidates Hoje', async () => {
+    const goal = await currentWeekGoal()
+
+    // 23:30 in Brasília on Thursday is already Friday in UTC: the day is still Thursday.
+    await at('2026-10-29T23:30:00-03:00', () => createTodayTask(goal.id, '  Estudar inglês  '))
+
+    const tasks = await prisma.dailyTask.findMany()
+    expect(tasks).toHaveLength(1)
+    expect(tasks[0]).toMatchObject({ title: 'Estudar inglês', weeklyGoalId: goal.id, completed: false })
+    expect(formatDayKey(tasks[0].date)).toBe('2026-10-29')
+    expect(revalidatePath).toHaveBeenCalledWith('/')
+    expect(revalidatePath).toHaveBeenCalledWith(`/objectives/${goal.objectiveId}`)
+  })
+
+  it('rejects an empty or too long title', async () => {
+    const goal = await currentWeekGoal()
+
+    await at('2026-10-29T12:00:00-03:00', async () => {
+      await expect(createTodayTask(goal.id, '   ')).rejects.toThrow()
+      await expect(createTodayTask(goal.id, 'x'.repeat(201))).rejects.toThrow()
+    })
+    expect(await prisma.dailyTask.count()).toBe(0)
+  })
+
+  it('only accepts goals of the current week', async () => {
+    const lastWeek = await currentWeekGoal(TEST_USER_ID, '2026-10-19')
+
+    await at('2026-10-29T12:00:00-03:00', async () => {
+      await expect(createTodayTask(lastWeek.id, 'Atrasada')).rejects.toThrow()
+    })
+    expect(await prisma.dailyTask.count()).toBe(0)
+  })
+
+  it('turns the week at Monday 00:00 in Brasília, not in UTC', async () => {
+    const week = await currentWeekGoal(TEST_USER_ID, MONDAY)
+
+    // Sunday 23:59 in Brasília is Monday 02:59 UTC: still the same week.
+    await at('2026-11-01T23:59:00-03:00', () => createTodayTask(week.id, 'Ainda domingo'))
+    expect(await prisma.dailyTask.count()).toBe(1)
+
+    // Monday 00:00 in Brasília: the goal now belongs to last week.
+    await at('2026-11-02T00:00:00-03:00', async () => {
+      await expect(createTodayTask(week.id, 'Já segunda')).rejects.toThrow()
+    })
+    expect(await prisma.dailyTask.count()).toBe(1)
+  })
+
+  it("never creates a task in another user's goal", async () => {
+    await createTestUser('other')
+    const theirs = await currentWeekGoal('other')
+
+    await at('2026-10-29T12:00:00-03:00', async () => {
+      await expect(createTodayTask(theirs.id, 'Intrusa')).rejects.toThrow(NOT_FOUND)
+    })
+    expect(await prisma.dailyTask.count()).toBe(0)
   })
 })
