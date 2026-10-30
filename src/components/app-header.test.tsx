@@ -10,7 +10,7 @@ vi.mock('@/lib/actions/summary', () => ({ getTodaySummary }))
 vi.mock('@/lib/actions/search', () => ({ search: vi.fn() }))
 vi.mock('@/lib/actions/auth', () => ({ signOut: vi.fn(), leaveGuestToSignUp: vi.fn() }))
 
-const { AppHeader } = await import('@/components/app-header')
+const { AppHeader, HIDE_UNLESS, HIDE_WHEN } = await import('@/components/app-header')
 const render = (ui: ReactElement) =>
   rtlRender(
     <BackgroundProvider initial="nenhum" onChange={vi.fn()}>
@@ -84,5 +84,20 @@ describe('AppHeader', () => {
     render(await AppHeader({ ...base, user: { id: 'g', name: 'Visitante', email: 'g@x.com', isAnonymous: true } }))
     expect(within(screen.getByRole('banner')).queryByRole('status')).toBeNull()
     expect(screen.getByRole('status')).toBeInTheDocument()
+  })
+
+  it('marks the bar, its content and the spacer so the installed app can move them into the title bar', async () => {
+    const { container } = render(await AppHeader({ ...base, user: null }))
+
+    expect(container.querySelector('header [data-app-bar]')).not.toBeNull()
+    expect(container.querySelector('[data-app-bar] [data-app-bar-inner]')).not.toBeNull()
+    expect(container.querySelector('[data-app-bar-spacer]')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('never hides the bar on scroll inside the installed app title bar, and keeps hiding it elsewhere', () => {
+    // `when` is a plain query: a browser that does not know window-controls-overlay
+    // must still hide the bar on desktop, so the feature lives only in `unless`.
+    expect(HIDE_WHEN).toBe('(min-width: 768px)')
+    expect(HIDE_UNLESS).toBe('(display-mode: window-controls-overlay)')
   })
 })

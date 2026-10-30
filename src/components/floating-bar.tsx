@@ -16,12 +16,13 @@ const OUT: Record<Edge, string> = { top: '-translate-y-[130%]', bottom: 'transla
 export function FloatingBar({
   edge,
   when,
+  unless,
   className,
   children,
   ...props
-}: { edge: Edge; when?: string } & ComponentProps<'div'>) {
+}: { edge: Edge; when?: string; unless?: string } & ComponentProps<'div'>) {
   const ref = useRef<HTMLDivElement>(null)
-  const hidden = useScrollHide(ref, when)
+  const hidden = useScrollHide(ref, when, unless)
 
   return (
     <div
