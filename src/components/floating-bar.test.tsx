@@ -4,7 +4,9 @@ import type { ComponentProps } from 'react'
 import { FloatingBar } from '@/components/floating-bar'
 
 let matches = true
+let unlessMatches = false
 let scrollY = 0
+let changeHandlers: Array<() => void> = []
 
 function scrollTo(y: number) {
   scrollY = y
@@ -15,12 +17,14 @@ function scrollTo(y: number) {
 
 beforeEach(() => {
   matches = true
+  unlessMatches = false
+  changeHandlers = []
   scrollY = 0
   Object.defineProperty(window, 'scrollY', { configurable: true, get: () => scrollY })
   vi.stubGlobal('matchMedia', (query: string) => ({
-    matches,
+    matches: query === UNLESS ? unlessMatches : matches,
     media: query,
-    addEventListener() {},
+    addEventListener: (_type: string, handler: () => void) => changeHandlers.push(handler),
     removeEventListener() {},
   }))
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
@@ -34,6 +38,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
+const UNLESS = '(display-mode: window-controls-overlay)'
 const bar = () => screen.getByTestId('bar')
 
 function setup(props: Partial<ComponentProps<typeof FloatingBar>> = {}) {
@@ -167,5 +172,36 @@ describe('FloatingBar', () => {
     const { unmount } = setup()
     unmount()
     expect(remove).toHaveBeenCalledWith('scroll', expect.any(Function))
+  })
+
+  it('stays shown while the `unless` query matches (the installed app title bar), even when scrolling down', () => {
+    unlessMatches = true
+    setup({ when: '(min-width: 768px)', unless: UNLESS })
+
+    scrollTo(300)
+
+    expect(bar()).toHaveAttribute('data-hidden', 'false')
+    expect(bar()).not.toHaveAttribute('inert')
+  })
+
+  it('still hides when only `when` matches, as in a browser that knows nothing of the `unless` feature', () => {
+    unlessMatches = false
+    setup({ when: '(min-width: 768px)', unless: UNLESS })
+
+    scrollTo(300)
+
+    expect(bar()).toHaveAttribute('data-hidden', 'true')
+  })
+
+  it('comes back without another scroll when the display mode flips to the title bar', () => {
+    setup({ when: '(min-width: 768px)', unless: UNLESS })
+    scrollTo(300)
+    expect(bar()).toHaveAttribute('data-hidden', 'true')
+
+    unlessMatches = true
+    act(() => changeHandlers.forEach((handler) => handler()))
+
+    expect(bar()).toHaveAttribute('data-hidden', 'false')
+    expect(bar()).not.toHaveAttribute('inert')
   })
 })

@@ -18,8 +18,12 @@ function isPinned(element: HTMLElement | null, keyboard: boolean): boolean {
 /**
  * Whether the bar should be hidden for the current scroll. `when` is a media query:
  * outside it the bar is never hidden (it is the plain bar of another screen size).
+ * `unless` is a second query that switches hiding off while it matches. It is separate
+ * from `when` on purpose: a browser that does not know the feature in `unless` treats
+ * that query as not matching, which is the right answer, whereas the same feature
+ * inside `not (...)` in `when` would make the whole query fail there.
  */
-export function useScrollHide(ref: RefObject<HTMLElement | null>, when?: string): boolean {
+export function useScrollHide(ref: RefObject<HTMLElement | null>, when?: string, unless?: string): boolean {
   const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
@@ -34,7 +38,8 @@ export function useScrollHide(ref: RefObject<HTMLElement | null>, when?: string)
       keyboard = false
     }
 
-    const applies = () => !when || (typeof matchMedia === 'function' && matchMedia(when).matches)
+    const matching = (query: string) => typeof matchMedia === 'function' && matchMedia(query).matches
+    const applies = () => (!when || matching(when)) && !(unless && matching(unless))
 
     function update() {
       scheduled = false
@@ -50,18 +55,26 @@ export function useScrollHide(ref: RefObject<HTMLElement | null>, when?: string)
       frame = requestAnimationFrame(update)
     }
 
+    // The display mode can flip while the page is open (the installed app's title bar),
+    // so a hidden bar must come back without waiting for the next scroll.
+    const queries = [when, unless]
+      .filter((query): query is string => Boolean(query) && typeof matchMedia === 'function')
+      .map((query) => matchMedia(query))
+    queries.forEach((query) => query.addEventListener?.('change', schedule))
+
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule)
     document.addEventListener('keydown', onKey, true)
     document.addEventListener('pointerdown', onPointer, true)
     return () => {
+      queries.forEach((query) => query.removeEventListener?.('change', schedule))
       window.removeEventListener('scroll', schedule)
       window.removeEventListener('resize', schedule)
       document.removeEventListener('keydown', onKey, true)
       document.removeEventListener('pointerdown', onPointer, true)
       if (scheduled) cancelAnimationFrame(frame)
     }
-  }, [ref, when])
+  }, [ref, when, unless])
 
   return hidden
 }

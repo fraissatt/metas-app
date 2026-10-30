@@ -14,6 +14,11 @@ describe('web app manifest', () => {
     expect(m.lang).toBe('pt-BR')
   })
 
+  it('asks desktop Chrome and Edge for the window-controls overlay and keeps standalone as the fallback', () => {
+    expect(m.display_override).toEqual(['window-controls-overlay'])
+    expect(m.display).toBe('standalone')
+  })
+
   it('is named after the app', () => {
     expect(m.name).toBe('Metas')
     expect(m.short_name).toBe('Metas')
