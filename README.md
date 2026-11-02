@@ -287,6 +287,10 @@ o banco.
   de teste, rodando em UTC e no horário de Brasília.
 - **Features maiores têm spec e plano** antes do código, em [`docs/superpowers`](docs/superpowers).
 
+## Segurança
+
+Para relatar uma vulnerabilidade, use o relato privado na aba Security do GitHub. Detalhes e o que o app já faz em [SECURITY.md](SECURITY.md).
+
 ## Licença
 
 Todos os direitos reservados. O código está público apenas para consulta e avaliação; copiar, modificar ou usar exige autorização por escrito (veja [LICENSE](LICENSE)). Versões obtidas antes de 08/10/2026 foram publicadas sob a MIT e continuam sob ela.
