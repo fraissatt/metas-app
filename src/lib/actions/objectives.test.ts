@@ -33,6 +33,14 @@ describe('objective actions', () => {
     expect(all[0].status).toBe('ACTIVE')
   })
 
+  it('rejects an oversized title or description', async () => {
+    await expect(createObjective(formData({ title: 'a'.repeat(201), startDate: '2026-01-01' }))).rejects.toThrow('too long')
+    await expect(
+      createObjective(formData({ title: 'Ok', description: 'a'.repeat(2001), startDate: '2026-01-01' })),
+    ).rejects.toThrow('too long')
+    expect(await prisma.objective.count()).toBe(0)
+  })
+
   it('sets the current user as owner of the created objective', async () => {
     await createObjective(formData({ title: 'Aprender React', startDate: '2026-01-01' }))
 

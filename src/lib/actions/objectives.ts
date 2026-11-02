@@ -5,17 +5,14 @@ import { differenceInAppWeeks } from '@/lib/dates'
 import { prisma } from '@/lib/db'
 import { findOwnedObjective } from '@/lib/owned'
 import { requireUser } from '@/lib/session'
-import { readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
+import { MAX_DESCRIPTION_LENGTH, readDate, readOptionalDate, readOptionalText, readTitle } from '@/lib/actions/validation'
 import { buildObjectiveWeeks, type ObjectiveStats } from '@/lib/objectives'
 import type { Objective } from '@prisma/client'
 
 function readObjectiveFields(formData: FormData) {
-  const title = readTitle(formData)
-  const description = formData.get('description')
-
   return {
-    title,
-    description: description ? String(description) : null,
+    title: readTitle(formData),
+    description: readOptionalText(formData, 'description', MAX_DESCRIPTION_LENGTH),
     startDate: readDate(formData, 'startDate'),
     targetDate: readOptionalDate(formData, 'targetDate'),
   }

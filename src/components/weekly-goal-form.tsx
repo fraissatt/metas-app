@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/submit-button'
+import { MAX_TITLE_LENGTH } from '@/lib/limits'
 
 export function WeeklyGoalForm({
   action,
@@ -21,6 +22,7 @@ export function WeeklyGoalForm({
         <Input
           id="title"
           name="title"
+          maxLength={MAX_TITLE_LENGTH}
           required
           autoFocus={autoFocusTitle}
           autoComplete="off"

@@ -10,6 +10,7 @@ import { SubmitButton } from '@/components/submit-button'
 import { TaskToggle } from '@/components/task-toggle'
 import { appDayOfMonth, formatDayKey, formatDayMonth, getWeekDays } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { MAX_TITLE_LENGTH } from '@/lib/limits'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
@@ -64,6 +65,7 @@ export function TaskItem({
         <div className="flex gap-2">
           <Input
             name="title"
+            maxLength={MAX_TITLE_LENGTH}
             aria-label="Nome da tarefa"
             defaultValue={task.title}
             autoComplete="off"
