@@ -6,7 +6,7 @@ import {
   getObjectiveStats,
   reopenObjective,
 } from '@/lib/actions/objectives'
-import { getObjectiveProgressSeries } from '@/lib/actions/progress'
+import { getObjectivePaceInput, getObjectiveProgressSeries } from '@/lib/actions/progress'
 import { createDailyTasks, deleteDailyTask, toggleDailyTask, updateDailyTask } from '@/lib/actions/dailyTasks'
 import {
   createWeeklyGoal,
@@ -15,6 +15,7 @@ import {
   listWeeklyGoalsForWeek,
 } from '@/lib/actions/weeklyGoals'
 import { describeSchedule } from '@/lib/objectives'
+import { ObjectivePaceChart } from '@/components/objective-pace-chart'
 import { ObjectiveProgressChart } from '@/components/objective-progress-chart'
 import { ObjectiveStatsPanel } from '@/components/objective-stats'
 import { ObjectiveStatusButton } from '@/components/objective-status-button'
@@ -46,6 +47,7 @@ export default async function ObjectiveDetailPage({
 
   const { current, past } = await listObjectiveWeeks(id)
   const series = await getObjectiveProgressSeries(id)
+  const paceInput = await getObjectivePaceInput(id)
   const stats = await getObjectiveStats(id)
   const schedule = objective.completedAt
     ? describeSchedule(objective.completedAt, objective.targetDate)
@@ -71,6 +73,10 @@ export default async function ObjectiveDetailPage({
             {schedule ? ` · ${schedule}` : ''}
           </p>
         )}
+      </div>
+
+      <div className="mb-6">
+        <ObjectivePaceChart input={paceInput} />
       </div>
 
       <div className="mb-6">
