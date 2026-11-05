@@ -15,7 +15,7 @@ jobs:
     name: Lint e tipos
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -52,7 +52,7 @@ jobs:
       BETTER_AUTH_URL: http://localhost:3000
       FUNNEL_PUBLIC: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
