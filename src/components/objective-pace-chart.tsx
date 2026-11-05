@@ -83,7 +83,7 @@ export function ObjectivePaceChart({ input }: { input: ObjectivePaceInput }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h2 className="text-base font-semibold">Ritmo</h2>
         <div role="group" aria-label="Período" className="flex gap-1">
-          {[...periods, ALL].map((option) => (
+          {([...periods, ALL] as Period[]).map((option) => (
             <button
               key={option}
               type="button"
