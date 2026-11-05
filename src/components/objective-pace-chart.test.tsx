@@ -105,4 +105,12 @@ describe('ObjectivePaceChart', () => {
     expect(screen.queryByText('Projeção no ritmo atual')).not.toBeInTheDocument()
     expect(screen.getByTestId('pace-summary')).toHaveTextContent('Objetivo concluído')
   })
+
+  it('on the first day there is no projection to show', () => {
+    vi.setSystemTime(new Date('2026-08-03T09:00:00-03:00'))
+    render(<ObjectivePaceChart input={input({})} />)
+
+    expect(screen.queryByText('Projeção no ritmo atual')).not.toBeInTheDocument()
+    expect(screen.getByTestId('pace-summary')).not.toHaveTextContent('projeção no fim')
+  })
 })

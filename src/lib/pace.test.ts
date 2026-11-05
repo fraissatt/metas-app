@@ -91,7 +91,7 @@ describe('buildPaceSeries', () => {
   })
 
   it("projection starts at today's real value and uses the last 14 days' pace", () => {
-    // 10 tasks, 2 done by today (day index 9, a 10-day window): 2 tasks / 10 days = 2% a day.
+    // 10 tasks, 2 done before today (day index 9; the pace window is the 9 days before it): 2 tasks / 9 days of a 10-task plan.
     const tasks = [
       task('2026-08-03', '2026-08-04T10:00:00-03:00'),
       task('2026-08-05', '2026-08-06T10:00:00-03:00'),
@@ -102,8 +102,8 @@ describe('buildPaceSeries', () => {
 
     expect(todayPoint.real).toBe(20)
     expect(todayPoint.projection).toBe(20)
-    expect(result.points.at(-1)!.projection).toBeCloseTo(56)
-    expect(result.summary.projectedPercent).toBeCloseTo(56)
+    expect(result.points.at(-1)!.projection).toBeCloseTo(60)
+    expect(result.summary.projectedPercent).toBeCloseTo(60)
   })
 
   it('projection is capped at 100', () => {
@@ -164,9 +164,10 @@ describe('buildPaceSeries', () => {
     const early = buildPaceSeries({ ...base, tasks, today: parseDay('2026-07-01') })!
 
     expect(late.points.at(-1)!.real).toBe(50)
-    expect(late.points.every((p) => p.projection === null || p.day <= TARGET)).toBe(true)
+    expect(late.summary.projectedPercent).toBe(50) // today is the last day: nothing left to project
     expect(early.points[0].real).toBe(0)
     expect(early.summary.donePercent).toBe(0)
+    expect(early.summary.projectedPercent).toBeNull() // today is the first day: no history yet
   })
 
   it('tasks completed after the range end still count, on the last day', () => {
@@ -211,7 +212,50 @@ describe('buildPaceSeries', () => {
     })!
 
     expect(onPace.summary.tasksPerWeekToCatchUp).toBeNull()
-    expect(Number.isInteger(short.summary.tasksPerWeekToCatchUp)).toBe(true)
-    expect(short.summary.tasksPerWeekToCatchUp).toBeGreaterThan(0)
+    // Projection ends at 30%; the ideal needs 63 more points = 6.3 tasks over 18 days (2.57 weeks) → 3 a week.
+    expect(short.summary.tasksPerWeekToCatchUp).toBe(3)
+  })
+
+  it('a user who did every task through yesterday is not behind in the morning', () => {
+    // 28 tasks, one a day from 08-03; 9 done (08-03 → 08-11), today is 08-12 and its task is still open.
+    const tasks = Array.from({ length: 28 }, (_, i) => {
+      const date = parseDay('2026-08-03')
+      date.setUTCDate(date.getUTCDate() + i)
+      const key = new Date(date.getTime() - 3 * 3600_000).toISOString().slice(0, 10)
+      return i < 9 ? task(key, key + 'T10:00:00-03:00') : task(key)
+    })
+    const result = buildPaceSeries({ ...base, tasks, today: parseDay('2026-08-12') })!
+
+    expect(result.summary.gapPoints).toBe(0)
+  })
+
+  it('on the first day there is no projection and no nudge', () => {
+    const result = buildPaceSeries({
+      ...base,
+      tasks: Array.from({ length: 28 }, () => task('2026-08-03')),
+      today: START,
+    })!
+
+    expect(result.points.every((p) => p.projection === null)).toBe(true)
+    expect(result.summary.projectedPercent).toBeNull()
+    expect(result.summary.tasksPerWeekToCatchUp).toBeNull()
+  })
+
+  it('hides the weekly nudge when less than a week is left', () => {
+    const tasks = [task('2026-08-03', '2026-08-04T10:00:00-03:00'), ...Array.from({ length: 27 }, () => task('2026-08-28'))]
+    const result = buildPaceSeries({ ...base, tasks, today: parseDay('2026-08-29') })!
+
+    expect(result.summary.projectedPercent).not.toBeNull()
+    expect(result.summary.tasksPerWeekToCatchUp).toBeNull()
+  })
+
+  it('a task completed before the start counts on the first day', () => {
+    const result = buildPaceSeries({
+      ...base,
+      tasks: [task('2026-08-03', '2026-07-30T10:00:00-03:00'), task('2026-08-24')],
+      today: parseDay('2026-08-10'),
+    })!
+
+    expect(result.points[0].real).toBe(50)
   })
 })

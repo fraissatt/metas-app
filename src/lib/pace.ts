@@ -65,11 +65,14 @@ export function buildPaceSeries(input: PaceInput): { points: PacePoint[]; summar
   const completedIndex = completedAt ? dayIndex(completedAt) : null
   const lastRealIndex = completedIndex ?? todayIndex
 
-  // Pace over the recent window, as a share of the plan per day.
-  const windowDays = Math.min(PACE_WINDOW_DAYS, todayIndex + 1)
+  // Pace over the days before today, as a share of the plan per day. Today is
+  // left out: in the morning its tasks are not done yet, which would read as a
+  // slow day. With no day behind us (the first day) there is no pace to project.
+  const windowDays = Math.min(PACE_WINDOW_DAYS, todayIndex)
   let recentDone = 0
-  for (let i = todayIndex - windowDays + 1; i <= todayIndex; i += 1) recentDone += doneOn[i]
-  const pacePercentPerDay = (recentDone / windowDays / total) * 100
+  for (let i = todayIndex - windowDays; i < todayIndex; i += 1) recentDone += doneOn[i]
+  const hasPace = windowDays > 0
+  const pacePercentPerDay = hasPace ? (recentDone / windowDays / total) * 100 : 0
 
   const points: PacePoint[] = []
   let planned = 0
@@ -82,19 +85,24 @@ export function buildPaceSeries(input: PaceInput): { points: PacePoint[]; summar
     if (i === lastRealIndex) realToday = (done / total) * 100
 
     let projection: number | null = null
-    if (completedIndex === null && i >= todayIndex) {
+    if (completedIndex === null && hasPace && i >= todayIndex) {
       projection = Math.min(100, realToday + pacePercentPerDay * (i - todayIndex))
     }
     points.push({ day: addAppDays(start, i), ideal: IDEAL_GOAL * 100 * (planned / total), real, projection })
   }
 
-  const idealToday = points[Math.min(lastRealIndex, lastIndex)].ideal
-  const projectedPercent = completedIndex === null ? points[lastIndex].projection : null
+  // Compared against the ideal at the end of yesterday: today's planned tasks
+  // can't be done yet, so counting them would tell a user who is on track that
+  // they are behind every morning. A completed objective is compared at its end.
+  const idealToday =
+    completedIndex !== null ? points[completedIndex].ideal : todayIndex > 0 ? points[todayIndex - 1].ideal : 0
+  const projectedPercent = completedIndex === null && hasPace ? points[lastIndex].projection : null
   const idealEnd = IDEAL_GOAL * 100
 
   let tasksPerWeekToCatchUp: number | null = null
   const daysLeft = lastIndex - todayIndex
-  if (projectedPercent !== null && projectedPercent < idealEnd && daysLeft > 0) {
+  // Said in tasks a week, so only when there is at least a week to spread them over.
+  if (projectedPercent !== null && projectedPercent < idealEnd && daysLeft >= 7) {
     const missingTasks = ((idealEnd - projectedPercent) / 100) * total
     tasksPerWeekToCatchUp = Math.ceil(missingTasks / (daysLeft / 7))
   }

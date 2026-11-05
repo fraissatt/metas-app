@@ -64,6 +64,8 @@ export function ObjectivePaceChart({ input }: { input: ObjectivePaceInput }) {
 
   const { points: all, summary } = result
   const completed = input.completedAt !== null
+  // No projection on the first day (no pace yet) nor once the objective is done.
+  const hasProjection = summary.projectedPercent !== null
   const todayIndex = Math.min(Math.max(differenceInAppDays(appToday(), all[0].day), 0), all.length - 1)
   const shown = windowOf(all, todayIndex, period === ALL ? all.length : period)
   const periods = PERIOD_OPTIONS.filter((days) => days < all.length)
@@ -154,7 +156,7 @@ export function ObjectivePaceChart({ input }: { input: ObjectivePaceInput }) {
               activeDot={{ r: 4 }}
               isAnimationActive={false}
             />
-            {!completed && (
+            {hasProjection && (
               <Line
                 dataKey="projection"
                 stroke="var(--primary)"
@@ -183,7 +185,7 @@ export function ObjectivePaceChart({ input }: { input: ObjectivePaceInput }) {
           <span aria-hidden="true" className="inline-block w-5 border-t-2 border-primary" />
           Seu progresso
         </li>
-        {!completed && (
+        {hasProjection && (
           <li className="flex items-center gap-1.5">
             <span aria-hidden="true" className="inline-block w-5 border-t-2 border-dotted border-primary" />
             Projeção no ritmo atual
@@ -203,7 +205,7 @@ export function ObjectivePaceChart({ input }: { input: ObjectivePaceInput }) {
               <th className="font-medium">Dia</th>
               <th className="font-medium">Feito</th>
               <th className="font-medium">Ideal</th>
-              {!completed && <th className="font-medium">Projeção</th>}
+              {hasProjection && <th className="font-medium">Projeção</th>}
             </tr>
           </thead>
           <tbody>
@@ -212,7 +214,7 @@ export function ObjectivePaceChart({ input }: { input: ObjectivePaceInput }) {
                 <td>{formatDayMonth(point.day)}</td>
                 <td>{point.real === null ? '—' : `${Math.round(point.real)}%`}</td>
                 <td>{Math.round(point.ideal)}%</td>
-                {!completed && <td>{point.projection === null ? '—' : `${Math.round(point.projection)}%`}</td>}
+                {hasProjection && <td>{point.projection === null ? '—' : `${Math.round(point.projection)}%`}</td>}
               </tr>
             ))}
           </tbody>
