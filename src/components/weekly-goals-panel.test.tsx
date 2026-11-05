@@ -159,6 +159,33 @@ describe('WeeklyGoalsPanel', () => {
       expect(screen.queryByRole('button', { name: /Ver mais/ })).not.toBeInTheDocument()
     })
 
+    it('collapses back to the 3 most recent weeks with "Ver menos" and keeps the button on screen', async () => {
+      const scrollIntoView = vi.fn()
+      Element.prototype.scrollIntoView = scrollIntoView
+      const onLoadWeek = vi.fn()
+      render(<WeeklyGoalsPanel goals={[goalA]} pastWeeks={past} onLoadWeek={onLoadWeek} {...handlers} />)
+
+      const toggle = screen.getByRole('button', { name: 'Ver mais 2 semanas' })
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      await userEvent.click(toggle)
+      expect(toggle).toHaveAccessibleName('Ver menos')
+      expect(toggle).toHaveAttribute('aria-expanded', 'true')
+      expect(scrollIntoView).not.toHaveBeenCalled()
+
+      await userEvent.click(toggle)
+      expect(toggle).toHaveAccessibleName('Ver mais 2 semanas')
+      expect(toggle).toHaveAttribute('aria-expanded', 'false')
+      expect(toggle).toHaveFocus()
+      expect(screen.queryByRole('button', { name: /Semana de 07\/09/ })).not.toBeInTheDocument()
+      expect(scrollIntoView.mock.contexts[0]).toBe(toggle)
+      expect(onLoadWeek).not.toHaveBeenCalled()
+    })
+
+    it('shows no toggle when all the earlier weeks already fit', () => {
+      render(<WeeklyGoalsPanel goals={[goalA]} pastWeeks={past.slice(0, 3)} onLoadWeek={vi.fn()} {...handlers} />)
+      expect(screen.queryByRole('button', { name: /Ver (mais|menos)/ })).not.toBeInTheDocument()
+    })
+
     it("loads a week's goals only when its row is opened, and collapses it again", async () => {
       const onLoadWeek = vi.fn().mockResolvedValue([{ ...goalB, title: 'Meta antiga' }])
       render(<WeeklyGoalsPanel goals={[goalA]} pastWeeks={past} onLoadWeek={onLoadWeek} {...handlers} />)
