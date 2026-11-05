@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { readCheckbox, readDate, readOptionalDate, readTitle } from '@/lib/actions/validation'
+import {
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TITLE_LENGTH,
+  readCheckbox,
+  readDate,
+  readOptionalDate,
+  readOptionalText,
+  readTitle,
+} from '@/lib/actions/validation'
 import { formatDayKey } from '@/lib/dates'
 
 function formData(fields: Record<string, string>) {
@@ -19,6 +27,28 @@ describe('readTitle', () => {
 
   it('throws when the title is empty after trimming', () => {
     expect(() => readTitle(formData({ title: '   ' }))).toThrow()
+  })
+
+  it('accepts a title at the limit and rejects one over it', () => {
+    expect(readTitle(formData({ title: 'a'.repeat(MAX_TITLE_LENGTH) }))).toHaveLength(MAX_TITLE_LENGTH)
+    expect(() => readTitle(formData({ title: 'a'.repeat(MAX_TITLE_LENGTH + 1) }))).toThrow('too long')
+  })
+})
+
+describe('readOptionalText', () => {
+  it('returns null when absent or blank', () => {
+    expect(readOptionalText(new FormData(), 'description', 10)).toBeNull()
+    expect(readOptionalText(formData({ description: '   ' }), 'description', 10)).toBeNull()
+  })
+
+  it('returns the text as typed when within the limit', () => {
+    expect(readOptionalText(formData({ description: 'Por saúde' }), 'description', MAX_DESCRIPTION_LENGTH)).toBe('Por saúde')
+  })
+
+  it('throws when over the limit', () => {
+    expect(() =>
+      readOptionalText(formData({ description: 'a'.repeat(MAX_DESCRIPTION_LENGTH + 1) }), 'description', MAX_DESCRIPTION_LENGTH),
+    ).toThrow('too long')
   })
 })
 

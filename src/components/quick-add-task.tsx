@@ -3,6 +3,7 @@
 import { useRef, useState, useSyncExternalStore, useTransition } from 'react'
 import { ArrowUp, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { MAX_TITLE_LENGTH } from '@/lib/limits'
 
 export type QuickAddGoal = { id: string; title: string }
 
@@ -118,7 +119,7 @@ export function QuickAddTask({
           placeholder="O que você vai fazer hoje?"
           autoComplete="off"
           enterKeyHint="send"
-          maxLength={200}
+          maxLength={MAX_TITLE_LENGTH}
           onKeyDown={(event) => {
             // Enter that confirms an IME composition must not submit the task.
             if (event.key === 'Enter' && event.nativeEvent.isComposing) event.preventDefault()

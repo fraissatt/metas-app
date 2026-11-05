@@ -1,12 +1,4 @@
-function Tile({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <p className="text-xl md:text-2xl font-bold tabular-nums text-accent-foreground">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
-    </div>
-  )
-}
-
+/** The three totals as one quiet sentence. */
 export function ObjectivesOverview({
   activeCount,
   weeksFulfilled,
@@ -17,10 +9,15 @@ export function ObjectivesOverview({
   recentRate: number | null
 }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
-      <Tile value={String(activeCount)} label="objetivos ativos" />
-      <Tile value={String(weeksFulfilled)} label="semanas cumpridas" />
-      <Tile value={recentRate === null ? '—' : `${recentRate}%`} label="conclusão média (8 sem.)" />
-    </div>
+    <p className="text-sm text-muted-foreground">
+      <strong className="font-semibold tabular-nums text-foreground">{activeCount}</strong>{' '}
+      {activeCount === 1 ? 'ativo' : 'ativos'} ·{' '}
+      <strong className="font-semibold tabular-nums text-foreground">{weeksFulfilled}</strong>{' '}
+      {weeksFulfilled === 1 ? 'semana cumprida' : 'semanas cumpridas'} ·{' '}
+      <strong className="font-semibold tabular-nums text-foreground">
+        {recentRate === null ? '—' : `${recentRate}%`}
+      </strong>{' '}
+      de média em 8 sem.
+    </p>
   )
 }

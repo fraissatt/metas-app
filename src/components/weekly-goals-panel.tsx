@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { AddWeeklyGoalCard } from '@/components/add-weekly-goal-card'
 import { PastWeekRow } from '@/components/past-week-row'
 import { WeeklyGoalCard } from '@/components/weekly-goal-card'
@@ -36,7 +37,18 @@ export function WeeklyGoalsPanel({
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showAllPast, setShowAllPast] = useState(false)
   const visiblePast = showAllPast ? pastWeeks : pastWeeks.slice(0, RECENT_PAST_WEEKS)
-  const hiddenCount = pastWeeks.length - visiblePast.length
+  const extraCount = pastWeeks.length - RECENT_PAST_WEEKS
+  const togglePastRef = useRef<HTMLButtonElement>(null)
+
+  function togglePast() {
+    if (!showAllPast) {
+      setShowAllPast(true)
+      return
+    }
+    // The list shrinks above the button: commit that first, then keep the button on screen.
+    flushSync(() => setShowAllPast(false))
+    togglePastRef.current?.scrollIntoView({ block: 'nearest' })
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -70,13 +82,15 @@ export function WeeklyGoalsPanel({
               handlers={{ onCreateTasks, onDeleteWeeklyGoal, onToggleTask, onUpdateTask, onDeleteTask }}
             />
           ))}
-          {hiddenCount > 0 && (
+          {extraCount > 0 && (
             <button
+              ref={togglePastRef}
               type="button"
-              onClick={() => setShowAllPast(true)}
+              aria-expanded={showAllPast}
+              onClick={togglePast}
               className="rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Ver mais {hiddenCount} {hiddenCount === 1 ? 'semana' : 'semanas'}
+              {showAllPast ? 'Ver menos' : `Ver mais ${extraCount} ${extraCount === 1 ? 'semana' : 'semanas'}`}
             </button>
           )}
         </section>

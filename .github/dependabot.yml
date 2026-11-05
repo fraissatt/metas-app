@@ -1,0 +1,30 @@
+# Weekly dependency updates, opened against develop like any other change
+# (master only ever receives develop through a reviewed PR).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    open-pull-requests-limit: 5
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      # One PR for all minor and patch bumps instead of one per package.
+      minor-e-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: America/Sao_Paulo
+    labels: [dependencies]
+    commit-message:
+      prefix: chore(ci)
