@@ -211,6 +211,21 @@ describe('createDailyTasks (recurring)', () => {
     expect(await prisma.dailyTask.findMany()).toHaveLength(0)
   })
 
+  it('creates one task per day when the same day is sent twice', async () => {
+    const goal = await makeWeeklyGoal()
+
+    await createDailyTasks(goal.id, multiFormData('Alongamento', ['2026-07-28', '2026-07-28']))
+    expect(await prisma.dailyTask.count()).toBe(1)
+  })
+
+  it('rejects more days than a week has', async () => {
+    const goal = await makeWeeklyGoal()
+    const days = Array.from({ length: 8 }, (_, i) => `2026-07-${String(20 + i).padStart(2, '0')}`)
+
+    await expect(createDailyTasks(goal.id, multiFormData('Alongamento', days))).rejects.toThrow('too many')
+    expect(await prisma.dailyTask.count()).toBe(0)
+  })
+
   it('rejects an empty title', async () => {
     const goal = await makeWeeklyGoal()
 

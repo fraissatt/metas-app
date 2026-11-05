@@ -12,6 +12,7 @@ import { SubmitButton } from '@/components/submit-button'
 import { TaskItem } from '@/components/task-item'
 import { appDayOfMonth, appToday, formatDayKey, getWeekDays, isSameAppDay } from '@/lib/dates'
 import type { WeeklyGoalWithTasks } from '@/lib/actions/weeklyGoals'
+import { MAX_TITLE_LENGTH } from '@/lib/limits'
 
 const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
@@ -128,7 +129,7 @@ function NewTaskForm({
 
   return (
     <form action={onCreate} className="flex flex-col gap-2 border-t border-border pt-3">
-      <Input name="title" aria-label="Nova tarefa" placeholder="Nova tarefa…" autoComplete="off" required autoFocus />
+      <Input name="title" maxLength={MAX_TITLE_LENGTH} aria-label="Nova tarefa" placeholder="Nova tarefa…" autoComplete="off" required autoFocus />
       <div className="flex gap-1.5">
         {days.map((day, index) => {
           const iso = formatDayKey(day)

@@ -3,7 +3,7 @@
 import { appToday, endOfAppDay, getWeekBounds, parseDay, startOfAppDay } from '@/lib/dates'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
-import { readDate, readTitle } from '@/lib/actions/validation'
+import { MAX_TITLE_LENGTH, readDate, readTitle } from '@/lib/actions/validation'
 import { findOwnedDailyTask, findOwnedWeeklyGoal } from '@/lib/owned'
 import { requireUser } from '@/lib/session'
 import type { DailyTask, Objective, WeeklyGoal } from '@prisma/client'
@@ -35,8 +35,6 @@ export async function createDailyTask(weeklyGoalId: string, formData: FormData):
   revalidatePath('/')
 }
 
-/** Longest title the quick entry accepts. */
-const MAX_QUICK_TITLE = 200
 
 /**
  * The quick entry on Hoje: a task for today in one of this week's goals. The
@@ -53,20 +51,28 @@ export async function createTodayTask(weeklyGoalId: string, title: string): Prom
 
   const clean = String(title ?? '').trim()
   if (!clean) throw new Error('"title" is required')
-  if (clean.length > MAX_QUICK_TITLE) throw new RangeError('"title" is too long')
+  if (clean.length > MAX_TITLE_LENGTH) throw new RangeError('"title" is too long')
 
   await prisma.dailyTask.create({ data: { title: clean, date: appToday(now), weeklyGoalId: goal.id } })
   await revalidateWeekPath(goal.id)
   revalidatePath('/')
 }
 
+/** The day picker offers one week. */
+const MAX_DATES_PER_BATCH = 7
+
 export async function createDailyTasks(weeklyGoalId: string, formData: FormData): Promise<void> {
   const user = await requireUser()
   await findOwnedWeeklyGoal(user.id, weeklyGoalId)
   const title = readTitle(formData)
-  const rawDates = formData.getAll('dates').map(String)
+  // Repeated days collapse to one; a week has seven, so more than that can
+  // only come from a crafted request.
+  const rawDates = [...new Set(formData.getAll('dates').map(String))]
   if (rawDates.length === 0) {
     throw new Error('Selecione ao menos um dia')
+  }
+  if (rawDates.length > MAX_DATES_PER_BATCH) {
+    throw new RangeError('"dates" has too many days')
   }
 
   const dates = rawDates.map((raw) => {

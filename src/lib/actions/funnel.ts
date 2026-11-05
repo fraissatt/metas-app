@@ -27,6 +27,9 @@ export type FunnelStage = {
 }
 
 const MAX_VALUE_LENGTH = 100
+// A full pass is about 15 events, going back and forth maybe 40. This action
+// needs no sign-in, so the cap keeps one session id from filling the table.
+const MAX_EVENTS_PER_SESSION = 60
 const RECENT_LIMIT = 10
 
 const EVENT_TYPES: readonly string[] = [
@@ -76,6 +79,7 @@ export async function trackFunnelEvent(event: FunnelEventInput): Promise<void> {
     if (step !== undefined && !isStepId(step)) return
     if (value !== undefined && typeof value !== 'string') return
     if (type === 'step_answered' && step && value !== undefined && !isValidAnswer(step, value)) return
+    if ((await prisma.funnelEvent.count({ where: { sessionId } })) >= MAX_EVENTS_PER_SESSION) return
 
     await prisma.funnelEvent.create({
       data: {

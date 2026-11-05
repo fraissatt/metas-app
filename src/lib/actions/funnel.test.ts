@@ -5,6 +5,17 @@ import { getFunnelStats, trackFunnelEvent } from '@/lib/actions/funnel'
 const SID = 'session-0001'
 
 describe('trackFunnelEvent', () => {
+  it('stops storing events for one session after 60, since anyone can call it', async () => {
+    await prisma.funnelEvent.createMany({
+      data: Array.from({ length: 60 }, () => ({ sessionId: SID, type: 'step_viewed', step: 'area' })),
+    })
+    await trackFunnelEvent({ sessionId: SID, type: 'quiz_started' })
+    expect(await prisma.funnelEvent.count({ where: { sessionId: SID } })).toBe(60)
+
+    await trackFunnelEvent({ sessionId: `${SID}-2`, type: 'quiz_started' })
+    expect(await prisma.funnelEvent.count({ where: { sessionId: `${SID}-2` } })).toBe(1)
+  })
+
   it('stores a valid step_viewed event', async () => {
     await trackFunnelEvent({ sessionId: SID, type: 'step_viewed', step: 'area' })
     const rows = await prisma.funnelEvent.findMany()

@@ -3,6 +3,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SubmitButton } from '@/components/submit-button'
+import { MAX_DESCRIPTION_LENGTH, MAX_TITLE_LENGTH } from '@/lib/limits'
 
 export function ObjectiveForm({
   action,
@@ -23,6 +24,7 @@ export function ObjectiveForm({
         <Input
           id="title"
           name="title"
+          maxLength={MAX_TITLE_LENGTH}
           required
           autoComplete="off"
           placeholder="Ex.: Correr uma meia maratona…"
@@ -34,6 +36,7 @@ export function ObjectiveForm({
         <Input
           id="description"
           name="description"
+          maxLength={MAX_DESCRIPTION_LENGTH}
           autoComplete="off"
           placeholder="Por que isso importa para você…"
           defaultValue={defaultValues?.description ?? ''}
