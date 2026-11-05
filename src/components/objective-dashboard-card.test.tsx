@@ -21,7 +21,6 @@ function weeks(currentHasGoal: boolean): DashboardWeek[] {
 const base = {
   id: 'o1',
   title: 'Correr uma maratona',
-  startDate: parseDay('2026-06-01'),
   onDelete: vi.fn(),
 }
 
@@ -40,9 +39,9 @@ describe('ObjectiveDashboardCard', () => {
     expect(screen.getByRole('link', { name: 'Correr uma maratona' })).toHaveClass('line-clamp-2')
     expect(screen.getByText('3 semanas seguidas cumpridas')).toBeInTheDocument()
     expect(screen.getByText('75%')).toBeInTheDocument()
-    expect(screen.getByText('média das últimas 8 semanas')).toBeInTheDocument()
-    expect(screen.getByText('início 01/06 · 62% do prazo · meta 15/11')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '+ Meta da semana' })).toHaveAttribute('href', '/objectives/o1?nova-meta=1#nova-meta')
+    expect(screen.getByText('8 sem.')).toBeInTheDocument()
+    expect(screen.getByText('62% do prazo · meta 15/11')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '+ Meta' })).toHaveAttribute('href', '/objectives/o1?nova-meta=1#nova-meta')
     expect(screen.getByRole('button', { name: 'Ações de Correr uma maratona' })).toBeInTheDocument()
   })
 
@@ -60,7 +59,7 @@ describe('ObjectiveDashboardCard', () => {
     render(<ObjectiveDashboardCard {...base} weeks={weeks(false)} streak={0} timeline={{ kind: 'open', weeksActive: 5 }} />)
 
     expect(screen.getByText('sem meta nesta semana')).toBeInTheDocument()
-    expect(screen.getByText('início 01/06 · ativo há 5 semanas · sem data-meta')).toBeInTheDocument()
+    expect(screen.getByText('ativo há 5 semanas · sem data-meta')).toBeInTheDocument()
   })
 
   it('shows no chip when there is a goal this week but no streak, and marks an overdue target', () => {
@@ -82,6 +81,6 @@ describe('ObjectiveDashboardCard', () => {
     const empty = weeks(false).map((w) => ({ ...w, completed: 0, total: 0, percent: 0, hasGoal: false }))
     render(<ObjectiveDashboardCard {...base} weeks={empty} streak={0} timeline={{ kind: 'open', weeksActive: 1 }} />)
     expect(screen.getByText('—')).toBeInTheDocument()
-    expect(screen.getByText('início 01/06 · ativo há 1 semana · sem data-meta')).toBeInTheDocument()
+    expect(screen.getByText('ativo há 1 semana · sem data-meta')).toBeInTheDocument()
   })
 })

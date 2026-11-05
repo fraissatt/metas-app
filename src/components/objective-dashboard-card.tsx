@@ -30,42 +30,22 @@ function Chip({ streak, currentHasGoal }: { streak: number; currentHasGoal: bool
   return null
 }
 
-function TimelineRow({ startDate, timeline }: { startDate: Date; timeline: Timeline }) {
-  const start = formatDayMonth(startDate)
+/** The deadline as one line of text: the list stays quiet, the detail lives on the objective's page. */
+function TimelineText({ timeline }: { timeline: Timeline }) {
   if (timeline.kind === 'open') {
-    return (
-      <p className="text-xs text-muted-foreground">
-        {`início ${start} · ativo há ${pluralWeeks(timeline.weeksActive)} · sem data-meta`}
-      </p>
-    )
+    return <>{`ativo há ${pluralWeeks(timeline.weeksActive)} · sem data-meta`}</>
   }
-  const head = `início ${start} · ${timeline.elapsedPercent}% do prazo · `
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="h-1.5 rounded-full bg-muted">
-        <div
-          className="h-full rounded-full bg-linear-to-r from-support to-primary"
-          style={{ width: `${timeline.elapsedPercent}%` }}
-        />
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {timeline.overdue ? (
-          <>
-            {head}
-            <span className="text-destructive">prazo encerrado</span>
-          </>
-        ) : (
-          `${head}meta ${formatDayMonth(timeline.targetDate)}`
-        )}
-      </p>
-    </div>
-  )
+  if (timeline.overdue) return <span className="text-destructive">prazo encerrado</span>
+  return <>{`${timeline.elapsedPercent}% do prazo · meta ${formatDayMonth(timeline.targetDate)}`}</>
 }
 
+/**
+ * One objective as a row. It draws no frame of its own: the page puts the rows
+ * in a `PanelList`, which supplies the border and the hairlines between them.
+ */
 export function ObjectiveDashboardCard({
   id,
   title,
-  startDate,
   weeks,
   streak,
   timeline,
@@ -73,7 +53,6 @@ export function ObjectiveDashboardCard({
 }: {
   id: string
   title: string
-  startDate: Date
   weeks: DashboardWeek[]
   streak: number
   timeline: Timeline
@@ -83,7 +62,7 @@ export function ObjectiveDashboardCard({
   const currentHasGoal = weeks.find((w) => w.current)?.hasGoal ?? false
 
   return (
-    <div className="card-roomy group/card rounded-lg border border-border bg-card p-4 flex flex-col gap-3 motion-safe:transition-[border-color,box-shadow] hover:border-primary/40 hover:shadow-[0_0_16px_var(--glow)] focus-within:border-primary/40 focus-within:shadow-[0_0_16px_var(--glow)]">
+    <div className="card-roomy flex flex-col gap-3 p-4">
       <div className="flex items-start gap-2">
         <h3 className="min-w-0 flex-1">
           <Link href={`/objectives/${id}`} className="block font-semibold line-clamp-2 break-words">
@@ -96,20 +75,21 @@ export function ObjectiveDashboardCard({
 
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-3xl font-bold tabular-nums text-accent-foreground">{rate === null ? '—' : `${rate}%`}</p>
-          <p className="text-xs text-muted-foreground">média das últimas 8 semanas</p>
+          <p className="text-2xl font-bold tabular-nums text-accent-foreground">{rate === null ? '—' : `${rate}%`}</p>
+          <p className="text-xs text-muted-foreground">8 sem.</p>
         </div>
-        <WeeklyBars weeks={weeks} className="w-[55%]" />
+        <WeeklyBars weeks={weeks} className="w-1/2" />
       </div>
 
-      <TimelineRow startDate={startDate} timeline={timeline} />
-
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <p className="text-xs text-muted-foreground">
+          <TimelineText timeline={timeline} />
+        </p>
         <Link
           href={`/objectives/${id}?nova-meta=1#nova-meta`}
           className={buttonVariants({ variant: 'secondary', size: 'sm' })}
         >
-          + Meta da semana
+          + Meta
         </Link>
       </div>
     </div>
