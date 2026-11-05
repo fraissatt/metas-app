@@ -25,3 +25,36 @@ export async function getObjectiveProgressSeries(
     percent: week.total === 0 ? 0 : Math.round((week.completed / week.total) * 100),
   }))
 }
+
+export type ObjectivePaceInput = {
+  tasks: Array<{ date: string; completed: boolean; completedAt: string | null }>
+  startDate: string
+  targetDate: string | null
+  completedAt: string | null
+}
+
+/**
+ * Everything the pace chart needs about one objective. Dates travel as ISO
+ * strings because the chart is a client component and `Date` does not survive
+ * the server/client boundary as a `Date`.
+ */
+export async function getObjectivePaceInput(objectiveId: string): Promise<ObjectivePaceInput> {
+  const user = await requireUser()
+  const objective = await findOwnedObjective(user.id, objectiveId)
+  const tasks = await prisma.dailyTask.findMany({
+    where: { weeklyGoal: { objectiveId } },
+    select: { date: true, completed: true, completedAt: true },
+    orderBy: { date: 'asc' },
+  })
+
+  return {
+    tasks: tasks.map((task) => ({
+      date: task.date.toISOString(),
+      completed: task.completed,
+      completedAt: task.completedAt?.toISOString() ?? null,
+    })),
+    startDate: objective.startDate.toISOString(),
+    targetDate: objective.targetDate?.toISOString() ?? null,
+    completedAt: objective.completedAt?.toISOString() ?? null,
+  }
+}

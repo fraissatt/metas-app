@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { prisma } from '@/lib/db'
-import { getObjectiveProgressSeries } from '@/lib/actions/progress'
+import { getObjectivePaceInput, getObjectiveProgressSeries } from '@/lib/actions/progress'
 import { getWeekBounds, parseDay } from '@/lib/dates'
 import { NOT_FOUND } from '@/lib/owned'
 import { TEST_USER_ID, createTestUser } from '@/test/session-mock'
@@ -86,5 +86,47 @@ describe('getObjectiveProgressSeries isolation', () => {
       data: { title: 'Tarefa Alheio', weeklyGoalId: foreignGoal.id, date: new Date(), completed: true, completedAt: new Date() },
     })
     await expect(getObjectiveProgressSeries(foreignObjective.id)).rejects.toThrow(NOT_FOUND)
+  })
+})
+
+describe('getObjectivePaceInput', () => {
+  it('returns every task of the objective across its weeks, with dates as ISO strings', async () => {
+    const targetDate = parseDay('2026-08-30')
+    const objective = await prisma.objective.create({
+      data: { userId: TEST_USER_ID, title: 'Obj', startDate: parseDay('2026-08-03'), targetDate },
+    })
+    const week1 = getWeekBounds(parseDay('2026-08-03'))
+    const week2 = getWeekBounds(parseDay('2026-08-10'))
+    const goal1 = await prisma.weeklyGoal.create({ data: { title: 'W1', objectiveId: objective.id, ...week1 } })
+    const goal2 = await prisma.weeklyGoal.create({ data: { title: 'W2', objectiveId: objective.id, ...week2 } })
+    const completedAt = new Date('2026-08-04T12:00:00-03:00')
+    await prisma.dailyTask.createMany({
+      data: [
+        { title: 'a', weeklyGoalId: goal1.id, date: week1.weekStart, completed: true, completedAt },
+        { title: 'b', weeklyGoalId: goal2.id, date: week2.weekStart, completed: false },
+      ],
+    })
+
+    const input = await getObjectivePaceInput(objective.id)
+
+    expect(input.startDate).toBe(parseDay('2026-08-03').toISOString())
+    expect(input.targetDate).toBe(targetDate.toISOString())
+    expect(input.completedAt).toBeNull()
+    expect(input.tasks).toHaveLength(2)
+    expect(input.tasks).toContainEqual({
+      date: week1.weekStart.toISOString(),
+      completed: true,
+      completedAt: completedAt.toISOString(),
+    })
+    expect(input.tasks).toContainEqual({ date: week2.weekStart.toISOString(), completed: false, completedAt: null })
+  })
+
+  it("rejects another user's objective", async () => {
+    await createTestUser('other-pace')
+    const foreign = await prisma.objective.create({
+      data: { userId: 'other-pace', title: 'Alheio', startDate: new Date() },
+    })
+
+    await expect(getObjectivePaceInput(foreign.id)).rejects.toThrow(NOT_FOUND)
   })
 })
