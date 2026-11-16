@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TourProvider, useTour } from '@/components/tour-provider'
 
@@ -118,7 +118,10 @@ describe('useTour', () => {
       </TourProvider>,
     )
     const opener = screen.getByRole('button', { name: 'Ver tour' })
-    await userEvent.click(opener)
+    // Focus sits elsewhere when the tour opens (Safari does not focus a clicked
+    // button), so only the explicit opener can bring it back.
+    screen.getByRole('button', { name: 'Outro' }).focus()
+    fireEvent.click(opener)
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Pular' }))

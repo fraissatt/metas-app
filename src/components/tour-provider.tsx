@@ -38,6 +38,8 @@ export function TourProvider({
   const [run, setRun] = useState(0)
   // Who opened the tour by hand. The dialog has no trigger of its own, so
   // without this the focus would be lost in the page when it closes.
+  // Passed on every render: the dialog reads it after it has closed, when
+  // `manualOpen` is already false. Empty (the automatic tour) means the default.
   const returnFocus = useRef<HTMLElement | null>(null)
 
   const autoOpen = canOpen && !seen && !NO_AUTO_OPEN.includes(pathname)
@@ -66,7 +68,7 @@ export function TourProvider({
         key={run}
         open={autoOpen || manualOpen}
         onOpenChange={handleOpenChange}
-        finalFocus={manualOpen ? returnFocus : undefined}
+        finalFocus={returnFocus}
       />
     </TourContext>
   )
