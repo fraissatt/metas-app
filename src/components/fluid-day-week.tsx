@@ -2,12 +2,13 @@
 
 import { useCallback, useOptimistic, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { CalendarCheck, ChevronDown, ChevronUp, Flag } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
 import { PanelList } from '@/components/panel-list'
 import { QuickAddTask } from '@/components/quick-add-task'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { groupTasksByWeeklyGoal } from '@/lib/tasks'
 import type { listDailyTasksByDate } from '@/lib/actions/dailyTasks'
@@ -103,12 +104,19 @@ export function FluidDayWeek({
           />
         )}
         {optimisticState.tasks.length === 0 ? (
-          <div className="flex flex-col items-start gap-2">
-            <p className="text-muted-foreground">Nenhuma tarefa para hoje.</p>
-            <Link href="/objectives" className="text-sm font-medium text-accent-foreground hover:underline">
-              + Adicionar tarefa a uma meta
-            </Link>
-          </div>
+          <EmptyState
+            icon={CalendarCheck}
+            title="Nenhuma tarefa para hoje"
+            action={
+              <Link href="/objectives" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+                Adicionar tarefa a uma meta
+              </Link>
+            }
+          >
+            {onCreateTask && optimisticState.goals.length > 0
+              ? 'Escreva no campo acima o que você vai fazer hoje, ou planeje a semana pela meta.'
+              : 'As tarefas do dia nascem de uma meta semanal. Escolha um objetivo e planeje a semana.'}
+          </EmptyState>
         ) : (
           <PanelList>
             {todayGroups.map((group) => (
@@ -149,7 +157,17 @@ export function FluidDayWeek({
           <div className="overflow-hidden" inert={!effectiveExpanded}>
             <h2 className="mb-6 text-2xl font-semibold">Progresso da semana</h2>
             {optimisticState.goals.length === 0 ? (
-              <p className="text-muted-foreground">Nenhuma meta semanal para esta semana.</p>
+              <EmptyState
+                icon={Flag}
+                title="Nenhuma meta nesta semana"
+                action={
+                  <Link href="/objectives" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+                    Criar meta semanal
+                  </Link>
+                }
+              >
+                Uma meta semanal é o pedaço do objetivo que cabe nestes sete dias.
+              </EmptyState>
             ) : (
               <div className="flex flex-col gap-4">
                 <PanelList>

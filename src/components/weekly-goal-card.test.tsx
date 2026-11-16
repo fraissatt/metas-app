@@ -299,8 +299,8 @@ describe('WeeklyGoalCard', () => {
       <WeeklyGoalCard goal={goal} expanded onToggleExpand={vi.fn()} onCreateTasks={vi.fn()} onDelete={vi.fn()} onToggleTask={vi.fn()} onUpdateTask={vi.fn()} onDeleteTask={vi.fn()} />,
     )
 
-    expect(screen.getAllByText(/nesta semana/i)).toHaveLength(1)
-    expect(screen.getByText('Sem tarefas nesta semana ainda.')).toBeInTheDocument()
+    expect(screen.getAllByText(/ainda não tem tarefas/i)).toHaveLength(1)
+    expect(screen.getByText('Esta meta ainda não tem tarefas')).toBeInTheDocument()
   })
 
   it('links Editar to the dedicated edit page', () => {

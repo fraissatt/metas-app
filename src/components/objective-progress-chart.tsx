@@ -1,10 +1,16 @@
 'use client'
 
+import { BarChart3 } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 export function ObjectiveProgressChart({ data }: { data: Array<{ weekLabel: string; percent: number }> }) {
   if (data.length === 0) {
-    return <p className="text-sm text-muted-foreground">Sem metas semanais ainda para gerar o gráfico.</p>
+    return (
+      <EmptyState icon={BarChart3} title="Ainda sem semanas para mostrar" compact>
+        Cada meta semanal vira uma barra aqui, com a parte das tarefas que você concluiu.
+      </EmptyState>
+    )
   }
 
   return (
