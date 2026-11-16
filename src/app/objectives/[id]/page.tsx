@@ -60,6 +60,7 @@ export default async function ObjectiveDetailPage({
         <h1 className="min-w-0 text-2xl font-semibold break-words">{objective.title}</h1>
         <ObjectiveStatusButton
           status={objective.status}
+          title={objective.title}
           onComplete={completeObjective.bind(null, id)}
           onReopen={reopenObjective.bind(null, id)}
         />

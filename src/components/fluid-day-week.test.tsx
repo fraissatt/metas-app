@@ -436,4 +436,19 @@ describe('useIsDesktop', () => {
     render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
     expect(screen.queryByRole('textbox', { name: 'Nova tarefa para hoje' })).toBeNull()
   })
+
+  it('says a quiet word when the tick closes the week, and stays quiet otherwise', async () => {
+    const onToggleTask = vi.fn().mockResolvedValue(undefined)
+    const open = { ...goal, dailyTasks: [task, task2] }
+    render(<FluidDayWeek tasks={[task, task2]} goals={[open]} onToggleTask={onToggleTask} />)
+    expect(screen.getByRole('status', { name: '' })).toBeEmptyDOMElement()
+
+    // Unticking the done task closes nothing.
+    await userEvent.click(screen.getByRole('checkbox', { name: /Reler/ }))
+    expect(screen.queryByText('Semana fechada')).toBeNull()
+
+    // Ticking the open one closes the only goal of the week.
+    await userEvent.click(screen.getByRole('checkbox', { name: /Revisar App Router/ }))
+    expect(await screen.findByText('Semana fechada')).toBeInTheDocument()
+  })
 })

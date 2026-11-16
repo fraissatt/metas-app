@@ -522,3 +522,26 @@
     opacity: 0.6;
   }
 }
+
+/* A quiet word when a goal, a week or an objective is closed (MomentToast):
+   it rises a little and fades in. No glow. Reduced motion: it just appears. */
+@keyframes moment-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.moment-toast {
+  animation: moment-in 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moment-toast {
+    animation: none;
+  }
+}
