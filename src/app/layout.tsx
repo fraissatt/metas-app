@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AppHeader } from "@/components/app-header";
 import { BackgroundProvider } from "@/components/background-provider";
 import { BottomNav } from "@/components/bottom-nav";
+import { NavigationProgress } from "@/components/navigation-progress";
 import { TourProvider } from "@/components/tour-provider";
 import { setBackground } from "@/lib/actions/background";
 import { setTheme } from "@/lib/actions/theme";
@@ -58,6 +59,7 @@ export default async function RootLayout({
       className={`${theme === "dark" ? "dark " : ""}${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        <NavigationProgress />
         <a
           href="#conteudo"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-md focus:bg-primary focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
