@@ -72,7 +72,9 @@ export function WeekGoalProgressCard({
               />
             </svg>
             {/* A goal with no tasks yet has no percentage: "0%" would read as a failure. */}
-            <span className="absolute text-[10px] font-semibold tabular-nums">{total === 0 ? '–' : `${percent}%`}</span>
+            <span aria-hidden={total === 0 || undefined} className="absolute text-[10px] font-semibold tabular-nums">
+              {total === 0 ? '–' : `${percent}%`}
+            </span>
           </div>
 
           <div className="flex h-6 flex-1 items-end gap-1">

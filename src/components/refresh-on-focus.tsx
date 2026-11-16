@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { msUntilNextAppDay } from '@/lib/dates'
 
 const MIN_INTERVAL_MS = 60_000
-const ROLLOVER_SLACK_MS = 2_000
+// Covers a client clock a few seconds ahead of the server's.
+const ROLLOVER_SLACK_MS = 5_000
 
 // The header summary is rendered on the server, and soft navigations reuse the
 // layout. Refreshing when the tab or window regains attention keeps "3 de 5

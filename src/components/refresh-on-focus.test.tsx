@@ -75,7 +75,7 @@ describe('RefreshOnFocus', () => {
       vi.advanceTimersByTime(29_000)
       expect(refresh).not.toHaveBeenCalled()
 
-      vi.advanceTimersByTime(4_000)
+      vi.advanceTimersByTime(7_000)
       expect(refresh).toHaveBeenCalledTimes(1)
 
       vi.advanceTimersByTime(24 * 60 * 60 * 1000)

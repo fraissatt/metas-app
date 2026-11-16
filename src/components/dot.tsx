@@ -9,9 +9,10 @@ export const TONE_LABEL: Record<DayTone, string> = {
   done: 'Dia feito',
 }
 
-// A day to come is only hinted at, so the eye reads the past as the history.
+// A day to come is an outline, not a filled square: visible in both themes,
+// yet the eye reads only the past as the history.
 const TONE_CLASS: Record<DayTone, string> = {
-  future: 'bg-muted/40',
+  future: 'ring-1 ring-inset ring-border',
   empty: 'bg-muted',
   partial: 'bg-primary/35',
   done: 'bg-primary',
