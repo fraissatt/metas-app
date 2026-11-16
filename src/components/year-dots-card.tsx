@@ -63,6 +63,8 @@ export function YearDotsCard({
     try {
       const next = await loadYear(year)
       if (id === request.current) setData(next)
+    } catch {
+      // The year did not load: keep the one on screen, so the arrow can retry.
     } finally {
       if (id === request.current) setLoading(null)
     }

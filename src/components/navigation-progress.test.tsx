@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { act, fireEvent, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -13,8 +14,8 @@ function page() {
   return (
     <>
       <NavigationProgress />
-      <a href="/objectives">Objetivos</a>
-      <a href="/">Hoje</a>
+      <Link href="/objectives">Objetivos</Link>
+      <Link href="/">Hoje</Link>
     </>
   )
 }
