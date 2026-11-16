@@ -105,4 +105,24 @@ describe('useTour', () => {
     expect(() => render(<OpenButton />)).toThrow('useTour must be used inside TourProvider')
     spy.mockRestore()
   })
+
+  it('gives the focus back to whoever opened the tour by hand', async () => {
+    function Opener() {
+      const { openTour } = useTour()
+      return <button onClick={(event) => openTour(event.currentTarget)}>Ver tour</button>
+    }
+    render(
+      <TourProvider initialSeen canOpen onSeen={vi.fn(async () => {})}>
+        <button>Outro</button>
+        <Opener />
+      </TourProvider>,
+    )
+    const opener = screen.getByRole('button', { name: 'Ver tour' })
+    await userEvent.click(opener)
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pular' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(() => expect(opener).toHaveFocus())
+  })
 })

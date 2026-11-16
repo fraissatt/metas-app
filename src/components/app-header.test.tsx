@@ -100,4 +100,19 @@ describe('AppHeader', () => {
     expect(HIDE_WHEN).toBe('(min-width: 768px)')
     expect(HIDE_UNLESS).toBe('(display-mode: window-controls-overlay)')
   })
+
+  it('keeps the DOM order equal to the visual order, so Tab runs left to right on a phone too', async () => {
+    const { container } = render(
+      await AppHeader({ ...base, user: { id: 'u', name: 'Ana', email: 'a@b.com', isAnonymous: false } }),
+    )
+    const bar = container.querySelector('[data-app-bar-inner]') as HTMLElement
+    // No CSS `order` anywhere in the bar: it would make focus jump around.
+    expect(bar.innerHTML).not.toMatch(/[\s":]order-\d/)
+    const names = Array.from(bar.querySelectorAll('a, button')).map(
+      (el) => el.getAttribute('aria-label') ?? el.textContent,
+    )
+    const position = (match: RegExp) => names.findIndex((name) => match.test(name ?? ''))
+    expect(position(/buscar/i)).toBeLessThan(position(/hoje, semana/))
+    expect(position(/hoje, semana/)).toBeLessThan(position(/^Conta:/))
+  })
 })
