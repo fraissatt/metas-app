@@ -94,13 +94,13 @@ describe('getLifetimeStats isolation', () => {
 })
 
 describe('getDayDots', () => {
-  it('returns the current year with every dot empty for a new user', async () => {
+  it('returns the current year with no dot lit for a new user', async () => {
     const result = await getDayDots()
     const year = appYear(new Date())
 
     expect(result.year).toBe(year)
     expect(result.dots).toHaveLength(getYearDays(year).length)
-    expect(result.dots.every((dot) => dot.tone === 'empty')).toBe(true)
+    expect(result.dots.every((dot) => dot.tone === 'empty' || dot.tone === 'future')).toBe(true)
     expect(result).toMatchObject({ daysDone: 0, firstYear: year, currentYear: year })
   })
 
@@ -117,7 +117,7 @@ describe('getDayDots', () => {
     })
 
     const result = await getDayDots(2026)
-    const lit = result.dots.filter((dot) => dot.tone !== 'empty').map((dot) => dot.key)
+    const lit = result.dots.filter((dot) => dot.tone === 'done' || dot.tone === 'partial').map((dot) => dot.key)
 
     expect(lit).toEqual(['2026-10-05'])
     expect(result.daysDone).toBe(2)

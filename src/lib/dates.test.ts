@@ -10,6 +10,7 @@ import {
   formatMonthYear,
   getMonthDays,
   getYearDays,
+  msUntilNextAppDay,
   appToday,
   differenceInAppWeeks,
   endOfAppDay,
@@ -130,5 +131,12 @@ describe('formatWeekRange', () => {
 
   it('names both months across a month boundary', () => {
     expect(formatWeekRange(parseDay('2026-10-26'))).toBe('26 de out. a 1 de nov.')
+  })
+})
+
+describe('msUntilNextAppDay', () => {
+  it('counts to the next Brasília midnight, whatever the machine time zone', () => {
+    expect(msUntilNextAppDay(new Date('2026-11-17T02:59:30Z'))).toBe(30_000)
+    expect(msUntilNextAppDay(new Date('2026-11-17T03:00:00Z'))).toBe(24 * 60 * 60 * 1000)
   })
 })

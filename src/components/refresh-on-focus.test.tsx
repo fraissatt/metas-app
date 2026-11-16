@@ -64,4 +64,37 @@ describe('RefreshOnFocus', () => {
     fireEvent.focus(window)
     expect(refresh).not.toHaveBeenCalled()
   })
+
+  it('refreshes by itself when the Brasília day turns, and again the next day', () => {
+    vi.restoreAllMocks()
+    vi.useFakeTimers()
+    // 23:59:30 in Brasília (UTC-3).
+    vi.setSystemTime(new Date('2026-11-17T02:59:30Z'))
+    try {
+      render(<RefreshOnFocus />)
+      vi.advanceTimersByTime(29_000)
+      expect(refresh).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(4_000)
+      expect(refresh).toHaveBeenCalledTimes(1)
+
+      vi.advanceTimersByTime(24 * 60 * 60 * 1000)
+      expect(refresh).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('cancels the day-turn refresh when it unmounts', () => {
+    vi.restoreAllMocks()
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-11-17T02:59:30Z'))
+    try {
+      render(<RefreshOnFocus />).unmount()
+      vi.advanceTimersByTime(60_000)
+      expect(refresh).not.toHaveBeenCalled()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })

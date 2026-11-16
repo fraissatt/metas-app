@@ -71,7 +71,8 @@ export function WeekGoalProgressCard({
                 )}
               />
             </svg>
-            <span className="absolute text-[10px] font-semibold tabular-nums">{percent}%</span>
+            {/* A goal with no tasks yet has no percentage: "0%" would read as a failure. */}
+            <span className="absolute text-[10px] font-semibold tabular-nums">{total === 0 ? '–' : `${percent}%`}</span>
           </div>
 
           <div className="flex h-6 flex-1 items-end gap-1">
@@ -84,7 +85,7 @@ export function WeekGoalProgressCard({
               return (
                 <div
                   key={day.toISOString()}
-                  title={`${DAY_LABELS[i]}: ${dayCompleted}/${dayTotal} tarefas`}
+                  title={dayTotal === 0 ? `${DAY_LABELS[i]}: sem tarefas` : `${DAY_LABELS[i]}: ${dayCompleted}/${dayTotal} tarefas`}
                   className="flex-1 rounded-t-sm bg-primary transition-[height] duration-300 ease-in-out motion-reduce:transition-none"
                   style={{ height: `${heightPercent}%`, opacity: dayTotal === 0 ? 0.3 : 1 }}
                 />
@@ -104,7 +105,7 @@ export function WeekGoalProgressCard({
           </div>
         ) : (
           <span className="mt-2 block text-sm text-muted-foreground tabular-nums">
-            {completed}/{total} tarefas
+            {total === 0 ? 'Sem tarefas ainda' : `${completed}/${total} tarefas`}
           </span>
         )}
       </div>

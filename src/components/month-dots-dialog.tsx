@@ -65,7 +65,8 @@ export function MonthDotsDialog({
   const isCurrentMonth = monthIndex(period) === monthIndex(current)
   const elapsed = dots.findIndex((dot) => dot.isCurrentDay) + 1
   const done = dots.filter((dot) => dot.tone === 'done').length
-  const summary = `${done} de ${isCurrentMonth ? elapsed : dots.length} dias feitos`
+  // Without a current-day dot (a page left open into a new month) count the whole month, never "0 de 0".
+  const summary = `${done} de ${isCurrentMonth && elapsed > 0 ? elapsed : dots.length} dias feitos`
   const atStart = monthIndex(period) <= monthIndex(first)
   const atEnd = isCurrentMonth
 
