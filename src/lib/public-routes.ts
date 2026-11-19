@@ -1,4 +1,4 @@
-export const AUTH_PAGES = ['/entrar', '/cadastro'] as const
+export const AUTH_PAGES = ['/entrar', '/cadastro', '/esqueci-senha', '/redefinir-senha'] as const
 
 export function isFunnelPublic(env: Record<string, string | undefined> = process.env): boolean {
   return env.FUNNEL_PUBLIC === 'true'
