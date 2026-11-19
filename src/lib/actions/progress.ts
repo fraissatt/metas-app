@@ -58,3 +58,39 @@ export async function getObjectivePaceInput(objectiveId: string): Promise<Object
     completedAt: objective.completedAt?.toISOString() ?? null,
   }
 }
+
+export type OverallPaceInput = Array<ObjectivePaceInput & { id: string; title: string }>
+
+/**
+ * The pace inputs of every objective still in progress, in two queries (not one
+ * per objective). Dates travel as ISO strings, as in `getObjectivePaceInput`.
+ */
+export async function getOverallPaceInput(): Promise<OverallPaceInput> {
+  const user = await requireUser()
+  const objectives = await prisma.objective.findMany({
+    where: { userId: user.id, status: { not: 'COMPLETED' } },
+    orderBy: { createdAt: 'asc' },
+  })
+  if (objectives.length === 0) return []
+
+  const tasks = await prisma.dailyTask.findMany({
+    where: { weeklyGoal: { objectiveId: { in: objectives.map((objective) => objective.id) } } },
+    select: { date: true, completed: true, completedAt: true, weeklyGoal: { select: { objectiveId: true } } },
+    orderBy: { date: 'asc' },
+  })
+
+  return objectives.map((objective) => ({
+    id: objective.id,
+    title: objective.title,
+    tasks: tasks
+      .filter((task) => task.weeklyGoal.objectiveId === objective.id)
+      .map((task) => ({
+        date: task.date.toISOString(),
+        completed: task.completed,
+        completedAt: task.completedAt?.toISOString() ?? null,
+      })),
+    startDate: objective.startDate.toISOString(),
+    targetDate: objective.targetDate?.toISOString() ?? null,
+    completedAt: null,
+  }))
+}

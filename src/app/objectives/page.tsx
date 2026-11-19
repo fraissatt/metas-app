@@ -2,10 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ChevronDown, Flag, Target } from 'lucide-react'
 import { deleteObjective, listObjectivesWithStats } from '@/lib/actions/objectives'
+import { getOverallPaceInput } from '@/lib/actions/progress'
 import { calendarWeeks, overview, streak, timeline } from '@/lib/objective-dashboard'
 import { CompletedObjectiveCard } from '@/components/completed-objective-card'
 import { EmptyState } from '@/components/empty-state'
 import { ObjectiveDashboardCard } from '@/components/objective-dashboard-card'
+import { OverallPaceChart } from '@/components/overall-pace-chart'
 import { ObjectivesOverview } from '@/components/objectives-overview'
 import { PageFooter } from '@/components/page-footer'
 import { PanelList } from '@/components/panel-list'
@@ -17,6 +19,7 @@ const sectionTitle = 'mb-3 text-sm font-semibold tracking-wide text-muted-foregr
 
 export default async function ObjectivesPage() {
   const { active, completed } = await listObjectivesWithStats()
+  const paceInputs = active.length > 0 ? await getOverallPaceInput() : []
   const now = new Date()
   const totals = overview(active, now)
   const hasAny = active.length + completed.length > 0
@@ -59,7 +62,7 @@ export default async function ObjectivesPage() {
           // Same split as Today: what is in play on the left, the summary and the
           // achievements beside it. On a phone the summary comes first.
           <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[3fr_2fr] lg:items-start">
-            <section aria-labelledby="em-andamento" className="order-2 lg:order-none lg:row-span-2">
+            <section aria-labelledby="em-andamento" className="order-2 lg:order-none lg:row-span-3">
               <h2 id="em-andamento" className={sectionTitle}>
                 Em andamento
               </h2>
@@ -99,6 +102,12 @@ export default async function ObjectivesPage() {
               </h2>
               <ObjectivesOverview {...totals} />
             </section>
+
+            {paceInputs.length > 0 && (
+              <section aria-label="Ritmo geral" className="order-1 lg:order-none">
+                <OverallPaceChart input={paceInputs} />
+              </section>
+            )}
 
             {/* Kept apart from the active ones, and folded: with ten achievements the
                 objectives still in play would otherwise disappear among them. */}
