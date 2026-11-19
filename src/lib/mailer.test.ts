@@ -34,6 +34,9 @@ describe('sendMail', () => {
       port: 465,
       secure: true,
       auth: { user: 'metas@gmail.com', pass: 'abcdefghijklmnop' },
+      connectionTimeout: 8_000,
+      greetingTimeout: 8_000,
+      socketTimeout: 10_000,
     })
     expect(sendMailMock).toHaveBeenCalledWith({ from: 'Metas <metas@gmail.com>', ...mail })
   })
@@ -45,8 +48,8 @@ describe('sendMail', () => {
     expect(info.mock.calls[0][0]).toContain('texto')
   })
 
-  it('without configuration in production only warns, and never prints the message', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  it('without configuration in production logs an error, and never prints the message', async () => {
+    const warn = vi.spyOn(console, 'error').mockImplementation(() => {})
     const info = vi.spyOn(console, 'info').mockImplementation(() => {})
     await sendMail(mail, { NODE_ENV: 'production' })
     expect(warn).toHaveBeenCalledOnce()

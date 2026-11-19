@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { betterAuth } from 'better-auth/minimal'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { nextCookies } from 'better-auth/next-js'
@@ -16,6 +17,10 @@ export const rateLimitOptions = (enabled: boolean) => ({ enabled, storage: 'data
  * Sends the reset link. A failure to send is logged and swallowed: the endpoint
  * answers the same whether or not the e-mail has an account (and whether or not
  * the message left), so nothing tells an outsider which addresses are registered.
+ *
+ * Better Auth runs this through `backgroundTasks` (below), so the answer does not
+ * wait for Gmail: otherwise a registered address would take a second or two longer
+ * to answer than an unknown one, and the delay would give it away.
  */
 export async function sendResetPassword({ user, url }: { user: { name: string; email: string }; url: string }) {
   try {
@@ -25,8 +30,22 @@ export async function sendResetPassword({ user, url }: { user: { name: string; e
   }
 }
 
+/**
+ * Runs work after the response without being cut off: `after` keeps the
+ * serverless function alive until it settles. Outside a request (nothing to
+ * hang it on) the work simply runs on its own.
+ */
+export function runAfterResponse(work: Promise<unknown>): void {
+  try {
+    after(work)
+  } catch {
+    void work.catch(() => {})
+  }
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: 'postgresql' }),
+  advanced: { backgroundTasks: { handler: runAfterResponse } },
   emailAndPassword: {
     enabled: true,
     minPasswordLength: PASSWORD_MIN_LENGTH,

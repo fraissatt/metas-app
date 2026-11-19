@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { betterAuth } from 'better-auth/minimal'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import { prisma } from '@/lib/db'
-import { sendResetPassword } from '@/lib/auth'
+import { runAfterResponse, sendResetPassword } from '@/lib/auth'
 import { RESET_TOKEN_TTL_SECONDS } from '@/lib/password-reset-email'
 
 const sendMailMock = vi.hoisted(() => vi.fn(async () => {}))
@@ -84,5 +84,17 @@ describe('sendResetPassword (the app hook)', () => {
     ).resolves.toBeUndefined()
     expect(error).toHaveBeenCalled()
     error.mockRestore()
+  })
+})
+
+describe('runAfterResponse', () => {
+  it('still runs the work, and swallows its failure, when there is no request to hang it on', async () => {
+    const done = vi.fn()
+    runAfterResponse(Promise.resolve().then(done))
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(done).toHaveBeenCalled()
+
+    expect(() => runAfterResponse(Promise.reject(new Error('x')))).not.toThrow()
+    await new Promise((resolve) => setTimeout(resolve, 0))
   })
 })
