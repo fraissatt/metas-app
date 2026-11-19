@@ -5,7 +5,7 @@ const sendMailMock = vi.hoisted(() => vi.fn(async () => ({})))
 const createTransport = vi.hoisted(() => vi.fn(() => ({ sendMail: sendMailMock })))
 vi.mock('nodemailer', () => ({ default: { createTransport } }))
 
-import { mailConfig, sendMail } from './mailer'
+import { isMailConfigured, mailConfig, sendMail } from './mailer'
 
 const mail = { to: 'ana@example.com', subject: 'Assunto', text: 'texto', html: '<p>texto</p>' }
 
@@ -23,6 +23,14 @@ describe('mailConfig', () => {
       user: 'metas@gmail.com',
       pass: 'abcdefghijklmnop',
     })
+  })
+})
+
+describe('isMailConfigured', () => {
+  it('is true only with both variables', () => {
+    expect(isMailConfigured({})).toBe(false)
+    expect(isMailConfigured({ GMAIL_USER: 'metas@gmail.com' })).toBe(false)
+    expect(isMailConfigured({ GMAIL_USER: 'metas@gmail.com', GMAIL_APP_PASSWORD: 'abcdefghijklmnop' })).toBe(true)
   })
 })
 

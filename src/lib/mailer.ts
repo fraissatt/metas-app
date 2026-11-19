@@ -12,6 +12,14 @@ export function mailConfig(env: Env = process.env): { user: string; pass: string
 }
 
 /**
+ * Whether e-mail can really be sent. The password recovery is offered only then:
+ * without it a person would ask for a link that never arrives.
+ */
+export function isMailConfigured(env: Env = process.env): boolean {
+  return mailConfig(env) !== null
+}
+
+/**
  * Sends through Gmail's SMTP with an app password. Without the two variables
  * nothing is sent and the app keeps working: in development the message goes to
  * the server console (so the reset link can be copied), in production a logged

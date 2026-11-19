@@ -10,7 +10,14 @@ import { PendingButton } from '@/components/pending-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
+export function AuthForm({
+  mode,
+  canRecoverPassword = false,
+}: {
+  mode: 'entrar' | 'cadastro'
+  /** Shows "Esqueci minha senha". Only when the server can send the e-mail. */
+  canRecoverPassword?: boolean
+}) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -77,7 +84,7 @@ export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
           </button>
         </div>
         {signingUp && <p className="text-xs text-muted-foreground">Mínimo de {PASSWORD_MIN_LENGTH} caracteres.</p>}
-        {!signingUp && (
+        {!signingUp && canRecoverPassword && (
           <Link href="/esqueci-senha" className="self-start text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
             Esqueci minha senha
           </Link>
