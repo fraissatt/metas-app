@@ -31,8 +31,15 @@ export function useScrollHide(ref: RefObject<HTMLElement | null>, when?: string,
     let frame = 0
     let scheduled = false
     let keyboard = false
-    const onKey = () => {
+    const onKey = (event: KeyboardEvent) => {
       keyboard = true
+      // A hidden bar is inert, so Tab could never reach it: bring it back when
+      // someone starts moving through the page with the keyboard. Scrolling
+      // down again hides it as usual.
+      if (event.key === 'Tab' && state.hidden) {
+        state = { hidden: false, lastY: window.scrollY }
+        setHidden(false)
+      }
     }
     const onPointer = () => {
       keyboard = false

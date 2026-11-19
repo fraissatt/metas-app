@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties, type RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -12,7 +12,16 @@ import {
 } from '@/components/ui/dialog'
 import { TOUR_STEPS } from '@/components/tour-steps'
 
-export function TourDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function TourDialog({
+  open,
+  onOpenChange,
+  finalFocus,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  /** Element to focus after the dialog closes (whoever opened the tour). */
+  finalFocus?: RefObject<HTMLElement | null>
+}) {
   const [index, setIndex] = useState(0)
   // Focus the main action when the dialog opens: Pular is first in the DOM, so
   // the default would make Enter skip the whole tour.
@@ -23,7 +32,7 @@ export function TourDialog({ open, onOpenChange }: { open: boolean; onOpenChange
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} initialFocus={nextRef}>
+      <DialogContent showCloseButton={false} initialFocus={nextRef} finalFocus={finalFocus}>
         <div
           key={step.id}
           className="tour-step flex flex-col gap-3"

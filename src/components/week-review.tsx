@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Check, Repeat, RotateCcw } from 'lucide-react'
 import { Dot } from '@/components/dot'
 import { PanelList } from '@/components/panel-list'
-import { Button } from '@/components/ui/button'
+import { PendingButton } from '@/components/pending-button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { formatFactor } from '@/lib/day-dots'
 import { cn } from '@/lib/utils'
@@ -244,10 +244,14 @@ export function WeekReview({
         </PanelList>
 
         <div className="flex flex-col gap-2 sm:items-start">
-          <Button type="button" disabled={isPending} onClick={finish}>
-            {selected.size > 0 ? <RotateCcw className="size-4" /> : <Check className="size-4" />}
+          <PendingButton
+            type="button"
+            pending={isPending}
+            icon={selected.size > 0 ? <RotateCcw className="size-4" /> : <Check className="size-4" />}
+            onClick={finish}
+          >
             {isPending ? 'Salvando…' : actionLabel(selected.size, review.repeatInto)}
-          </Button>
+          </PendingButton>
           {failed && (
             <p role="alert" className="text-sm text-destructive">
               Não deu para salvar. Recarregue a página e tente de novo.

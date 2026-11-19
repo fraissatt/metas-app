@@ -147,4 +147,14 @@ describe('MonthDotsDialog', () => {
     expect(screen.queryByText(/0 de 0/)).not.toBeInTheDocument()
     expect(screen.getByText('0 de 31 dias feitos')).toBeInTheDocument()
   })
+
+  it('loads a past year once and moves through its months without new requests', async () => {
+    const loadYear = vi.fn(async () => yearData(2025, 2025))
+    render(<MonthDotsDialog initial={yearData(2026, 2025)} loadYear={loadYear} />)
+    await open()
+    for (let i = 0; i < 12; i++) await userEvent.click(screen.getByRole('button', { name: 'Mês anterior' })) // → outubro de 2025
+
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'outubro de 2025' })).toBeInTheDocument())
+    expect(loadYear).toHaveBeenCalledTimes(1)
+  })
 })

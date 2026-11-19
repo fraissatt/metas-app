@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Dot, DotLegend } from '@/components/dot'
@@ -34,10 +34,13 @@ export function MonthDotsDialog({
   // land, so two quick clicks while a year loads never skip or repeat a month.
   const target = useRef<Period>(current)
   const request = useRef(0)
+  // Which arrow is waiting for a year to load, so it can show a spinner.
+  const [loading, setLoading] = useState<-1 | 1 | null>(null)
 
   function reset() {
     request.current += 1
     target.current = current
+    setLoading(null)
     setShown({ period: current, data: initial })
   }
 
@@ -48,15 +51,28 @@ export function MonthDotsDialog({
     target.current = next
     const id = ++request.current
 
+    // A month of the year already on screen needs no request.
+    const known = next.year === initial.year ? initial : next.year === shown.data.year ? shown.data : null
+    if (known) {
+      setLoading(null)
+      setShown({ period: next, data: known })
+      return
+    }
+
+    setLoading(delta < 0 ? -1 : 1)
     try {
-      const data = next.year === initial.year ? initial : await loadYear(next.year)
+      const data = await loadYear(next.year)
       if (id === request.current) setShown({ period: next, data })
     } catch {
       // The year did not load: stay on the month on screen, so the next click
       // retries it instead of skipping ahead.
       if (id === request.current) target.current = before
+    } finally {
+      if (id === request.current) setLoading(null)
     }
   }
+
+  const spinner = <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />
 
   const { period, data } = shown
   const dots = monthFromDots(data.dots, period.year, period.month)
@@ -85,7 +101,7 @@ export function MonthDotsDialog({
             className={ARROW}
             onClick={() => move(-1)}
           >
-            <ChevronLeftIcon />
+            {loading === -1 ? spinner : <ChevronLeftIcon />}
           </Button>
           <DialogTitle aria-live="polite" className="first-letter:uppercase">
             {title}
@@ -99,7 +115,7 @@ export function MonthDotsDialog({
             className={ARROW}
             onClick={() => move(1)}
           >
-            <ChevronRightIcon />
+            {loading === 1 ? spinner : <ChevronRightIcon />}
           </Button>
         </DialogHeader>
 

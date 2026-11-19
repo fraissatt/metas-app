@@ -50,9 +50,10 @@ export async function AppHeader({
             </Link>
             {user && <HeaderNav />}
             <div className="flex-1" />
-            {/* Desktop: search, summary, user menu. Mobile: summary, search, then the user menu. */}
+            {/* The DOM order is the visual order at every size (no CSS `order`), so Tab
+                moves left to right: search, help (md up), summary, user menu. */}
             {user && (
-              <div className="flex items-center max-md:order-2">
+              <div className="flex items-center">
                 <SearchDialog onSearch={search} />
               </div>
             )}
@@ -63,11 +64,11 @@ export async function AppHeader({
               </div>
             )}
             {summary && (
-              <div className="flex items-center max-md:order-1">
+              <div className="flex items-center">
                 <DaySummary {...summary} />
               </div>
             )}
-            <div className="flex items-center max-md:order-3">
+            <div className="flex items-center">
               <UserMenu
                 user={user}
                 theme={theme}
