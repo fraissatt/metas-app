@@ -463,3 +463,85 @@
     animation: none;
   }
 }
+
+/* Thin bar along the top edge while the next page loads (NavigationProgress).
+   It stays invisible for the first 150 ms, so instant navigations never flash
+   it, then creeps towards 80% and only completes when the page arrives. */
+.nav-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 70;
+  height: 2px;
+  pointer-events: none;
+}
+
+.nav-progress-bar {
+  height: 100%;
+  width: 0;
+  background-color: var(--primary);
+  opacity: 0;
+}
+
+.nav-progress[data-phase='loading'] .nav-progress-bar {
+  animation: nav-progress-creep 10s cubic-bezier(0.1, 0.6, 0.2, 1) 150ms forwards;
+}
+
+.nav-progress[data-phase='done'] .nav-progress-bar {
+  width: 100%;
+  opacity: 0;
+  transition:
+    width 200ms ease-out,
+    opacity 200ms ease-out 150ms;
+}
+
+@keyframes nav-progress-creep {
+  from {
+    width: 0;
+    opacity: 1;
+  }
+  to {
+    width: 80%;
+    opacity: 1;
+  }
+}
+
+/* Reduced motion: no creeping width, just a steady full line that appears
+   (after the same short wait) and goes away. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress[data-phase='loading'] .nav-progress-bar {
+    animation: nav-progress-show 0s linear 150ms forwards;
+  }
+  .nav-progress[data-phase='done'] .nav-progress-bar {
+    transition: none;
+  }
+}
+
+@keyframes nav-progress-show {
+  to {
+    width: 100%;
+    opacity: 0.6;
+  }
+}
+
+/* A quiet word when a goal, a week or an objective is closed (MomentToast):
+   it rises a little and fades in. No glow. Reduced motion: it just appears. */
+@keyframes moment-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.moment-toast {
+  animation: moment-in 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moment-toast {
+    animation: none;
+  }
+}

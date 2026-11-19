@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { TourProvider, useTour } from '@/components/tour-provider'
 
@@ -104,5 +104,28 @@ describe('useTour', () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(() => render(<OpenButton />)).toThrow('useTour must be used inside TourProvider')
     spy.mockRestore()
+  })
+
+  it('gives the focus back to whoever opened the tour by hand', async () => {
+    function Opener() {
+      const { openTour } = useTour()
+      return <button onClick={(event) => openTour(event.currentTarget)}>Ver tour</button>
+    }
+    render(
+      <TourProvider initialSeen canOpen onSeen={vi.fn(async () => {})}>
+        <button>Outro</button>
+        <Opener />
+      </TourProvider>,
+    )
+    const opener = screen.getByRole('button', { name: 'Ver tour' })
+    // Focus sits elsewhere when the tour opens (Safari does not focus a clicked
+    // button), so only the explicit opener can bring it back.
+    screen.getByRole('button', { name: 'Outro' }).focus()
+    fireEvent.click(opener)
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Pular' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(() => expect(opener).toHaveFocus())
   })
 })

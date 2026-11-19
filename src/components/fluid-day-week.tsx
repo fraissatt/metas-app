@@ -6,10 +6,12 @@ import { CalendarCheck, ChevronDown, ChevronUp, Flag } from 'lucide-react'
 import { EmptyState } from '@/components/empty-state'
 import { PanelList } from '@/components/panel-list'
 import { QuickAddTask } from '@/components/quick-add-task'
+import { MomentToast, useMoment } from '@/components/moment-toast'
 import { TodayTaskGroup } from '@/components/today-task-group'
 import { WeekGoalProgressCard } from '@/components/week-goal-progress-card'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { weekMoment } from '@/lib/moments'
 import { groupTasksByWeeklyGoal } from '@/lib/tasks'
 import type { listDailyTasksByDate } from '@/lib/actions/dailyTasks'
 import type { listWeeklyGoalsForCurrentWeek } from '@/lib/actions/weeklyGoals'
@@ -81,7 +83,12 @@ export function FluidDayWeek({
   const effectiveExpanded = expanded || isDesktop
   const [optimisticState, applyOptimisticToggle] = useOptimistic({ tasks, goals }, toggleTaskOptimistic)
 
+  const { moment, onDone, celebrate } = useMoment()
+
   async function handleToggle(taskId: string) {
+    // Decided from the tick itself, so only what the person just did is celebrated.
+    const won = weekMoment(optimisticState.goals, toggleTaskOptimistic(optimisticState, taskId).goals)
+    if (won) celebrate(won)
     applyOptimisticToggle(taskId)
     await onToggleTask(taskId)
   }
@@ -95,6 +102,7 @@ export function FluidDayWeek({
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+      <MomentToast moment={moment} onDone={onDone} />
       <div className="lg:basis-3/5">
         <h1 className="mb-4 text-2xl font-semibold">Hoje</h1>
         {onCreateTask && (
