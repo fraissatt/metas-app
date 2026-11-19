@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { Menu } from '@base-ui/react/menu'
 import { Bell, Check, Moon, Palette, Sun } from 'lucide-react'
@@ -94,12 +94,14 @@ export function UserMenu({
   const { style, setStyle } = useBackground()
   const { openTour } = useTour()
   const [leaveOpen, setLeaveOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const label = user ? (user.isAnonymous ? 'Visitante' : user.name) : null
 
   return (
     <>
       <Menu.Root>
         <Menu.Trigger
+          ref={triggerRef}
           aria-label={label ? `Conta: ${label}` : 'Aparência'}
           className={cn(
             triggerClass,
@@ -157,7 +159,7 @@ export function UserMenu({
               {user && (
                 <>
                   {separator}
-                  <Menu.Item className={cn(itemClass, 'md:hidden')} onClick={openTour}>
+                  <Menu.Item className={cn(itemClass, 'md:hidden')} onClick={() => openTour(triggerRef.current)}>
                     Ver tour
                   </Menu.Item>
                   <Menu.Item
