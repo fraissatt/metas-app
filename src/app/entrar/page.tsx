@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/session'
 import { AuthForm } from '@/components/auth-form'
 import { GuestButton } from '@/components/guest-button'
 import { enterAsGuest } from '@/lib/actions/guest'
+import { isMailConfigured } from '@/lib/mailer'
 
 export const metadata: Metadata = { title: 'Entrar' }
 
@@ -28,7 +29,7 @@ export default async function EntrarPage({ searchParams }: { searchParams: Promi
       ) : (
         <GuestButton onEnter={enterAsGuest} />
       )}
-      <AuthForm mode="entrar" />
+      <AuthForm mode="entrar" canRecoverPassword={isMailConfigured()} />
       <p className="text-sm text-muted-foreground">
         Não tem conta? <Link href="/cadastro" className="text-accent-foreground underline-offset-4 hover:underline">Criar conta</Link>
       </p>

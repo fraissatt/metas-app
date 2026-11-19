@@ -11,6 +11,9 @@ vi.mock('next/navigation', async (importOriginal) => ({
 
 import EntrarPage from '@/app/entrar/page'
 
+const mail = vi.hoisted(() => ({ configured: false }))
+vi.mock('@/lib/mailer', () => ({ isMailConfigured: () => mail.configured }))
+
 const NOTE = 'Entrar numa conta existente descarta os dados de visitante.'
 const guest = { id: 'g', name: 'Visitante', email: 'g@x.com', isAnonymous: true }
 const props = { searchParams: Promise.resolve({}) }
@@ -33,5 +36,18 @@ describe('/entrar', () => {
 
   it('still sends a real account to Hoje', async () => {
     await expect(EntrarPage(props)).rejects.toMatchObject({ digest: expect.stringContaining('NEXT_REDIRECT') })
+  })
+
+  it('offers "Esqueci minha senha" only once the e-mail is configured', async () => {
+    actAs(null)
+    mail.configured = false
+    const off = render(await EntrarPage(props))
+    expect(screen.queryByRole('link', { name: 'Esqueci minha senha' })).toBeNull()
+    off.unmount()
+
+    mail.configured = true
+    render(await EntrarPage(props))
+    expect(screen.getByRole('link', { name: 'Esqueci minha senha' })).toHaveAttribute('href', '/esqueci-senha')
+    mail.configured = false
   })
 })

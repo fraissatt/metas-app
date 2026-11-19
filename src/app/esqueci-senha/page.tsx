@@ -1,10 +1,26 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ForgotPasswordForm } from '@/components/password-reset-forms'
+import { isMailConfigured } from '@/lib/mailer'
 
 export const metadata: Metadata = { title: 'Esqueci minha senha' }
 
 export default function EsqueciSenhaPage() {
+  // Suspended until the e-mail is configured (GMAIL_USER and GMAIL_APP_PASSWORD).
+  if (!isMailConfigured()) {
+    return (
+      <main className="mx-auto flex max-w-sm flex-col gap-6 p-4 md:p-8">
+        <h1 className="text-2xl font-bold">Esqueci minha senha</h1>
+        <p role="status" className="rounded-md border border-border bg-card p-3 text-sm">
+          A recuperação de senha está indisponível no momento. Se precisar, crie uma nova conta ou entre como visitante.
+        </p>
+        <Link href="/entrar" className="text-sm text-accent-foreground underline-offset-4 hover:underline">
+          Voltar para entrar
+        </Link>
+      </main>
+    )
+  }
+
   return (
     <main className="mx-auto flex max-w-sm flex-col gap-6 p-4 md:p-8">
       <div className="flex flex-col gap-2">
