@@ -1,14 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Flag, Target } from 'lucide-react'
 import { deleteObjective, listObjectivesWithStats } from '@/lib/actions/objectives'
 import { calendarWeeks, overview, streak, timeline } from '@/lib/objective-dashboard'
 import { CompletedObjectiveCard } from '@/components/completed-objective-card'
+import { EmptyState } from '@/components/empty-state'
 import { ObjectiveDashboardCard } from '@/components/objective-dashboard-card'
 import { ObjectivesOverview } from '@/components/objectives-overview'
 import { PageFooter } from '@/components/page-footer'
 import { PanelList } from '@/components/panel-list'
-import { Button } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 
 export const metadata: Metadata = { title: 'Objetivos' }
 
@@ -36,15 +37,24 @@ export default async function ObjectivesPage() {
         </div>
 
         {!hasAny ? (
-          <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <p className="text-muted-foreground">Você ainda não tem objetivos.</p>
-            <Button nativeButton={false} render={<Link href="/quiz" />}>
-              Montar plano com o quiz
-            </Button>
-            <Button variant="secondary" nativeButton={false} render={<Link href="/objectives/new" />}>
-              Criar meu primeiro objetivo
-            </Button>
-          </div>
+          <EmptyState
+            icon={Target}
+            title="Comece pelo primeiro objetivo"
+            className="mx-auto max-w-md"
+            action={
+              <>
+                <Button nativeButton={false} render={<Link href="/quiz" />}>
+                  Montar plano com o quiz
+                </Button>
+                <Button variant="secondary" nativeButton={false} render={<Link href="/objectives/new" />}>
+                  Criar meu primeiro objetivo
+                </Button>
+              </>
+            }
+          >
+            Um objetivo é o destino, com prazo. Depois você o divide em metas semanais e em tarefas do dia. O quiz
+            monta o primeiro plano em cinco perguntas.
+          </EmptyState>
         ) : (
           // Same split as Today: what is in play on the left, the summary and the
           // achievements beside it. On a phone the summary comes first.
@@ -54,9 +64,18 @@ export default async function ObjectivesPage() {
                 Em andamento
               </h2>
               {active.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum objetivo em andamento. Que tal começar o próximo?
-                </p>
+                <EmptyState
+                  icon={Flag}
+                  title="Nenhum objetivo em andamento"
+                  compact
+                  action={
+                    <Link href="/objectives/new" className={buttonVariants({ variant: 'secondary', size: 'sm' })}>
+                      Começar o próximo
+                    </Link>
+                  }
+                >
+                  Tudo concluído por aqui. Quando quiser, defina o próximo destino.
+                </EmptyState>
               ) : (
                 <PanelList>
                   {active.map((objective) => (

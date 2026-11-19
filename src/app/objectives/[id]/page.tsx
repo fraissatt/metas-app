@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { TrendingUp } from 'lucide-react'
 import {
   completeObjective,
   getObjective,
@@ -15,6 +17,7 @@ import {
   listWeeklyGoalsForWeek,
 } from '@/lib/actions/weeklyGoals'
 import { describeSchedule } from '@/lib/objectives'
+import { EmptyState } from '@/components/empty-state'
 import { ObjectivePaceChart } from '@/components/objective-pace-chart'
 import { ObjectiveProgressChart } from '@/components/objective-progress-chart'
 import { ObjectiveStatsPanel } from '@/components/objective-stats'
@@ -22,6 +25,7 @@ import { ObjectiveStatusButton } from '@/components/objective-status-button'
 import { WeeklyGoalsPanel } from '@/components/weekly-goals-panel'
 import { formatDate } from '@/lib/dates'
 import { Breadcrumbs } from '@/components/breadcrumbs'
+import { buttonVariants } from '@/components/ui/button'
 
 export async function generateMetadata({
   params,
@@ -76,13 +80,37 @@ export default async function ObjectiveDetailPage({
         )}
       </div>
 
-      <div className="mb-6">
-        <ObjectivePaceChart input={paceInput} />
-      </div>
+      {series.length === 0 ? (
+        // No weekly goal yet: one invitation instead of two empty charts.
+        <EmptyState
+          icon={TrendingUp}
+          title="Os gráficos aparecem com a primeira meta semanal"
+          className="mb-6"
+          action={
+            objective.completedAt ? undefined : (
+              <Link
+                href={`/objectives/${id}?nova-meta=1`}
+                className={buttonVariants({ variant: 'secondary', size: 'sm' })}
+              >
+                Criar meta semanal
+              </Link>
+            )
+          }
+        >
+          Divida o objetivo em uma meta para esta semana e adicione tarefas: o ritmo e o progresso passam a ser
+          desenhados aqui.
+        </EmptyState>
+      ) : (
+        <>
+          <div className="mb-6">
+            <ObjectivePaceChart input={paceInput} />
+          </div>
 
-      <div className="mb-6">
-        <ObjectiveProgressChart data={series} />
-      </div>
+          <div className="mb-6">
+            <ObjectiveProgressChart data={series} />
+          </div>
+        </>
+      )}
       <WeeklyGoalsPanel
         goals={current}
         pastWeeks={past}
