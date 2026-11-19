@@ -10,7 +10,7 @@ type Handler = (event: Record<string, unknown>) => void
 function loadWorker(windows: Array<{ url: string; focus: () => Promise<unknown> }> = []) {
   const handlers: Record<string, Handler> = {}
   const self = {
-    location: { origin: 'https://metas.example' },
+    location: { origin: 'https://metas.example', hostname: 'metas.example' },
     addEventListener: (type: string, handler: Handler) => (handlers[type] = handler),
     registration: { showNotification: vi.fn(async () => {}) },
     clients: { matchAll: vi.fn(async () => windows), openWindow: vi.fn(async () => null) },
