@@ -139,6 +139,15 @@ describe('MonthDotsDialog', () => {
     await waitFor(() => expect(screen.getByRole('dialog', { name: 'dezembro de 2025' })).toBeInTheDocument())
   })
 
+  it('never says "0 de 0" when the data has no current day (page left open into a new year)', async () => {
+    const stale = yearData(2026, 2026)
+    const initial = { ...stale, dots: stale.dots.map((dot) => ({ ...dot, isCurrentDay: false })) }
+    render(<MonthDotsDialog initial={initial} loadYear={vi.fn()} />)
+    await open()
+    expect(screen.queryByText(/0 de 0/)).not.toBeInTheDocument()
+    expect(screen.getByText('0 de 31 dias feitos')).toBeInTheDocument()
+  })
+
   it('loads a past year once and moves through its months without new requests', async () => {
     const loadYear = vi.fn(async () => yearData(2025, 2025))
     render(<MonthDotsDialog initial={yearData(2026, 2025)} loadYear={loadYear} />)

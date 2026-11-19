@@ -24,7 +24,7 @@ describe('dayTone', () => {
 describe('buildDayDots', () => {
   const now = new Date('2026-10-20T15:00:00Z')
 
-  it('buckets tasks by their Brasília day and leaves the future empty', () => {
+  it('buckets tasks by their Brasília day and marks the days to come as future, not as nothing done', () => {
     const tasks = [
       { date: parseDay('2026-10-05'), completed: true },
       { date: parseDay('2026-10-05'), completed: false },
@@ -37,7 +37,8 @@ describe('buildDayDots', () => {
     expect(dots[4]).toEqual({ key: '2026-10-05', tone: 'partial', isCurrentDay: false })
     expect(dots[5].tone).toBe('done')
     expect(dots[19]).toEqual({ key: '2026-10-20', tone: 'empty', isCurrentDay: true })
-    expect(dots[24].tone).toBe('empty') // future
+    expect(dots[24].tone).toBe('future')
+    expect(dots[20].tone).toBe('future') // tomorrow, with no task planned
   })
 
   it('keeps a task stored at 00:00 Brasília on that day, not the UTC one before', () => {

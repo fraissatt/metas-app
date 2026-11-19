@@ -3,7 +3,8 @@ import { appToday, appWeekdayIndex, formatDayKey, parseDay } from '@/lib/dates'
 /** Share of a day's planned tasks that makes it a done day. */
 export const DONE_THRESHOLD = 0.6
 
-export type DayTone = 'empty' | 'partial' | 'done'
+/** `future`: a day that has not come yet, which is not "nothing done". */
+export type DayTone = 'future' | 'empty' | 'partial' | 'done'
 
 /** Plain data (no Dates), so it crosses into client components as is. */
 export type DayDot = { key: string; tone: DayTone; isCurrentDay: boolean }
@@ -45,7 +46,7 @@ export function buildDayDots(tasks: TaskDay[], days: Date[], now: Date): DayDot[
   return days.map((day) => {
     const key = formatDayKey(day)
     const tally = byDay.get(key)
-    const tone = day > today || !tally ? 'empty' : dayTone(tally.completed, tally.total)
+    const tone = day > today ? 'future' : tally ? dayTone(tally.completed, tally.total) : 'empty'
     return { key, tone, isCurrentDay: key === todayKey }
   })
 }
