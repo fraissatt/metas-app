@@ -1,8 +1,7 @@
 // Metas service worker: the daily reminder, plus a light offline layer.
 //
 // What the offline layer does, and what it deliberately does not:
-//  - It keeps the app's own static files (hashed JS/CSS under /_next/static/ and
-//    the icons) so the app opens faster and its shell survives a bad connection.
+//  - It keeps the app's own static files (hashed JS/CSS under /_next/static/) so the app opens faster and its shell survives a bad connection.
 //  - When a page cannot be reached, it shows /offline.html, a static page that
 //    carries nothing about the person.
 //  - It never stores pages or data and never queues writes. The goals live in
@@ -11,7 +10,7 @@
 
 const STATIC_CACHE = 'metas-static-v1'
 const OFFLINE_URL = '/offline.html'
-const PRECACHE = [OFFLINE_URL, '/icons/icon-192.png']
+const PRECACHE = [OFFLINE_URL]
 
 // In local development these file names are not hashed, so a cache would serve old code.
 const isLocalDev = ['localhost', '127.0.0.1', '[::1]'].includes(self.location.hostname)
@@ -40,12 +39,14 @@ self.addEventListener('fetch', (event) => {
   // router makes for client-side navigation are not "navigate" requests, so
   // they are left to fail normally and the router falls back to a full load.
   if (request.mode === 'navigate') {
-    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL)))
+    // If the offline page was evicted, a plain network error is all that is left.
+    event.respondWith(fetch(request).catch(() => caches.match(OFFLINE_URL).then((page) => page || Response.error())))
     return
   }
 
   // Files whose name changes whenever their content does: safe to keep forever.
-  if (url.pathname.startsWith('/_next/static/') || url.pathname.startsWith('/icons/')) {
+  // The icons are not hashed, so they are left to the browser's own cache.
+  if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
       caches.match(request).then(
         (cached) =>

@@ -49,6 +49,7 @@ function loadWorker({
     self,
     URL,
     Promise,
+    Response: { error: () => 'NETWORK ERROR' },
     caches: caches.caches,
     fetch: fetchImpl,
   })
@@ -67,13 +68,13 @@ function fetchEvent(url: string, init: { method?: string; mode?: string } = {}) 
 }
 
 describe('service worker, offline layer', () => {
-  it('precaches the offline page and the icon on install, and takes over at once', async () => {
+  it('precaches the offline page on install, and takes over at once', async () => {
     const { handlers, self, store } = loadWorker()
     const pending: Promise<unknown>[] = []
     handlers.install({ waitUntil: (p: Promise<unknown>) => pending.push(p) })
     await Promise.all(pending)
 
-    expect([...store.stores.get('metas-static-v1')!.keys()]).toEqual(['/offline.html', '/icons/icon-192.png'])
+    expect([...store.stores.get('metas-static-v1')!.keys()]).toEqual(['/offline.html'])
     expect(self.skipWaiting).toHaveBeenCalled()
   })
 
@@ -101,6 +102,24 @@ describe('service worker, offline layer', () => {
     const online = fetchEvent('https://metas.example/objectives', { mode: 'navigate' })
     up.handlers.fetch(online)
     expect(await online.response).toBe(upResponse)
+  })
+
+  it('falls back to a network error when the offline page was evicted from the cache', async () => {
+    const { handlers } = loadWorker({
+      fetchImpl: vi.fn(async () => {
+        throw new TypeError('offline')
+      }),
+    })
+    const event = fetchEvent('https://metas.example/', { mode: 'navigate' })
+    handlers.fetch(event)
+    expect(await event.response).toBe('NETWORK ERROR')
+  })
+
+  it('leaves the unhashed icons to the browser cache', () => {
+    const { handlers } = loadWorker()
+    const event = fetchEvent('https://metas.example/icons/icon-192.png')
+    handlers.fetch(event)
+    expect(event.response).toBeUndefined()
   })
 
   it('serves hashed static files from the cache after the first fetch', async () => {
