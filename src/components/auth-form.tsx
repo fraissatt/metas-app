@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { authErrorMessage, PASSWORD_MIN_LENGTH } from '@/lib/auth-errors'
-import { Button } from '@/components/ui/button'
+import { PendingButton } from '@/components/pending-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -88,9 +88,9 @@ export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
           </p>
         )}
       </div>
-      <Button type="submit" disabled={pending}>
+      <PendingButton type="submit" pending={pending}>
         {signingUp ? 'Criar conta' : 'Entrar'}
-      </Button>
+      </PendingButton>
     </form>
   )
 }

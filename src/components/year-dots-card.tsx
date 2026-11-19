@@ -1,7 +1,7 @@
 'use client'
 
 import { useLayoutEffect, useRef, useState } from 'react'
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dot, DotLegend, daysDoneLabel } from '@/components/dot'
 import { MonthDotsDialog } from '@/components/month-dots-dialog'
@@ -32,6 +32,8 @@ export function YearDotsCard({
     setSeen(initial)
     setData(initial)
   }
+  // The year being fetched, so its arrow can show a spinner meanwhile.
+  const [loading, setLoading] = useState<number | null>(null)
   const request = useRef(0)
   const scroller = useRef<HTMLDivElement>(null)
 
@@ -52,13 +54,28 @@ export function YearDotsCard({
 
   async function go(year: number) {
     const id = ++request.current
-    const next = year === initial.year ? initial : await loadYear(year)
-    if (id === request.current) setData(next)
+    if (year === initial.year) {
+      setLoading(null)
+      setData(initial)
+      return
+    }
+    setLoading(year)
+    try {
+      const next = await loadYear(year)
+      if (id === request.current) setData(next)
+    } catch {
+      // The year did not load: keep the one on screen, so the arrow can retry.
+    } finally {
+      if (id === request.current) setLoading(null)
+    }
   }
+
+  const spinner = <Loader2 aria-hidden="true" className="motion-safe:animate-spin" />
 
   return (
     <section
       aria-label="Calendário do ano"
+      aria-busy={loading !== null || undefined}
       className={cn('px-4 py-3', !flat && 'rounded-lg border border-border bg-card')}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -73,7 +90,7 @@ export function YearDotsCard({
               className={ARROW}
               onClick={() => !atStart && go(data.year - 1)}
             >
-              <ChevronLeftIcon />
+              {loading !== null && loading < data.year ? spinner : <ChevronLeftIcon />}
             </Button>
           )}
           <h3 aria-live="polite" className="text-sm font-semibold tabular-nums">
@@ -89,14 +106,17 @@ export function YearDotsCard({
               className={ARROW}
               onClick={() => !atEnd && go(data.year + 1)}
             >
-              <ChevronRightIcon />
+              {loading !== null && loading > data.year ? spinner : <ChevronRightIcon />}
             </Button>
           )}
         </div>
         <MonthDotsDialog initial={initial} loadYear={loadYear} />
       </div>
 
-      <div ref={scroller} className="relative mt-3 overflow-x-auto pb-1">
+      <div
+        ref={scroller}
+        className={cn('relative mt-3 overflow-x-auto pb-1 transition-opacity', loading !== null && 'opacity-50')}
+      >
         <div style={{ minWidth: `${weeks.length * COLUMN_REM}rem` }}>
           <div
             aria-hidden="true"

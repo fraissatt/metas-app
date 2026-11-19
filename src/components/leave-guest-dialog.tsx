@@ -1,6 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
+import { PendingButton } from '@/components/pending-button'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -37,14 +38,14 @@ export function LeaveGuestDialog({
         </DialogHeader>
         <DialogFooter>
           <DialogClose render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>
-          <Button
+          <PendingButton
             type="button"
             variant="destructive"
-            disabled={isPending}
+            pending={isPending}
             onClick={() => startTransition(() => runRedirectingAction(action))}
           >
             {confirmLabel}
-          </Button>
+          </PendingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

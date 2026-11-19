@@ -110,4 +110,19 @@ describe('YearDotsCard', () => {
     expect(scrolled).toHaveBeenLastCalledWith(0)
     vi.restoreAllMocks()
   })
+
+  it('shows a spinner on the arrow while the other year loads', async () => {
+    let resolve: (data: DayDotsYear) => void = () => {}
+    const loadYear = vi.fn(() => new Promise<DayDotsYear>((r) => (resolve = r)))
+    render(<YearDotsCard initial={yearData(2026, 2025)} loadYear={loadYear} />)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ano anterior' }))
+    const section = screen.getByRole('region', { name: 'Calendário do ano' })
+    expect(section).toHaveAttribute('aria-busy', 'true')
+    expect(section.querySelector('.animate-spin, [class*="animate-spin"]')).not.toBeNull()
+
+    resolve(yearData(2025, 2025))
+    await waitFor(() => expect(section).not.toHaveAttribute('aria-busy'))
+    expect(screen.getByRole('heading', { name: '2025' })).toBeInTheDocument()
+  })
 })

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
-import { Button } from '@/components/ui/button'
+import { PendingButton } from '@/components/pending-button'
 import { cn } from '@/lib/utils'
 
 const GENERIC_ERROR = 'Não foi possível concluir. Tente de novo.'
@@ -25,11 +25,11 @@ export function GuestButton({
         variant === 'card' ? 'rounded-lg border border-border bg-card p-4' : 'items-start',
       )}
     >
-      <Button
+      <PendingButton
         type="button"
         variant={variant === 'card' ? 'secondary' : 'default'}
         size={variant === 'card' ? 'default' : 'lg'}
-        disabled={pending}
+        pending={pending}
         onClick={async () => {
           setPending(true)
           setFailed(null)
@@ -52,7 +52,7 @@ export function GuestButton({
         }}
       >
         Entrar como visitante
-      </Button>
+      </PendingButton>
       {variant === 'card' && <p className="text-xs text-muted-foreground">Conta de demonstração com dados prontos</p>}
       {failed && <p role="alert" className="text-xs text-destructive">{failed}</p>}
     </div>
