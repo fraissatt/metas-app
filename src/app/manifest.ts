@@ -2,9 +2,10 @@ import type { MetadataRoute } from 'next'
 import { NAV_LINKS } from '@/lib/navigation'
 import { BROWSER_CHROME, DEFAULT_THEME } from '@/lib/theme'
 
-// No service worker on purpose: this is what makes the app installable, and the
-// data lives in Postgres behind Server Actions, so caching pages offline would
-// show stale goals and break writes.
+// The service worker (public/sw.js) keeps only static files and a static offline
+// page. It does not cache pages or queue writes on purpose: the data lives in
+// Postgres behind Server Actions, so cached pages would show stale goals and
+// replayed writes could clash with changes made on another device.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Metas',
