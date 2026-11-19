@@ -6,11 +6,18 @@ import { useRouter } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
 import { authClient } from '@/lib/auth-client'
 import { authErrorMessage, PASSWORD_MIN_LENGTH } from '@/lib/auth-errors'
-import { Button } from '@/components/ui/button'
+import { PendingButton } from '@/components/pending-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
+export function AuthForm({
+  mode,
+  canRecoverPassword = false,
+}: {
+  mode: 'entrar' | 'cadastro'
+  /** Shows "Esqueci minha senha". Only when the server can send the e-mail. */
+  canRecoverPassword?: boolean
+}) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -77,6 +84,11 @@ export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
           </button>
         </div>
         {signingUp && <p className="text-xs text-muted-foreground">Mínimo de {PASSWORD_MIN_LENGTH} caracteres.</p>}
+        {!signingUp && canRecoverPassword && (
+          <Link href="/esqueci-senha" className="self-start text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+            Esqueci minha senha
+          </Link>
+        )}
       </div>
       <div aria-live="polite">
         {error && (
@@ -88,9 +100,9 @@ export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
           </p>
         )}
       </div>
-      <Button type="submit" disabled={pending}>
+      <PendingButton type="submit" pending={pending}>
         {signingUp ? 'Criar conta' : 'Entrar'}
-      </Button>
+      </PendingButton>
     </form>
   )
 }

@@ -158,12 +158,10 @@ describe('FluidDayWeek', () => {
   it('shows empty-state copy and a way to add work when there are no tasks or goals', () => {
     render(<FluidDayWeek tasks={[]} goals={[]} onToggleTask={vi.fn()} />)
 
-    expect(screen.getByText('Nenhuma tarefa para hoje.')).toBeInTheDocument()
-    expect(screen.getByText('Nenhuma meta semanal para esta semana.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /adicionar tarefa/i })).toHaveAttribute(
-      'href',
-      '/objectives',
-    )
+    expect(screen.getByText('Nenhuma tarefa para hoje')).toBeInTheDocument()
+    expect(screen.getByText('Nenhuma meta nesta semana')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /adicionar tarefa/i })).toHaveAttribute('href', '/objectives')
+    expect(screen.getByRole('link', { name: 'Criar meta semanal', hidden: true })).toHaveAttribute('href', '/objectives')
   })
 
   it('hides the week panel from AT and keyboard while collapsed', async () => {
@@ -329,8 +327,8 @@ describe('FluidDayWeek', () => {
   it('does not wrap the empty states in a panel', () => {
     render(<FluidDayWeek tasks={[]} goals={[]} onToggleTask={vi.fn()} />)
 
-    expect(screen.getByText('Nenhuma tarefa para hoje.').closest('.divide-y')).toBeNull()
-    expect(screen.getByText('Nenhuma meta semanal para esta semana.').closest('.divide-y')).toBeNull()
+    expect(screen.getByText('Nenhuma tarefa para hoje').closest('.divide-y')).toBeNull()
+    expect(screen.getByText('Nenhuma meta nesta semana').closest('.divide-y')).toBeNull()
   })
 
   it('gathers the week cards in one panel, and the other goals in a second one under their label', () => {
@@ -435,5 +433,20 @@ describe('useIsDesktop', () => {
   it('leaves the quick entry out when no handler is given', () => {
     render(<FluidDayWeek tasks={[task]} goals={[goal]} onToggleTask={vi.fn()} />)
     expect(screen.queryByRole('textbox', { name: 'Nova tarefa para hoje' })).toBeNull()
+  })
+
+  it('says a quiet word when the tick closes the week, and stays quiet otherwise', async () => {
+    const onToggleTask = vi.fn().mockResolvedValue(undefined)
+    const open = { ...goal, dailyTasks: [task, task2] }
+    render(<FluidDayWeek tasks={[task, task2]} goals={[open]} onToggleTask={onToggleTask} />)
+    expect(screen.getByRole('status', { name: '' })).toBeEmptyDOMElement()
+
+    // Unticking the done task closes nothing.
+    await userEvent.click(screen.getByRole('checkbox', { name: /Reler/ }))
+    expect(screen.queryByText('Semana fechada')).toBeNull()
+
+    // Ticking the open one closes the only goal of the week.
+    await userEvent.click(screen.getByRole('checkbox', { name: /Revisar App Router/ }))
+    expect(await screen.findByText('Semana fechada')).toBeInTheDocument()
   })
 })

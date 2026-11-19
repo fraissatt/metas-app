@@ -82,13 +82,15 @@ describe('WeekGoalProgressCard', () => {
 
     expect(screen.getByTitle('SEG: 1/1 tarefas')).toBeInTheDocument()
     expect(screen.getByTitle('TER: 0/1 tarefas')).toBeInTheDocument()
-    expect(screen.getByTitle('QUA: 0/0 tarefas')).toBeInTheDocument()
+    expect(screen.getByTitle('QUA: sem tarefas')).toBeInTheDocument()
   })
 
-  it('shows 0/0 tarefas and does not crash when the goal has no tasks yet', () => {
+  it('says there are no tasks yet, never "0/0" or "0%", when the goal has none', () => {
     render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks: [] }} />)
 
-    expect(screen.getByText('0/0 tarefas')).toBeInTheDocument()
+    expect(screen.getByText('Sem tarefas ainda')).toBeInTheDocument()
+    expect(screen.queryByText('0%')).not.toBeInTheDocument()
+    expect(screen.queryByText(/0\/0/)).not.toBeInTheDocument()
   })
 
   it('marks the card as fulfilled when every task for the week is complete', () => {
@@ -130,7 +132,7 @@ describe('WeekGoalProgressCard', () => {
     render(<WeekGoalProgressCard goal={{ ...weeklyGoal, dailyTasks: [] }} />)
 
     expect(screen.queryByText('✓ concluída')).not.toBeInTheDocument()
-    expect(screen.getByText('0/0 tarefas')).toBeInTheDocument()
+    expect(screen.getByText('Sem tarefas ainda')).toBeInTheDocument()
   })
 
   it('has no coloured rail on its left edge', () => {

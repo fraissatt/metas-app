@@ -28,7 +28,7 @@ describe('ObjectivePaceChart', () => {
   it('shows the empty state when there are no tasks', () => {
     render(<ObjectivePaceChart input={input({ tasks: [] })} />)
 
-    expect(screen.getByText('Sem tarefas planejadas ainda para gerar o gráfico.')).toBeInTheDocument()
+    expect(screen.getByText('O ritmo aparece com as primeiras tarefas')).toBeInTheDocument()
   })
 
   it("offers only the periods that fit the objective's span", () => {

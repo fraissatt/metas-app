@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { prisma } from '@/lib/db'
 import { addAppWeeks, getWeekBounds } from '@/lib/dates'
 import { actAs, TEST_USER_ID } from '@/test/session-mock'
-import Home, { generateMetadata } from '@/app/page'
+import Home, { generateMetadata } from '@/app/(hoje)/page'
 
 describe('root page', () => {
   afterEach(() => {

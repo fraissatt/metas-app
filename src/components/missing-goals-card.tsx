@@ -2,7 +2,7 @@
 
 import { useTransition } from 'react'
 import { RotateCcw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { PendingButton } from '@/components/pending-button'
 import type { MissingGoalsPreview } from '@/lib/actions/weeklyGoals'
 import { formatDayMonth } from '@/lib/dates'
 
@@ -35,10 +35,14 @@ export function MissingGoalsCard({
         ))}
       </div>
 
-      <Button type="button" disabled={isPending} onClick={() => startTransition(() => onRepeat())}>
-        <RotateCcw className="size-4" />
+      <PendingButton
+        type="button"
+        pending={isPending}
+        icon={<RotateCcw className="size-4" />}
+        onClick={() => startTransition(() => onRepeat())}
+      >
         {isPending ? 'Trazendo…' : 'Trazer para esta semana'}
-      </Button>
+      </PendingButton>
     </div>
   )
 }

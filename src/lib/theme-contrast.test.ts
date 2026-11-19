@@ -72,9 +72,14 @@ describe('theme colors stay in tokens', () => {
     })
   }
 
+  // E-mail clients read neither CSS variables nor the app's theme, so the reset
+  // e-mail carries its own fixed colours. It is the only file allowed to.
+  const EMAIL_FILES = ['password-reset-email.ts']
+
   it('no component hardcodes a hex color (it would ignore the active theme)', () => {
     const offenders = files(join(process.cwd(), 'src'))
       .filter((f) => /\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f))
+      .filter((f) => !EMAIL_FILES.some((name) => f.endsWith(name)))
       .filter((f) => HEX_COLOR.test(readFileSync(f, 'utf8')))
       .map((f) => f.replace(process.cwd(), ''))
 

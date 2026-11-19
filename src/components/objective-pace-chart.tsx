@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { TrendingUp } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
 import type { ObjectivePaceInput } from '@/lib/actions/progress'
 import { appToday, differenceInAppDays, formatDayMonth } from '@/lib/dates'
 import { IDEAL_GOAL, buildPaceSeries, type PacePoint, type PaceSummary } from '@/lib/pace'
@@ -59,7 +61,11 @@ export function ObjectivePaceChart({ input }: { input: ObjectivePaceInput }) {
   )
 
   if (!result) {
-    return <p className="text-sm text-muted-foreground">Sem tarefas planejadas ainda para gerar o gráfico.</p>
+    return (
+      <EmptyState icon={TrendingUp} title="O ritmo aparece com as primeiras tarefas" compact>
+        Crie uma meta semanal logo abaixo e adicione tarefas: o gráfico compara o que você fez com o ritmo ideal.
+      </EmptyState>
+    )
   }
 
   const { points: all, summary } = result

@@ -1,13 +1,16 @@
 'use client'
 
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { TourDialog } from '@/components/tour-dialog'
 
 // Pages where the tour does not open by itself (the quiz is its own onboarding).
 const NO_AUTO_OPEN = ['/quiz']
 
-type TourContextValue = { openTour: () => void }
+type TourContextValue = {
+  /** Opens the tour. `returnFocus` is the element that gets the focus back when it closes. */
+  openTour: (returnFocus?: unknown) => void
+}
 
 const TourContext = createContext<TourContextValue | null>(null)
 
@@ -33,6 +36,11 @@ export function TourProvider({
   const [manualOpen, setManualOpen] = useState(false)
   // A new run of the dialog starts on its first step.
   const [run, setRun] = useState(0)
+  // Who opened the tour by hand. The dialog has no trigger of its own, so
+  // without this the focus would be lost in the page when it closes.
+  // Passed on every render: the dialog reads it after it has closed, when
+  // `manualOpen` is already false. Empty (the automatic tour) means the default.
+  const returnFocus = useRef<HTMLElement | null>(null)
 
   const autoOpen = canOpen && !seen && !NO_AUTO_OPEN.includes(pathname)
 
@@ -46,7 +54,9 @@ export function TourProvider({
     }
   }
 
-  function openTour() {
+  function openTour(opener?: unknown) {
+    // Callers may pass it straight to onClick, so anything that isn't an element is ignored.
+    returnFocus.current = opener instanceof HTMLElement ? opener : null
     setRun((current) => current + 1)
     setManualOpen(true)
   }
@@ -54,7 +64,12 @@ export function TourProvider({
   return (
     <TourContext value={{ openTour }}>
       {children}
-      <TourDialog key={run} open={autoOpen || manualOpen} onOpenChange={handleOpenChange} />
+      <TourDialog
+        key={run}
+        open={autoOpen || manualOpen}
+        onOpenChange={handleOpenChange}
+        finalFocus={returnFocus}
+      />
     </TourContext>
   )
 }

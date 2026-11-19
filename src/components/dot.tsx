@@ -3,12 +3,16 @@ import type { DayDot, DayTone } from '@/lib/day-dots'
 import { cn } from '@/lib/utils'
 
 export const TONE_LABEL: Record<DayTone, string> = {
+  future: 'Ainda não chegou',
   empty: 'Nada feito',
   partial: 'Parte feita',
   done: 'Dia feito',
 }
 
+// A day to come is an outline, not a filled square: visible in both themes,
+// yet the eye reads only the past as the history.
 const TONE_CLASS: Record<DayTone, string> = {
+  future: 'ring-1 ring-inset ring-border',
   empty: 'bg-muted',
   partial: 'bg-primary/35',
   done: 'bg-primary',
@@ -34,10 +38,13 @@ export function Dot({ dot, size }: { dot: DayDot | null; size: 'sm' | 'md' }) {
   )
 }
 
+// Days to come explain themselves by position; the legend covers what was done.
+const LEGEND_TONES: DayTone[] = ['empty', 'partial', 'done']
+
 export function DotLegend() {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-      {(Object.keys(TONE_LABEL) as DayTone[]).map((tone) => (
+      {LEGEND_TONES.map((tone) => (
         <li key={tone} className="flex items-center gap-1.5">
           <span aria-hidden="true" className={cn('size-2.5 rounded-full', TONE_CLASS[tone])} />
           {TONE_LABEL[tone]}

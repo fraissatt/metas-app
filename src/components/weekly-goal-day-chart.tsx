@@ -1,6 +1,8 @@
 'use client'
 
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { ListChecks } from 'lucide-react'
+import { EmptyState } from '@/components/empty-state'
 import type { DailyTask } from '@prisma/client'
 import { getWeekDays, isSameAppDay } from '@/lib/dates'
 
@@ -8,7 +10,11 @@ const DAY_LABELS = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 
 export function WeeklyGoalDayChart({ weekStart, tasks }: { weekStart: Date; tasks: DailyTask[] }) {
   if (tasks.length === 0) {
-    return <p className="text-sm text-muted-foreground">Sem tarefas nesta semana ainda.</p>
+    return (
+      <EmptyState icon={ListChecks} title="Esta meta ainda não tem tarefas" compact>
+        Adicione as tarefas logo abaixo e escolha os dias: o gráfico mostra o que foi feito em cada um.
+      </EmptyState>
+    )
   }
 
   const data = getWeekDays(weekStart).map((day, index) => {

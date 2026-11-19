@@ -51,6 +51,9 @@ export function formatDayKey(date: Date): string {
 
 export const startOfAppDay = (date: Date) => plain(startOfDay(date, inApp))
 export const endOfAppDay = (date: Date) => plain(endOfDay(date, inApp))
+/** Milliseconds from `now` until the next Brasília day starts. Always positive. */
+export const msUntilNextAppDay = (now: Date = new Date()) =>
+  plain(startOfDay(addDays(now, 1, inApp), inApp)).getTime() - now.getTime()
 export const isSameAppDay = (a: Date, b: Date) => isSameDay(a, b, inApp)
 export const addAppDays = (date: Date, n: number) => plain(addDays(date, n, inApp))
 export const addAppMonths = (date: Date, n: number) => plain(addMonths(date, n, inApp))
