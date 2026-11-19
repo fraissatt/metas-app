@@ -82,4 +82,13 @@ describe('AuthForm', () => {
     expect(input).toHaveAttribute('type', 'text')
     expect(screen.getByRole('button', { name: 'Ocultar senha' })).toBeInTheDocument()
   })
+
+  it('offers the password recovery only when signing in', () => {
+    const { unmount } = render(<AuthForm mode="entrar" />)
+    expect(screen.getByRole('link', { name: 'Esqueci minha senha' })).toHaveAttribute('href', '/esqueci-senha')
+    unmount()
+
+    render(<AuthForm mode="cadastro" />)
+    expect(screen.queryByRole('link', { name: 'Esqueci minha senha' })).toBeNull()
+  })
 })

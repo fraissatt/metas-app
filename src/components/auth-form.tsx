@@ -77,6 +77,11 @@ export function AuthForm({ mode }: { mode: 'entrar' | 'cadastro' }) {
           </button>
         </div>
         {signingUp && <p className="text-xs text-muted-foreground">Mínimo de {PASSWORD_MIN_LENGTH} caracteres.</p>}
+        {!signingUp && (
+          <Link href="/esqueci-senha" className="self-start text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+            Esqueci minha senha
+          </Link>
+        )}
       </div>
       <div aria-live="polite">
         {error && (

@@ -17,3 +17,9 @@ describe('authErrorMessage', () => {
     expect(authErrorMessage(undefined)).toBe('Não foi possível concluir. Tente de novo.')
   })
 })
+
+describe('authErrorMessage, reset link', () => {
+  it('asks for a new link when the token is invalid or expired', () => {
+    expect(authErrorMessage({ status: 400, code: 'INVALID_TOKEN' })).toBe('Esse link não vale mais. Peça um novo.')
+  })
+})

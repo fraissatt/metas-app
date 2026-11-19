@@ -7,6 +7,11 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/cadastro', false)).toBe(true)
   })
 
+  it('opens the password recovery pages: the person cannot be signed in', () => {
+    expect(isPublicPath('/esqueci-senha', false)).toBe(true)
+    expect(isPublicPath('/redefinir-senha', false)).toBe(true)
+  })
+
   it('opens the presentation page at the root', () => {
     expect(isPublicPath('/', false)).toBe(true)
     expect(isPublicPath('/', true)).toBe(true)
