@@ -25,4 +25,28 @@ describe('ObjectiveStatusButton', () => {
     expect(onReopen).toHaveBeenCalledTimes(1)
     expect(onComplete).not.toHaveBeenCalled()
   })
+
+  it('says a quiet word after the objective is completed, and nothing after reopening', async () => {
+    const onComplete = vi.fn().mockResolvedValue(undefined)
+    const { rerender } = render(
+      <ObjectiveStatusButton status="ACTIVE" title="Correr 10 km" onComplete={onComplete} onReopen={vi.fn()} />,
+    )
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+
+    await userEvent.click(screen.getByRole('button', { name: /concluir objetivo/i }))
+    expect(await screen.findByText('Objetivo concluído')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Você chegou em “Correr 10 km”.')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Fechar aviso' }))
+    rerender(
+      <ObjectiveStatusButton
+        status="COMPLETED"
+        title="Correr 10 km"
+        onComplete={onComplete}
+        onReopen={vi.fn().mockResolvedValue(undefined)}
+      />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /reabrir/i }))
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
+  })
 })
