@@ -204,4 +204,28 @@ describe('FloatingBar', () => {
     expect(bar()).toHaveAttribute('data-hidden', 'false')
     expect(bar()).not.toHaveAttribute('inert')
   })
+
+  it('comes back when Tab is pressed, so the keyboard can reach it, and hides again on the next scroll down', () => {
+    setup()
+    scrollTo(200)
+    expect(bar()).toHaveAttribute('inert')
+
+    act(() => {
+      fireEvent.keyDown(document.body, { key: 'Tab' })
+    })
+    expect(bar()).toHaveAttribute('data-hidden', 'false')
+    expect(bar()).not.toHaveAttribute('inert')
+
+    scrollTo(260)
+    expect(bar()).toHaveAttribute('data-hidden', 'true')
+  })
+
+  it('stays hidden for other keys', () => {
+    setup()
+    scrollTo(200)
+    act(() => {
+      fireEvent.keyDown(document.body, { key: 'a' })
+    })
+    expect(bar()).toHaveAttribute('data-hidden', 'true')
+  })
 })
